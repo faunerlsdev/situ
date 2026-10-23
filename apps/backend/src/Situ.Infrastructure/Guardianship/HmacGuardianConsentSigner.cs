@@ -8,6 +8,7 @@ public sealed class HmacGuardianConsentSigner(GuardianConsentOptions options) : 
 {
     public string Sign(GuardianConsentSignature input)
     {
+        options.EnsureValid();
         var payload = string.Join(
             '\n',
             input.ConsentId.ToString("D"),

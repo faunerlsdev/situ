@@ -46,7 +46,7 @@ Los vínculos del diagrama son propiedades `Guid` que nombran otra entidad. Dond
 | Entidad | Base | Rol |
 | --- | --- | --- |
 | `UserProfile` | AggregateRoot | Cara pública y privacidad. El perfil nace privado. `ShowRealtimeLocation` aplica al perfil público. `ShareLocationWithFriends` es independiente y nace apagado. |
-| `UserLocation` | Entity | Última posición enviada por el móvil. Las lecturas calientes (cercanos y avisos a 1 km) salen de Redis GEO; esta fila es el respaldo durable. |
+| `UserLocation` | Entity | Última posición enviada por el móvil. Esta fila guarda el punto durable para cercanos y avisos a 1 km. |
 | `PrivacyZone` | AuditableEntity | Zona (casa, trabajo) donde la ubicación en tiempo real no se muestra. |
 | `LocationShareRecipient` | AuditableEntity | Amigo que recibe la ubicación cuando el modo es «amigos seleccionados». |
 | `AvatarGalleryItem` | AuditableEntity | Ícono de avatar predefinido, administrado desde el panel. |

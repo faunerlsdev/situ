@@ -6,6 +6,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\src\Situ.Domain\Situ.Domain.csproj" />
         <ProjectReference Include="..\..\src\Situ.Application\Situ.Application.csproj" />
         <ProjectReference Include="..\..\src\Situ.Infrastructure\Situ.Infrastructure.csproj" />

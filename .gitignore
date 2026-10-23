@@ -28,6 +28,7 @@ TestResults/
 .env
 .env.*
 !.env.example
+secrets.json
 
 # IDE / SO
 .idea/

@@ -12,19 +12,23 @@ namespace Situ.Infrastructure;
 
 public static class DependencyInjection
 {
-    public const string ConnectionStringName = "Database";
+    public const string ConnectionStringName = "Default";
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(ConnectionStringName)
-            ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is required.");
-
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<AuditSaveChangesInterceptor>();
         services.AddScoped<DomainEventSaveChangesInterceptor>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
+            var connectionString = configuration.GetConnectionString(ConnectionStringName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Falta la cadena de conexión ConnectionStrings:Default. En desarrollo configúrala con dotnet user-secrets. En producción define la variable de entorno ConnectionStrings__Default.");
+            }
+
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.UseNetTopologySuite();
@@ -44,9 +48,6 @@ public static class DependencyInjection
         services.AddSingleton<IPublicLinks, PublicLinks>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
-        var guardianConsent = GuardianConsentOptions.From(configuration);
-        guardianConsent.EnsureValid();
-        services.AddSingleton(guardianConsent);
         services.AddSingleton<IGuardianConsentSigner, HmacGuardianConsentSigner>();
         return services;
     }

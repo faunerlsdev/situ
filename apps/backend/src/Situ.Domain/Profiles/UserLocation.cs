@@ -3,8 +3,8 @@ using Situ.Domain.Common;
 namespace Situ.Domain.Profiles;
 
 /// <summary>
-/// Last known position of a user, written by the mobile app (RF-UBI-07). Hot reads (nearby users, 1 km alerts)
-/// are served from Redis GEO; this row is the durable fallback.
+/// Last known position of a user, written by the mobile app (RF-UBI-07).
+/// This row is the durable record for nearby users and 1 km alerts.
 /// </summary>
 public sealed class UserLocation : Entity
 {

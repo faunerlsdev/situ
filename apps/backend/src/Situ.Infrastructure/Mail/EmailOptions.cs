@@ -14,7 +14,7 @@ public sealed class EmailOptions
 
     public string FromName { get; init; } = "SITU";
 
-    /// <summary>Origin of the API, used to build the confirmation link that Mailpit can open.</summary>
+    /// <summary>Origin of the API, used to build public links such as email confirmation.</summary>
     public string ApiPublicBaseUrl { get; init; } = "http://localhost:5080";
 
     public bool UseSsl { get; init; }

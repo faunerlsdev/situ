@@ -32,6 +32,7 @@ Mapea `Result` a `ProblemDetails`: Locked → 423, Conflict → 409, NotFound �
 - Enums JSON como string (`JsonStringEnumConverter`), nunca como número.
 - Tiempo inyectado con `TimeProvider`. Prohibido `DateTime.UtcNow` y `DateTimeOffset.UtcNow` en lógica de aplicación, dominio o infraestructura.
 - Versiones de paquetes solo en `Directory.Packages.props`. Los `.csproj` no fijan versiones.
+- Nunca poner secretos en archivos versionados; usar user-secrets en desarrollo y variables de entorno en producción.
 
 ```csharp
 public sealed class CreateReportHandler(IReportRepository reports, TimeProvider time)

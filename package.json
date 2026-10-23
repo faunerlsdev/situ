@@ -8,8 +8,6 @@
     "node": ">=22"
   },
   "scripts": {
-    "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down",
     "dev:api": "dotnet watch --project apps/backend/src/Situ.Api",
     "dev:web": "pnpm --filter @situ/web dev",
     "dev:landing": "pnpm --filter @situ/landing dev",

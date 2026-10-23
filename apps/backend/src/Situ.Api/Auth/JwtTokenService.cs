@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Situ.Api.Configuration;
 using Situ.Application.Common.Abstractions;
 
 namespace Situ.Api.Auth;
@@ -12,7 +13,7 @@ public sealed class JwtTokenService(JwtOptions options) : ITokenService
     public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt)
     {
         var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SigningKey)),
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)),
             SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: options.Issuer,
