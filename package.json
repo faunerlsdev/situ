@@ -1,0 +1,29 @@
+{
+  "name": "situ",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SITU — red social informativa con mapa (monorepo)",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "dev:api": "dotnet watch --project apps/backend/src/Situ.Api",
+    "dev:web": "pnpm --filter @situ/web dev",
+    "dev:landing": "pnpm --filter @situ/landing dev",
+    "dev:support": "pnpm --filter @situ/support dev",
+    "dev:mobile": "pnpm --filter @situ/mobile start",
+    "api:build": "dotnet build apps/backend/Situ.slnx",
+    "api:test": "dotnet test apps/backend/Situ.slnx",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,mdx,yml,yaml,css}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.6.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.9.0"
+  }
+}

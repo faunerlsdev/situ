@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Situ.Domain\Situ.Domain.csproj" />
+        <ProjectReference Include="..\..\src\Situ.Application\Situ.Application.csproj" />
+        <ProjectReference Include="..\..\src\Situ.Infrastructure\Situ.Infrastructure.csproj" />
+        <ProjectReference Include="..\..\src\Situ.Api\Situ.Api.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="NetArchTest.Rules" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+</Project>

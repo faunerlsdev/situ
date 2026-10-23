@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Capa Domain: sin referencias a ningún otro proyecto ni paquete NuGet. -->
+
+</Project>
