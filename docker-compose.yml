@@ -4,12 +4,14 @@ name: situ
 services:
   postgres:
     image: postgis/postgis:17-3.5
+    # Official tags are amd64-only; Apple Silicon runs this image under emulation.
+    platform: linux/amd64
     environment:
       POSTGRES_USER: situ
       POSTGRES_PASSWORD: situ_dev
       POSTGRES_DB: situ
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - situ-postgres:/var/lib/postgresql/data
     healthcheck:

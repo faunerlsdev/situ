@@ -1,0 +1,27 @@
+import { createHttpClient, createServices, defaultApiUrl, readApiUrl, sessionEvents } from '@situ/shared';
+
+let accessToken: string | null = null;
+let prepareHandler: (() => Promise<void>) | null = null;
+let refreshHandler: (() => Promise<string | null>) | null = null;
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+export function setSessionHandlers(handlers: {
+  prepareRequest: () => Promise<void>;
+  refreshAccessToken: () => Promise<string | null>;
+}): void {
+  prepareHandler = handlers.prepareRequest;
+  refreshHandler = handlers.refreshAccessToken;
+}
+
+export const http = createHttpClient({
+  baseUrl: readApiUrl(process.env.EXPO_PUBLIC_API_URL, defaultApiUrl),
+  getAccessToken: () => accessToken,
+  prepareRequest: () => prepareHandler?.() ?? Promise.resolve(),
+  refreshAccessToken: () => refreshHandler?.() ?? Promise.resolve(null),
+  onSessionExpired: () => sessionEvents.emitExpired(),
+});
+
+export const api = createServices(http);

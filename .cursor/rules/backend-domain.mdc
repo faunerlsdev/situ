@@ -1,0 +1,40 @@
+---
+description: Entidades, Guard, menores y retención del dominio
+globs: apps/backend/src/Situ.Domain/**
+alwaysApply: false
+---
+
+# Domain
+
+Sin dependencias de framework. Ids `Guid` v7 (`Guid.CreateVersion7()`).
+
+- `Entity` — identidad.
+- `AuditableEntity` — `CreatedAt` / `UpdatedAt` vía `MarkCreated` / `MarkUpdated`.
+- `AggregateRoot` — eventos de dominio; Infrastructure los despacha después de guardar.
+
+Setters privados. Constructor privado sin parámetros para EF. Creación solo por fábrica estática que recibe `DateTimeOffset now`.
+
+Invariantes con `Guard.NotEmpty`, `Guard.Optional`, `Guard.InRange` y `Guard.That`. Si se rompen, `DomainException(code, message)` con un `code` estable (`"user.below_minimum_age"`). Value objects: `GeoPoint` (WGS84), `Email`, `UserName`.
+
+```csharp
+public sealed class Report : AggregateRoot
+{
+    private Report() { }
+
+    public static Report Create(/* ... */, DateTimeOffset now)
+    {
+        Guard.That(condition, "report.invalid", "Report is invalid.");
+        var report = new Report { /* private setters */ };
+        report.MarkCreated(now);
+        return report;
+    }
+}
+```
+
+## Reglas que no se relajan
+
+- `LockoutPolicy.Default`: 5 intentos fallidos bloquean 15 minutos.
+- Edad mínima de registro: `Country.MinimumAge` (hoy 14). No la hardcodees fuera de ese campo.
+- Menores (`MinorProtectionPolicy`, mayoría a los 18): nunca perfil público ni pin en el mapa público; solo transmiten a amigos y siempre en anónimo; menores de 16 necesitan autorización del tutor para transmitir.
+- Consentimiento del tutor: ventana de 7 días (`DefaultGuardianResponseWindow`).
+- Retención: grabación en vivo 60 días; copia interna 7 días más; reportes 1 año. Los días viven en `RetentionPolicy`, no en literales sueltos.

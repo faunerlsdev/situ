@@ -1,0 +1,47 @@
+---
+description: Vertical slice del backend .NET, handlers, Result y validación
+globs: apps/backend/**
+alwaysApply: false
+---
+
+# Backend
+
+Vertical Slice + Clean Architecture. Sin MediatR.
+
+| Proyecto | Rol |
+|---|---|
+| `Situ.Domain` | Entidades y reglas. Sin referencias a otros proyectos. |
+| `Situ.Application` | Un slice por caso de uso. |
+| `Situ.Infrastructure` | EF Core, Npgsql, NetTopologySuite / PostGIS. |
+| `Situ.Api` | Minimal APIs. El endpoint solo adapta HTTP. |
+
+## Un caso de uso
+
+```
+Application/Features/<Module>/<UseCase>/{Request,Response,Validator,Handler}.cs
+Api/Endpoints/<Module>/<UseCase>Endpoint.cs
+```
+
+El endpoint inyecta `IHandler<TRequest, TResponse>` y lo llama directo. El handler devuelve `Result<T>` con un `Error`; no lanza por fallos esperados. `DomainException` queda reservada a invariantes rotas dentro del dominio.
+
+Mapea `Result` a `ProblemDetails`: Locked → 423, Conflict → 409, NotFound → 404, Validation → 400, Unauthorized → 401, Forbidden → 403.
+
+## Reglas
+
+- Validación de entrada con FluentValidation, en el `Validator` del slice.
+- Enums JSON como string (`JsonStringEnumConverter`), nunca como número.
+- Tiempo inyectado con `TimeProvider`. Prohibido `DateTime.UtcNow` y `DateTimeOffset.UtcNow` en lógica de aplicación, dominio o infraestructura.
+- Versiones de paquetes solo en `Directory.Packages.props`. Los `.csproj` no fijan versiones.
+
+```csharp
+public sealed class CreateReportHandler(IReportRepository reports, TimeProvider time)
+    : IHandler<CreateReportRequest, Result<CreateReportResponse>>
+{
+    public async Task<Result<CreateReportResponse>> Handle(
+        CreateReportRequest request, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        // expected failures return Result.Failure(Error.*), they do not throw
+    }
+}
+```

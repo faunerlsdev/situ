@@ -1,0 +1,24 @@
+{
+  "name": "@situ/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.css": "./src/brand/theme.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@situ/config": "workspace:*",
+    "typescript": "^5.9.0",
+    "vitest": "3.2.4"
+  },
+  "dependencies": {
+    "axios": "1.12.2",
+    "zod": "3.25.76"
+  }
+}

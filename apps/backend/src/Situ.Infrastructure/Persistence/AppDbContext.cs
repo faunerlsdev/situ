@@ -1,0 +1,166 @@
+using Microsoft.EntityFrameworkCore;
+using Situ.Application.Common.Abstractions;
+using Situ.Domain.Administration;
+using Situ.Domain.Geography;
+using Situ.Domain.Guardianship;
+using Situ.Domain.Identity;
+using Situ.Domain.Legal;
+using Situ.Domain.Live;
+using Situ.Domain.Moderation;
+using Situ.Domain.Monetization;
+using Situ.Domain.News;
+using Situ.Domain.Notifications;
+using Situ.Domain.Organizations;
+using Situ.Domain.Profiles;
+using Situ.Domain.Reports;
+using Situ.Domain.Retention;
+using Situ.Domain.Social;
+using Situ.Infrastructure.Persistence.Conventions;
+using Situ.Infrastructure.Persistence.Converters;
+using Situ.Infrastructure.Persistence.Seeding;
+
+namespace Situ.Infrastructure.Persistence;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IApplicationDbContext
+{
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
+
+    public DbSet<StaffPermission> StaffPermissions => Set<StaffPermission>();
+
+    public DbSet<StaffRole> StaffRoles => Set<StaffRole>();
+
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+
+    public DbSet<City> Cities => Set<City>();
+
+    public DbSet<Country> Countries => Set<Country>();
+
+    public DbSet<Region> Regions => Set<Region>();
+
+    public DbSet<GuardianConsent> GuardianConsents => Set<GuardianConsent>();
+
+    public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<SecurityToken> SecurityTokens => Set<SecurityToken>();
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<UserDevice> UserDevices => Set<UserDevice>();
+
+    public DbSet<ConsentRecord> ConsentRecords => Set<ConsentRecord>();
+
+    public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
+
+    public DbSet<LiveStream> LiveStreams => Set<LiveStream>();
+
+    public DbSet<LiveViewer> LiveViewers => Set<LiveViewer>();
+
+    public DbSet<AnonymousIdentityAccessLog> AnonymousIdentityAccessLogs => Set<AnonymousIdentityAccessLog>();
+
+    public DbSet<Complaint> Complaints => Set<Complaint>();
+
+    public DbSet<ModerationAction> ModerationActions => Set<ModerationAction>();
+
+    public DbSet<TakedownRequest> TakedownRequests => Set<TakedownRequest>();
+
+    public DbSet<Payment> Payments => Set<Payment>();
+
+    public DbSet<PlanPrice> PlanPrices => Set<PlanPrice>();
+
+    public DbSet<SponsoredPin> SponsoredPins => Set<SponsoredPin>();
+
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+
+    public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
+
+    public DbSet<ImportanceScoringConfig> ImportanceScoringConfigs => Set<ImportanceScoringConfig>();
+
+    public DbSet<NewsItem> NewsItems => Set<NewsItem>();
+
+    public DbSet<UserReputation> UserReputations => Set<UserReputation>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
+
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+
+    public DbSet<NotificationSettings> NotificationSettings => Set<NotificationSettings>();
+
+    public DbSet<UserCategoryInterest> UserCategoryInterests => Set<UserCategoryInterest>();
+
+    public DbSet<UserInterestCity> UserInterestCities => Set<UserInterestCity>();
+
+    public DbSet<AlertRule> AlertRules => Set<AlertRule>();
+
+    public DbSet<Organization> Organizations => Set<Organization>();
+
+    public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
+
+    public DbSet<AvatarGalleryItem> AvatarGalleryItems => Set<AvatarGalleryItem>();
+
+    public DbSet<LocationShareRecipient> LocationShareRecipients => Set<LocationShareRecipient>();
+
+    public DbSet<PrivacyZone> PrivacyZones => Set<PrivacyZone>();
+
+    public DbSet<UserLocation> UserLocations => Set<UserLocation>();
+
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+
+    public DbSet<Comment> Comments => Set<Comment>();
+
+    public DbSet<Reaction> Reactions => Set<Reaction>();
+
+    public DbSet<Report> Reports => Set<Report>();
+
+    public DbSet<ReportCategory> ReportCategories => Set<ReportCategory>();
+
+    public DbSet<ReportCategoryOverride> ReportCategoryOverrides => Set<ReportCategoryOverride>();
+
+    public DbSet<ReportCategoryTranslation> ReportCategoryTranslations => Set<ReportCategoryTranslation>();
+
+    public DbSet<ReportConfirmation> ReportConfirmations => Set<ReportConfirmation>();
+
+    public DbSet<ReportMedia> ReportMedias => Set<ReportMedia>();
+
+    public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
+
+    public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
+
+    public DbSet<LegalHold> LegalHolds => Set<LegalHold>();
+
+    public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
+
+    public DbSet<FriendInvitation> FriendInvitations => Set<FriendInvitation>();
+
+    public DbSet<Friendship> Friendships => Set<Friendship>();
+
+    public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateTimeOffset>().HaveConversion<UtcDateTimeOffsetConverter>();
+        configurationBuilder.Properties<DateTimeOffset?>().HaveConversion<NullableUtcDateTimeOffsetConverter>();
+        configurationBuilder.Properties<Situ.Domain.Common.Email>().HaveConversion<EmailConverter, EmailComparer>().HaveMaxLength(254);
+        configurationBuilder.Properties<Situ.Domain.Common.UserName>().HaveConversion<UserNameConverter, UserNameComparer>().HaveMaxLength(30);
+        configurationBuilder.Properties<Situ.Domain.Common.GeoPoint>()
+            .HaveConversion<GeoPointConverter, GeoPointComparer>()
+            .HaveColumnType("geography(point, 4326)");
+        configurationBuilder.Properties<Situ.Domain.Common.GeoPoint?>()
+            .HaveConversion<NullableGeoPointConverter, NullableGeoPointComparer>()
+            .HaveColumnType("geography(point, 4326)");
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasPostgresExtension("postgis");
+        RelationalModelConventions.IgnoreComputedMembers(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        RelationalModelConventions.Apply(modelBuilder);
+        CatalogSeed.Apply(modelBuilder);
+    }
+}

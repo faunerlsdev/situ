@@ -1,0 +1,13 @@
+---
+description: Convenciones de la app Expo (sesión, mapa y vivo)
+globs: apps/mobile/**
+alwaysApply: false
+---
+
+# Mobile (Expo)
+
+- Expo, Expo Router y TypeScript estricto.
+- Tokens de sesión solo en `expo-secure-store`. Nada de access/refresh token en AsyncStorage, estado global persistido ni logs.
+- Mapa con MapLibre o `react-native-maps`. Misma semántica que el mapa web (reportes, radio de 1 km, sin menores en el mapa público).
+- La transmisión en vivo solo se inicia aquí. Respeta las reglas de menores: anónimo, solo amigos, y autorización del tutor si tiene menos de 16.
+- Copys en español (Colombia). Lógica de negocio en el backend; tipos compartidos desde `packages/shared`.

@@ -1,0 +1,19 @@
+{
+  "name": "@situ/config",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./eslint": "./eslint.config.mjs"
+  },
+  "scripts": {
+    "typecheck": "node --check eslint.config.mjs",
+    "build": "node --check eslint.config.mjs"
+  },
+  "dependencies": {
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.4.2"
+  }
+}

@@ -1,0 +1,15 @@
+export const feedbackMessages = {
+  sessionExpiredTitle: 'Tu sesión expiró',
+  sessionExpiredBody: 'Vuelve a ingresar para continuar.',
+  understood: 'Entendido',
+  cancel: 'Cancelar',
+  retry: 'Reintentar',
+  offline: 'Sin conexión',
+  online: 'Conexión restablecida',
+  published: '¡Gracias! Tu chisme ya está en el mapa',
+  locationDeniedTitle: 'Necesitamos tu ubicación',
+  locationDeniedBody: 'Activa el permiso de ubicación para ver lo que pasa cerca de ti.',
+  cameraDeniedTitle: 'Necesitamos la cámara',
+  cameraDeniedBody: 'Activa el permiso de la cámara para publicar una foto o un video.',
+  openSettings: 'Abrir ajustes',
+} as const;

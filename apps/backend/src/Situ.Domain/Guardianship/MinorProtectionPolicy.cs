@@ -15,6 +15,8 @@ public static class MinorProtectionPolicy
 
     public static readonly TimeSpan DefaultGuardianResponseWindow = TimeSpan.FromDays(7);
 
+    public static readonly TimeSpan GuardianEmailVerificationLifetime = TimeSpan.FromHours(24);
+
     public static bool IsMinor(int age) => age < AdultAge;
 
     /// <summary>Minors keep a private profile and never appear on the public map (RF-MIN-04).</summary>

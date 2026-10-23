@@ -6,6 +6,7 @@
         <Project Path="src/Situ.Api/Situ.Api.csproj" />
     </Folder>
     <Folder Name="/tests/">
+        <Project Path="tests/Situ.Application.Tests/Situ.Application.Tests.csproj" />
         <Project Path="tests/Situ.Domain.Tests/Situ.Domain.Tests.csproj" />
         <Project Path="tests/Situ.Architecture.Tests/Situ.Architecture.Tests.csproj" />
     </Folder>

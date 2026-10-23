@@ -1,0 +1,43 @@
+/* Keep these values aligned with brand/tokens.ts. */
+@theme {
+  --color-primary: #ff6400;
+  --color-primary-pressed: #e05800;
+  --color-primary-light: #ff9f24;
+  --color-live: #de0506;
+  --color-black: #000000;
+  --color-ink: #424242;
+  --color-gray600: #5a5a5a;
+  --color-gray400: #bababa;
+  --color-gray200: #cdcdd5;
+  --color-white: #ffffff;
+  --color-edge: #1c1c1c;
+  --color-edge-center: #34352b;
+  --color-surface: #ffffff;
+  --font-sans: var(--font-source-sans), 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-montserrat), Montserrat, ui-sans-serif, system-ui, sans-serif;
+  --radius-input: 2px;
+  --radius-button: 4px;
+  --shadow-sheet: 0 4px 12px rgb(0 0 0 / 25%);
+  --text-display: 40px;
+  --text-display--line-height: 1.1;
+  --text-h1: 28px;
+  --text-h1--line-height: 1.2;
+  --text-h2: 22px;
+  --text-h2--line-height: 1.25;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-small: 13px;
+  --text-small--line-height: 1.4;
+  --text-caption: 11px;
+  --text-caption--line-height: 1.3;
+}
+
+.brand-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+}
+
+.text-stamp {
+  text-shadow: 2px 2px 0 var(--color-black);
+}

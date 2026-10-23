@@ -1,0 +1,33 @@
+---
+description: Visión de SITU, monorepo, idioma y límites de producto
+alwaysApply: true
+---
+
+# SITU
+
+Red social-informativa ("chisme") para móvil y web, con mapa estilo Waze. Los usuarios reportan lo que pasa en un lugar (accidentes, hurtos, retenes, basuras), tienen amigos y reciben notificaciones por ciudad y en un radio de 1 km. Reportes, comentarios y transmisiones pueden ser anónimos.
+
+## Transmisión en vivo
+
+- Solo la app móvil inicia una transmisión.
+- La web solo ve y comenta. No expongas controles de "ir en vivo" en `apps/web`, `apps/landing` ni `apps/support`.
+
+## Cuentas y menores
+
+- Planes: Free, Basic, Pro, Advanced.
+- Protección de menores bajo ley colombiana: habeas data y Ley 1581 de 2012. Ante duda entre una función y la privacidad de un menor, gana la privacidad.
+
+## Idioma
+
+- Textos de UI, errores visibles y copys: español (Colombia).
+- Código, nombres de tipos, archivos, rutas, APIs y comentarios técnicos: inglés.
+
+## Monorepo
+
+- `apps/backend` — .NET 10
+- `apps/web`, `apps/landing`, `apps/support` — Next.js
+- `apps/mobile` — Expo
+- `packages/shared` — cliente API y tipos compartidos
+- `packages/config` — configuración compartida
+
+La lógica de negocio vive en el backend. Los clientes la consumen; no la reimplementan.

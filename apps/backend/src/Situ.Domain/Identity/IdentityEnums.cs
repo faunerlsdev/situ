@@ -38,6 +38,7 @@ public enum SecurityTokenPurpose
     EmailConfirmation,
     PasswordReset,
     TwoFactorSetup,
+    GuardianEmailVerification,
 }
 
 public enum LoginFailureReason

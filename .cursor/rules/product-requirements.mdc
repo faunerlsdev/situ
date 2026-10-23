@@ -1,0 +1,30 @@
+---
+description: requisitos funcionales de SITU
+alwaysApply: false
+---
+
+# Requisitos funcionales
+
+Al implementar una función, respeta estas reglas. Si el dominio ya las codifica (`MinorProtectionPolicy`, `AnonymousIdentity`, `LockoutPolicy`, `RetentionPolicy`, `SubscriptionPlan`), no las reescribas en el cliente.
+
+## Mapa y reportes
+
+- Panel del mapa: "Quiero chismosear" / "Quiero reportar algo".
+- Categorías dinámicas, administradas en el panel admin: TTL, peso de importancia, media requerida y flag solo-adultos.
+- Un reporte lleva fotos o video. Otros usuarios confirman "sigue ahí" o "ya no está", reaccionan y comentan.
+
+## Perfil, ubicación y anonimato
+
+- Perfil público o privado.
+- Ubicación configurable: tiempo real si el perfil es público; si no, la del último reporte. Compartir ubicación solo con amigos.
+- Anonimato en reportes, comentarios y transmisiones. Nombre visible: "Situero anónimo" o, dentro de una misma conversación, "Situero anónimo N" (el índice no se reutiliza entre publicaciones). Antigüedad: "Miembro desde mes/año", nunca el día exacto. El autor real se guarda para moderación y ley.
+
+## Notificaciones, planes y cuenta
+
+- Notificaciones por ciudad de interés, por radio de 1 km y por actividad de amigos.
+- Planes Free, Basic, Pro y Advanced. Sin publicidad personalizada a menores. Límite de dispositivos por plan (la web cuenta como un dispositivo).
+- Confirmación de correo y recuperación de contraseña.
+
+## Admin
+
+- Panel con auditoría, moderación y configuración (categorías, retención, textos de anonimato, límites). Toda acción de staff queda en el audit log.

@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "SITU",
+    "slug": "situ",
+    "scheme": "situ",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/brand/situ-isotipo-naranja-claro.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "co.situ.app"
+    },
+    "android": {
+      "package": "co.situ.app",
+      "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/brand/situ-isotipo-naranja-claro.png",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "SITU usa Face ID para desbloquear tu sesión."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/brand/situ-logo-vertical-naranja.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1C1C1C"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

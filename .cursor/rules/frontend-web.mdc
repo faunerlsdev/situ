@@ -1,0 +1,16 @@
+---
+description: Convenciones Next.js de web, landing y support
+globs: apps/web/**,apps/landing/**,apps/support/**
+alwaysApply: false
+---
+
+# Web (Next.js)
+
+Aplica a `apps/web`, `apps/landing` y `apps/support`.
+
+- App Router y TypeScript estricto. Sin `any` para tapar tipos del API.
+- Estilos con Tailwind. Componentes y copys en español (Colombia).
+- Accesibilidad WCAG AA: contraste, foco visible, labels en formularios, botones con nombre accesible, y estado no solo por color.
+- Cliente HTTP y tipos en `packages/shared`. No dupliques contratos ni armes `fetch` ad hoc por pantalla.
+- Sin lógica de negocio en el cliente (edad, anonimato, planes, visibilidad, retención). El backend decide; la UI muestra el resultado.
+- La web no inicia transmisiones en vivo. Solo reproduce y comenta.

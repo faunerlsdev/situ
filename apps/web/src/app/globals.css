@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@import '@situ/shared/theme.css';
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-primary-light);
+    color: var(--color-ink);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .situ-loader {
+    animation: situ-pulse 1.2s ease-in-out infinite;
+  }
+
+  .situ-toast {
+    animation: situ-enter 220ms ease;
+  }
+
+  .situ-progress {
+    animation: situ-indeterminate 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes situ-pulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes situ-enter {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes situ-indeterminate {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(320%);
+  }
+}
