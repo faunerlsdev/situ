@@ -19,6 +19,21 @@ internal static class AuthErrors
     public static Error PendingGuardian() =>
         Error.Forbidden("auth.pending_guardian", "Esta cuenta espera la autorización de un acudiente.");
 
+    public static Error GuardianConsentRequired(string accessToken, DateTimeOffset expiresAt) =>
+        new(
+            "auth.guardian_consent_required",
+            "Necesitamos la autorización de tu representante legal.",
+            ErrorType.Forbidden,
+            new Dictionary<string, object?>
+            {
+                ["accessToken"] = accessToken,
+                ["accessTokenExpiresAt"] = expiresAt,
+                ["scope"] = "guardian_consent",
+            });
+
+    public static Error EmailUnconfirmed() =>
+        Error.Forbidden("auth.email_unconfirmed", "Tu correo todavía no está confirmado.");
+
     public static Error Suspended() =>
         Error.Forbidden("auth.suspended", "Esta cuenta está suspendida.");
 

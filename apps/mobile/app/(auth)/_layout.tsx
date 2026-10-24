@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { theme } from '@/theme/theme';
 
 export const unstable_settings = {
-  initialRouteName: 'splash',
+  anchor: 'splash',
 };
 
 export default function AuthLayout() {
@@ -14,12 +14,14 @@ export default function AuthLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.primary },
+          gestureEnabled: false,
+          animation: 'fade',
+          contentStyle: { backgroundColor: theme.colors.bg },
         }}
       >
         <Stack.Screen
           name="splash"
-          options={{ contentStyle: { backgroundColor: theme.colors.bgDarkEdge } }}
+          options={{ contentStyle: { backgroundColor: theme.colors.bg } }}
         />
         <Stack.Screen name="login" options={{ title: 'Ingresar' }} />
         <Stack.Screen name="registro" options={{ title: 'Registro' }} />

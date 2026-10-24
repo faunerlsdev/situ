@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { theme } from '@/theme/theme';
 
@@ -31,16 +31,31 @@ export function LogoAction({
       onPressOut={() => setPressed(false)}
       style={[styles.hit, pressed && !isDisabled && styles.pressed, isDisabled && styles.disabled]}
     >
-      <Image source={isotipo} resizeMode="contain" style={styles.mark} />
-      <Text style={styles.label}>{pending ? pendingLabel : label}</Text>
+      <View style={styles.button}>
+        <Image source={isotipo} resizeMode="contain" style={styles.mark} />
+        <Text style={styles.label}>{pending ? pendingLabel : label}</Text>
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   hit: {
+    width: '80%',
+    maxWidth: 360,
+    alignSelf: 'center',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+  },
+  button: {
+    height: 52,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: theme.radius.button,
+    backgroundColor: theme.colors.primary,
   },
   pressed: {
     transform: [{ scale: 0.95 }],
@@ -49,16 +64,13 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   mark: {
-    width: 72,
-    height: 94,
+    width: 22,
+    height: 28,
   },
   label: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
-    fontSize: 28,
-    lineHeight: 34,
-    textShadowColor: theme.colors.black,
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 0,
+    color: theme.colors.textOnPrimary,
+    fontFamily: theme.fontFamily.sansBold,
+    fontSize: 18,
+    lineHeight: 22,
   },
 });

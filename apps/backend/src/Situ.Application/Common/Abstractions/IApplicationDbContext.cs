@@ -40,6 +40,12 @@ public interface IApplicationDbContext
 
     DbSet<GuardianConsent> GuardianConsents { get; }
 
+    DbSet<GuardianEmailOptOut> GuardianEmailOptOuts { get; }
+
+    DbSet<GuardianConsentDispatch> GuardianConsentDispatches { get; }
+
+    DbSet<GuardianConsentExpiryAudit> GuardianConsentExpiryAudits { get; }
+
     DbSet<LoginAttempt> LoginAttempts { get; }
 
     DbSet<RefreshToken> RefreshTokens { get; }

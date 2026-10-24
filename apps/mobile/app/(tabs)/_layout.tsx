@@ -5,18 +5,18 @@ import { ShellProvider, WazeHeader, WazeTabBar } from '@/components/shell';
 import { theme } from '@/theme/theme';
 
 export const unstable_settings = {
-  initialRouteName: 'mapa',
+  anchor: 'mapa',
 };
 
 export default function TabsLayout() {
   return (
     <ShellProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Tabs
         tabBar={() => <WazeTabBar />}
         screenOptions={{
           header: () => <WazeHeader />,
-          sceneStyle: { backgroundColor: theme.colors.surface },
+          sceneStyle: { backgroundColor: theme.colors.bg },
         }}
       >
         <Tabs.Screen name="mapa" options={{ title: 'Mapa' }} />

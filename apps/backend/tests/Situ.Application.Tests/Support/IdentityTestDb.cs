@@ -34,6 +34,9 @@ internal sealed class IdentityTestDb(DbContextOptions<IdentityTestDb> options) :
     public DbSet<Country> Countries => Set<Country>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<GuardianConsent> GuardianConsents => Set<GuardianConsent>();
+    public DbSet<GuardianEmailOptOut> GuardianEmailOptOuts => Set<GuardianEmailOptOut>();
+    public DbSet<GuardianConsentDispatch> GuardianConsentDispatches => Set<GuardianConsentDispatch>();
+    public DbSet<GuardianConsentExpiryAudit> GuardianConsentExpiryAudits => Set<GuardianConsentExpiryAudit>();
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SecurityToken> SecurityTokens => Set<SecurityToken>();
@@ -101,6 +104,8 @@ internal sealed class IdentityTestDb(DbContextOptions<IdentityTestDb> options) :
         configurationBuilder.Properties<DateTimeOffset?>().HaveConversion<NullableUtcDateTimeOffsetConverter>();
         configurationBuilder.Properties<Email>().HaveConversion<EmailConverter, EmailComparer>().HaveMaxLength(254);
         configurationBuilder.Properties<UserName>().HaveConversion<UserNameConverter, UserNameComparer>().HaveMaxLength(30);
+        configurationBuilder.Properties<PersonName>().HaveConversion<PersonNameConverter, PersonNameComparer>().HaveMaxLength(80);
+        configurationBuilder.Properties<PhoneNumber>().HaveConversion<PhoneNumberConverter, PhoneNumberComparer>().HaveMaxLength(16);
         configurationBuilder.Properties<GeoPoint>().HaveConversion<GeoPointConverter, GeoPointComparer>();
         configurationBuilder.Properties<GeoPoint?>().HaveConversion<NullableGeoPointConverter, NullableGeoPointComparer>();
     }

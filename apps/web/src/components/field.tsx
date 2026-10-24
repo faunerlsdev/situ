@@ -13,10 +13,10 @@ export function Field({
     <label className="block">
       <span className="text-sm font-semibold">{label}</span>
       {children}
-      {hint ? <span className="mt-1 block text-sm text-gray600">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-sm text-app-muted">{hint}</span> : null}
     </label>
   );
 }
 
 export const controlClassName =
-  'mt-2 w-full rounded-xl border border-gray200 bg-white px-3 py-3 text-ink';
+  'mt-2 w-full rounded-[8px] border border-app-border bg-app-input px-3 py-3 text-app-text focus:border-[1.5px] focus:border-primary';

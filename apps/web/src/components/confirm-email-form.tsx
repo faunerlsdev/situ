@@ -46,17 +46,17 @@ export function ConfirmEmailForm() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-primary px-6 py-10">
-      <h1 className="font-display text-[42px] leading-none font-extrabold text-white italic">Confirmar correo</h1>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 splash-gradient px-6 py-10">
+      <h1 className="font-display text-[42px] leading-none font-extrabold text-app-text italic">Confirmar correo</h1>
       <FormStatus error={formError} notice={notice} />
       {token && !confirmed ? (
-        <button type="button" disabled={pending} onClick={() => void confirm()} className="font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
+        <button type="button" disabled={pending} onClick={() => void confirm()} className="font-sans text-[22px] font-bold text-app-text italic disabled:opacity-60">
           {pending ? 'Confirmando…' : 'Confirmar mi correo'}
         </button>
       ) : null}
       {!token ? (
         <form onSubmit={(event) => void resend(event)} className="flex w-[80%] max-w-[360px] flex-col gap-3" noValidate>
-          <label className="font-sans text-body font-bold text-white italic" htmlFor="confirm-email">
+          <label className="font-sans text-body font-bold text-app-text italic" htmlFor="confirm-email">
             Correo
             <input
               id="confirm-email"
@@ -64,16 +64,16 @@ export function ConfirmEmailForm() {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 h-[52px] w-full rounded-[2px] bg-white px-3 font-sans text-body font-bold text-ink italic outline-none"
+              className="mt-2 h-[52px] w-full rounded-[8px] border border-app-border bg-app-input focus:border-[1.5px] focus:border-primary px-3 font-sans text-body font-bold text-app-text italic outline-none"
             />
           </label>
           {!email.trim() && formError ? <FieldError id="confirm-email-error" message="Escribe tu correo." /> : null}
-          <button type="submit" disabled={pending} className="font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
+          <button type="submit" disabled={pending} className="font-sans text-[22px] font-bold text-app-text italic disabled:opacity-60">
             {pending ? 'Enviando…' : 'Reenviar enlace'}
           </button>
         </form>
       ) : null}
-      <Link href="/login" className="font-sans text-body font-bold text-white italic">Volver a ingresar</Link>
+      <Link href="/login" className="font-sans text-body font-bold text-app-text italic">Volver a ingresar</Link>
     </main>
   );
 }

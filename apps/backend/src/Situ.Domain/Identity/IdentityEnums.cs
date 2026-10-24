@@ -2,7 +2,7 @@ namespace Situ.Domain.Identity;
 
 public enum UserStatus
 {
-    /// <summary>Adult, registered, e-mail not confirmed yet: can sign in and browse, cannot publish (RF-AUT-07).</summary>
+    /// <summary>Adult, registered, e-mail not confirmed yet: cannot sign in until the address is confirmed (RF-AUT-07).</summary>
     PendingEmailConfirmation,
 
     /// <summary>Minor whose legal guardian has not authorized the account yet: cannot sign in (RF-MIN-01).</summary>
@@ -39,6 +39,8 @@ public enum SecurityTokenPurpose
     PasswordReset,
     TwoFactorSetup,
     GuardianEmailVerification,
+    GuardianEmailCode,
+    GuardianConsentManagement,
 }
 
 public enum LoginFailureReason
@@ -52,4 +54,5 @@ public enum LoginFailureReason
     DeviceLimitReached,
     TwoFactorRequired,
     TwoFactorInvalid,
+    EmailUnconfirmed,
 }

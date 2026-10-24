@@ -77,7 +77,14 @@ public sealed class GuardianConsent : AggregateRoot
     public string? AuthorizationIpAddress { get; private set; }
     public string? AuthorizationUserAgent { get; private set; }
     public DateTimeOffset? DeclinedAt { get; private set; }
+    public string? DeclineReason { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
+
+    /// <summary>Channel used to capture the authorization, kept with the proof (web).</summary>
+    public string? AuthorizationChannel { get; private set; }
+
+    /// <summary>What the minor chose to tell the guardian, if anything (RF-MIN-02).</summary>
+    public string? MinorStatement { get; private set; }
 
     public static GuardianConsent Request(
         Guid minorUserId,
@@ -145,7 +152,8 @@ public sealed class GuardianConsent : AggregateRoot
         bool locationSharingAuthorized,
         string? ipAddress,
         string? userAgent,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        string? channel = null)
     {
         EnsureOpen(now);
         Guard.That(
@@ -158,6 +166,7 @@ public sealed class GuardianConsent : AggregateRoot
         LocationSharingAuthorized = locationSharingAuthorized;
         AuthorizationIpAddress = Guard.Optional(ipAddress, nameof(ipAddress), 64);
         AuthorizationUserAgent = Guard.Optional(userAgent, nameof(userAgent), 512);
+        AuthorizationChannel = Guard.Optional(channel, nameof(channel), 30);
         AuthorizedAt = now;
         Status = GuardianConsentStatus.Authorized;
 
@@ -170,12 +179,45 @@ public sealed class GuardianConsent : AggregateRoot
         ReceiptSentAt = now;
     }
 
-    public void Decline(DateTimeOffset now)
+    public void Decline(DateTimeOffset now, string? reason = null)
     {
         EnsureOpen(now);
         DeclinedAt = now;
+        DeclineReason = Guard.Optional(reason, nameof(reason), 500);
         Status = GuardianConsentStatus.Declined;
     }
+
+    public void RememberMinorStatement(string? statement) =>
+        MinorStatement = Guard.Optional(statement, nameof(statement), 500);
+
+    public void ReplaceLink(string tokenHash, DateTimeOffset now)
+    {
+        EnsureOpen(now);
+        TokenHash = Guard.NotEmpty(tokenHash, nameof(tokenHash));
+    }
+
+    public void ChangeGuardianEmail(string guardianEmail, string tokenHash, DateTimeOffset now)
+    {
+        EnsureOpen(now);
+        GuardianEmail = Email.Create(guardianEmail).Value;
+        TokenHash = Guard.NotEmpty(tokenHash, nameof(tokenHash));
+        GuardianEmailVerifiedAt = null;
+        if (Status == GuardianConsentStatus.EmailVerified)
+        {
+            Status = GuardianConsentStatus.Requested;
+        }
+    }
+
+    public void UpdatePermissions(bool liveStreamingAuthorized, bool locationSharingAuthorized, DateTimeOffset now)
+    {
+        Guard.That(Status == GuardianConsentStatus.Authorized, "guardian_consent.not_authorized", "Only an authorized consent can change permissions.");
+        LiveStreamingAuthorized = liveStreamingAuthorized;
+        LocationSharingAuthorized = locationSharingAuthorized;
+        MarkUpdated(now);
+    }
+
+    public void RetireLink(string replacementHash) =>
+        TokenHash = Guard.NotEmpty(replacementHash, nameof(replacementHash));
 
     /// <summary>The guardian withdraws a previous authorization (right to revoke).</summary>
     public void Revoke(DateTimeOffset now)

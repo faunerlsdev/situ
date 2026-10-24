@@ -17,7 +17,14 @@ public sealed class EmailOptions
     /// <summary>Origin of the API, used to build public links such as email confirmation.</summary>
     public string ApiPublicBaseUrl { get; init; } = "http://localhost:5080";
 
+    /// <summary>Origin of the web app, used for the public guardian review page.</summary>
+    public string WebPublicBaseUrl { get; init; } = "http://localhost:3000";
+
     public bool UseSsl { get; init; }
+
+    public string Username { get; init; } = "";
+
+    public string Password { get; init; } = "";
 
     public static EmailOptions From(IConfiguration configuration)
     {
@@ -31,7 +38,12 @@ public sealed class EmailOptions
             ApiPublicBaseUrl = string.IsNullOrWhiteSpace(section["ApiPublicBaseUrl"])
                 ? "http://localhost:5080"
                 : section["ApiPublicBaseUrl"]!.Trim().TrimEnd('/'),
+            WebPublicBaseUrl = string.IsNullOrWhiteSpace(section["WebPublicBaseUrl"])
+                ? "http://localhost:3000"
+                : section["WebPublicBaseUrl"]!.Trim().TrimEnd('/'),
             UseSsl = bool.TryParse(section["UseSsl"], out var useSsl) && useSsl,
+            Username = section["Username"]?.Trim() ?? "",
+            Password = section["Password"] ?? "",
         };
     }
 }

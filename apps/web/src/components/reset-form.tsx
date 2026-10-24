@@ -33,9 +33,9 @@ export function ResetForm() {
   const pending = form.formState.isSubmitting;
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-primary px-6 py-10" noValidate>
-      <h1 className="mb-4 font-display text-[48px] leading-none font-extrabold text-white italic">Recuperar</h1>
-      <p className="w-[80%] max-w-[360px] text-center font-sans text-body font-bold text-white">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-dvh flex-col items-center justify-center gap-4 splash-gradient px-6 py-10" noValidate>
+      <h1 className="mb-4 font-display text-[48px] leading-none font-extrabold text-app-text italic">Recuperar</h1>
+      <p className="w-[80%] max-w-[360px] text-center font-sans text-body font-bold text-app-text">
         Escribe el correo de tu cuenta. Si está registrado, te enviaremos un enlace.
       </p>
       <FormStatus error={formError} notice={notice} />
@@ -47,15 +47,15 @@ export function ResetForm() {
           aria-label="Correo"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? 'reset-email-error' : undefined}
-          className="h-[52px] w-full rounded-[2px] bg-white px-3 font-sans text-body font-bold text-ink italic outline-none placeholder:text-gray400"
+          className="h-[52px] w-full rounded-[8px] border border-app-border bg-app-input focus:border-[1.5px] focus:border-primary px-3 font-sans text-body font-bold text-app-text italic outline-none placeholder:text-app-placeholder"
           {...form.register('email')}
         />
         {error ? <FieldError id="reset-email-error" message={error} /> : null}
       </div>
-      <button type="submit" disabled={pending} className="mt-2 font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
+      <button type="submit" disabled={pending} className="mt-2 font-sans text-[22px] font-bold text-app-text italic disabled:opacity-60">
         {pending ? 'Enviando…' : 'Enviar enlace'}
       </button>
-      <Link href="/login" className="font-sans text-body font-bold text-white italic">
+      <Link href="/login" className="font-sans text-body font-bold text-app-text italic">
         Volver a ingresar
       </Link>
     </form>

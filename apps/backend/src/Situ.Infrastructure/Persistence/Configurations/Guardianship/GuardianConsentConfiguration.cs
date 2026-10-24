@@ -18,6 +18,9 @@ public sealed class GuardianConsentConfiguration : IEntityTypeConfiguration<Guar
         builder.Property(e => e.DigitalSignature).HasMaxLength(512);
         builder.Property(e => e.AuthorizationIpAddress).HasMaxLength(64);
         builder.Property(e => e.AuthorizationUserAgent).HasMaxLength(512);
+        builder.Property(e => e.AuthorizationChannel).HasMaxLength(30);
+        builder.Property(e => e.DeclineReason).HasMaxLength(500);
+        builder.Property(e => e.MinorStatement).HasMaxLength(500);
         builder.Required<GuardianConsent, User>(e => e.MinorUserId);
         builder.HasIndex(e => e.TokenHash).IsUnique().AreNullsDistinct(false);
     }

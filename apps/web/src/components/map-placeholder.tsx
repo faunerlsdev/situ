@@ -34,10 +34,10 @@ type ExampleId = (typeof examples)[number]['id'];
 type Tab = 'mapa' | 'chisme' | 'vivo' | 'mensajes';
 
 const rail = [
-  { id: 'mapa', label: 'Mapa', icon: '/icons/nav-mapa-globo.png' },
-  { id: 'chisme', label: 'Chisme', icon: '/icons/nav-chisme-megafono.png' },
-  { id: 'vivo', label: 'En vivo', icon: '/icons/nav-en-vivo.png' },
-  { id: 'mensajes', label: 'Mensajes', icon: '/icons/nav-mensajes.png' },
+  { id: 'mapa', label: 'Mapa', icon: '/icons/nav-mapa-globo-dark.png' },
+  { id: 'chisme', label: 'Chisme', icon: '/icons/nav-chisme-megafono-dark.png' },
+  { id: 'vivo', label: 'En vivo', icon: '/icons/nav-en-vivo-dark.png' },
+  { id: 'mensajes', label: 'Mensajes', icon: '/icons/nav-mensajes-dark.png' },
 ] as const;
 
 export function MapPlaceholder() {
@@ -85,8 +85,8 @@ export function MapPlaceholder() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-edge text-ink">
-      <nav aria-label="Accesos" className="absolute inset-y-0 left-0 z-30 hidden w-16 flex-col items-center gap-3 bg-white py-4 lg:flex">
+    <div className="relative min-h-dvh bg-app-bg text-app-text">
+      <nav aria-label="Accesos" className="absolute inset-y-0 left-0 z-30 hidden w-16 flex-col items-center gap-3 bg-app-surface py-4 lg:flex">
         <div className="brand-divider absolute top-0" />
         {rail.map((item) => (
           <button
@@ -106,12 +106,12 @@ export function MapPlaceholder() {
             {tab === item.id ? <span className="mt-1 size-1 rounded-full bg-primary" /> : null}
           </button>
         ))}
-        <button type="button" onClick={() => void signOut()} className="mt-auto font-sans text-small font-bold text-ink">
+        <button type="button" onClick={() => void signOut()} className="mt-auto font-sans text-small font-bold text-app-text">
           Salir
         </button>
       </nav>
 
-      <aside className="absolute top-4 bottom-4 left-20 z-20 hidden w-[360px] flex-col overflow-hidden rounded-[20px] bg-white shadow-sheet lg:flex">
+      <aside className="absolute top-4 bottom-4 left-20 z-20 hidden w-[360px] flex-col overflow-hidden rounded-[20px] bg-app-surface shadow-app lg:flex">
         <label className="flex items-center gap-2 px-4 py-3">
           <img src="/icons/ic-buscar.png" alt="" className="size-8 object-contain" />
           <input
@@ -119,7 +119,7 @@ export function MapPlaceholder() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar"
             aria-label="Buscar"
-            className="h-11 w-full rounded-[2px] px-2 font-sans text-body outline-none placeholder:text-gray400"
+            className="h-11 w-full rounded-[2px] px-2 font-sans text-body outline-none placeholder:text-app-placeholder"
           />
         </label>
         <div className="brand-divider" />
@@ -136,10 +136,10 @@ export function MapPlaceholder() {
                     type="button"
                     aria-pressed={selected === example.id}
                     onClick={() => setSelected(example.id)}
-                    className={`w-full rounded-[4px] border px-3 py-3 text-left ${selected === example.id ? 'border-ink' : 'border-gray200'}`}
+                    className={`w-full rounded-[4px] border px-3 py-3 text-left ${selected === example.id ? 'border-ink' : 'border-app-border'}`}
                   >
                     <span className="block font-sans text-body font-semibold">{example.title}</span>
-                    <span className="mt-1 block font-sans text-small text-gray600">{example.place}</span>
+                    <span className="mt-1 block font-sans text-small text-app-muted">{example.place}</span>
                   </button>
                 </li>
               ))}
@@ -150,11 +150,11 @@ export function MapPlaceholder() {
       </aside>
 
       <div className="relative min-h-dvh lg:pl-16">
-        <header className="bg-white lg:hidden">
+        <header className="bg-app-surface lg:hidden">
           <AreaProgress active={showAreaProgress} />
           <div className="flex h-14 items-center justify-between px-4">
             <div className="flex items-center gap-3">
-              <button type="button" aria-label="Abrir menú" onClick={() => setDrawer(true)} className="grid size-9 place-items-center rounded-full bg-gray200 font-sans text-body font-bold">
+              <button type="button" aria-label="Abrir menú" onClick={() => setDrawer(true)} className="grid size-9 place-items-center rounded-full bg-app-border font-sans text-body font-bold">
                 S
               </button>
               <button type="button" aria-label="Buscar" onClick={() => setSearch(true)}>
@@ -166,8 +166,9 @@ export function MapPlaceholder() {
           <div className="brand-divider" />
         </header>
 
-        <div className="relative min-h-[calc(100dvh-3.5rem-4rem)] bg-edge lg:min-h-dvh">
-          <div className="absolute top-[18%] left-1/2 size-64 -translate-x-1/2 rounded-full bg-edge-center" />
+        <div className="relative min-h-[calc(100dvh-3.5rem-4rem)] bg-app-map-water lg:min-h-dvh">
+          <div className="absolute inset-x-0 top-1/3 h-3 bg-app-map-road" />
+          <div className="absolute inset-y-0 left-1/2 w-3 bg-app-map-road" />
           {tab === 'mapa' || tab === 'chisme' ? (
             examples.map((example) => (
               <button
@@ -179,7 +180,7 @@ export function MapPlaceholder() {
                 className="absolute"
                 style={{ top: example.top, left: example.left }}
               >
-                <img src="/icons/situ-pin-mapa.png" alt="" className="h-9 w-7 object-contain" />
+                <img src="/icons/situ-pin-mapa-dark.png" alt="" className="h-9 w-7 object-contain" />
               </button>
             ))
           ) : (
@@ -187,25 +188,25 @@ export function MapPlaceholder() {
               <EmptyCopy title={tab === 'vivo' ? 'En vivo' : 'Mensajes'} />
             </div>
           )}
-          <button type="button" aria-label="Centrar en mi ubicación" className="absolute bottom-4 left-4 grid size-12 place-items-center rounded-full bg-white shadow-sheet">
+          <button type="button" aria-label="Centrar en mi ubicación" className="absolute bottom-4 left-4 grid size-12 place-items-center rounded-full bg-app-elevated text-app-text shadow-app">
             <span className="size-3.5 rounded-full border-2 border-primary" />
           </button>
-          <button type="button" aria-label="Reportar" onClick={() => setSheet(true)} className="absolute right-4 bottom-4 grid size-16 place-items-center rounded-full bg-white shadow-sheet">
+          <button type="button" aria-label="Reportar" onClick={() => setSheet(true)} className="absolute right-4 bottom-4 grid size-16 place-items-center rounded-full border-2 border-primary bg-app-elevated shadow-app">
             <img src="/brand/situ-isotipo-negro.png" alt="" className="h-[52px] w-10 object-contain" />
           </button>
           {current ? (
-            <form onSubmit={onSubmit} className="absolute right-24 bottom-24 left-4 space-y-2 rounded-[20px] bg-white p-3 lg:hidden">
+            <form onSubmit={onSubmit} className="absolute right-24 bottom-24 left-4 space-y-2 rounded-[20px] bg-app-surface p-3 lg:hidden">
               <p className="font-sans text-body font-semibold">{current.title}</p>
-              <p className="font-sans text-small text-gray600">{current.detail}</p>
-              <textarea name="body" required disabled={pending} aria-label="Comentario" className="min-h-16 w-full rounded-[2px] border border-gray200 px-2 py-2 font-sans text-body" />
-              <button type="submit" disabled={pending} className="h-10 w-full rounded-[4px] bg-primary font-sans text-body font-bold text-white">
+              <p className="font-sans text-small text-app-muted">{current.detail}</p>
+              <textarea name="body" required disabled={pending} aria-label="Comentario" className="min-h-16 w-full rounded-[8px] border border-app-border bg-app-input px-2 py-2 font-sans text-body text-app-text placeholder:text-app-placeholder" />
+              <button type="submit" disabled={pending} className="h-10 w-full rounded-[4px] bg-primary font-sans text-body font-bold text-app-on">
                 {pending ? 'Enviando…' : 'Comentar'}
               </button>
             </form>
           ) : null}
         </div>
 
-        <nav aria-label="Principal" className="bg-white lg:hidden">
+        <nav aria-label="Principal" className="bg-app-surface lg:hidden">
           <div className="brand-divider" />
           <div className="grid h-16 grid-cols-4">
             {rail.map((item) => (
@@ -222,7 +223,7 @@ export function MapPlaceholder() {
                 }}
                 className="grid place-items-center"
               >
-                <img src={item.icon} alt="" className={`size-8 object-contain ${tab === item.id ? '' : 'opacity-55'}`} />
+                <img src={item.icon} alt="" className={`size-8 object-contain ${tab === item.id ? '' : 'opacity-50'}`} />
                 {tab === item.id ? <span className="size-1 rounded-full bg-primary" /> : null}
               </button>
             ))}
@@ -232,18 +233,18 @@ export function MapPlaceholder() {
 
       {sheet ? (
         <div className="fixed inset-0 z-40 flex items-end">
-          <button type="button" aria-label="Cerrar" className="absolute inset-0 bg-black/40" onClick={() => setSheet(false)} />
-          <div className="relative w-full rounded-t-[20px] bg-white p-4 shadow-sheet">
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-gray200" />
+          <button type="button" aria-label="Cerrar" className="absolute inset-0 bg-black/60" onClick={() => setSheet(false)} />
+          <div className="relative w-full rounded-t-[20px] bg-app-elevated p-4 shadow-app">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-app-border" />
             <h2 className="font-display text-h2">Reportar</h2>
             <div className="brand-divider my-3" />
-            <p className="font-sans text-body text-gray600">
+            <p className="font-sans text-body text-app-muted">
               El reporte real guarda la foto, el lugar y la categoría. Este adelanto todavía no publica. Desde la web no se inicia una transmisión.
             </p>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {['Retén', 'Basura', 'Hurto'].map((label) => (
-                <div key={label} className="grid min-h-24 place-items-center rounded-[4px] border border-gray200 p-2 text-center">
-                  <img src="/icons/situ-noticias.png" alt="" className="h-7 w-9 object-contain" />
+                <div key={label} className="grid min-h-24 place-items-center rounded-[4px] border border-app-border p-2 text-center">
+                  <img src="/icons/situ-noticias-dark.png" alt="" className="h-7 w-9 object-contain" />
                   <span className="font-sans text-small">{label}</span>
                 </div>
               ))}
@@ -256,8 +257,8 @@ export function MapPlaceholder() {
       ) : null}
 
       {search ? (
-        <div className="fixed inset-0 z-40 bg-white p-4 lg:hidden">
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar" aria-label="Buscar" className="h-[52px] w-full rounded-[2px] border border-gray200 px-3 font-sans text-body" />
+        <div className="fixed inset-0 z-40 bg-app-elevated p-4 lg:hidden">
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar" aria-label="Buscar" className="h-[52px] w-full rounded-[8px] border border-app-border bg-app-input px-3 font-sans text-body text-app-text placeholder:text-app-placeholder" />
           <button type="button" onClick={() => setSearch(false)} className="mt-3 font-sans text-body font-bold text-primary">
             Cerrar
           </button>
@@ -267,8 +268,8 @@ export function MapPlaceholder() {
 
       {drawer ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" aria-label="Cerrar menú" className="absolute inset-0 bg-black/40" onClick={() => setDrawer(false)} />
-          <aside className="relative h-full w-[280px] bg-white p-5 shadow-sheet">
+          <button type="button" aria-label="Cerrar menú" className="absolute inset-0 bg-black/60" onClick={() => setDrawer(false)} />
+          <aside className="relative h-full w-[280px] bg-app-elevated p-5 shadow-app">
             <h2 className="font-display text-h1">Mi SITU</h2>
             <ul className="mt-4 space-y-3 font-sans text-body">
               <li><Link href="/login">Ingresar</Link></li>
@@ -278,7 +279,7 @@ export function MapPlaceholder() {
                   Cerrar sesión
                 </button>
               </li>
-              <li className="text-gray600">Ajustes · Próximamente</li>
+              <li className="text-app-muted">Ajustes · Próximamente</li>
             </ul>
           </aside>
         </div>
@@ -290,9 +291,9 @@ export function MapPlaceholder() {
 function EmptyCopy({ title }: { title: string }) {
   return (
     <div className="grid justify-items-center gap-2 py-8 text-center">
-      <img src="/icons/situ-noticias.png" alt="" className="h-16 w-24 object-contain" />
+      <img src="/icons/situ-noticias-dark.png" alt="" className="h-16 w-24 object-contain" />
       <p className="font-sans text-h2 font-bold">{title}</p>
-      <p className="font-sans text-small text-gray600">Próximamente</p>
+      <p className="font-sans text-small text-app-muted">Próximamente</p>
     </div>
   );
 }
@@ -309,7 +310,7 @@ function CommentForm({
   return (
     <form onSubmit={onSubmit} className="mt-4 space-y-2">
       <h2 className="font-display text-h2">Comentar</h2>
-      <p className="font-sans text-small text-gray600">
+      <p className="font-sans text-small text-app-muted">
         {current ? `${current.title}. ${current.detail}` : 'Elige un reporte de ejemplo para escribir.'}
       </p>
       <textarea
@@ -317,9 +318,9 @@ function CommentForm({
         required
         disabled={current === undefined || pending}
         aria-label="Comentario"
-        className="min-h-24 w-full rounded-[2px] border border-gray200 px-3 py-2 font-sans text-body"
+        className="min-h-24 w-full rounded-[2px] border border-app-border px-3 py-2 font-sans text-body"
       />
-      <button type="submit" disabled={current === undefined || pending} className="h-11 rounded-[4px] bg-primary px-4 font-sans text-body font-bold text-white disabled:opacity-60">
+      <button type="submit" disabled={current === undefined || pending} className="h-11 rounded-[4px] bg-primary px-4 font-sans text-body font-bold text-app-on disabled:opacity-60">
         {pending ? 'Enviando…' : 'Comentar'}
       </button>
     </form>

@@ -12,7 +12,7 @@ export function AuthShell({
   return (
     <section className="mx-auto w-full max-w-md px-5 py-16">
       <h1 className="font-display text-4xl">{title}</h1>
-      <p className="mt-3 text-gray600">{lede}</p>
+      <p className="mt-3 text-app-muted">{lede}</p>
       <div className="mt-8">{children}</div>
     </section>
   );

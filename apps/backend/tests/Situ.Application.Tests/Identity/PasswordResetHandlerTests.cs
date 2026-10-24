@@ -111,6 +111,9 @@ public class ForgotPasswordHandlerTests
         var user = User.Register(
             Email.Create("ana@situ.test"),
             UserName.Create("ana"),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
             "hashed:Clave123",
             DateOnly.FromDateTime(RegistrationCatalog.Now.UtcDateTime).AddYears(-30),
             Guid.NewGuid(),
@@ -119,6 +122,7 @@ public class ForgotPasswordHandlerTests
             "es-CO",
             14,
             RegistrationCatalog.Now);
+        user.ConfirmEmail(RegistrationCatalog.Now);
         db.Users.Add(user);
         await db.SaveChangesAsync();
         return user;
@@ -230,7 +234,7 @@ public class ResetPasswordHandlerTests
 
     private sealed class FakeTokens : ITokenService
     {
-        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt) => "access";
+        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null) => "access";
 
         public string CreateRefreshToken() => Guid.NewGuid().ToString("N");
 

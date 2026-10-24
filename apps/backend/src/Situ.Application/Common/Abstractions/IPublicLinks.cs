@@ -8,4 +8,8 @@ public interface IPublicLinks
     string PasswordReset(string plainToken);
 
     string GuardianEmailVerification(string plainToken);
+
+    string GuardianReview(string plainToken);
+
+    string GuardianManage(string plainToken);
 }

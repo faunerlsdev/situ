@@ -1,5 +1,5 @@
 import type { City, Country, LegalDocument, Region } from '@situ/shared';
-import { adultAge, ageInYears, composeDateOfBirth, messageFromUnknown, registerSchema } from '@situ/shared';
+import { adultAge, ageInYears, composeDateOfBirth, messageFromUnknown, notify, registerSchema } from '@situ/shared';
 import type { RegisterValues } from '@situ/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
@@ -20,11 +20,12 @@ import {
 import type { TextInputProps } from 'react-native';
 
 import { LogoAction } from '@/components/logo-action';
+import { SelectField } from '@/components/select-field';
 import { StatusMessage } from '@/components/status-message';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
-const globe = require('../../assets/images/icons/nav-mapa-globo.png');
+const globe = require('../../assets/images/icons/nav-mapa-globo-dark.png');
 
 export default function RegisterScreen() {
   const [countries, setCountries] = useState<Country[]>([]);
@@ -32,14 +33,17 @@ export default function RegisterScreen() {
   const [cities, setCities] = useState<City[]>([]);
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      givenNames: '',
+      surnames: '',
+      phone: '',
       userName: '',
       email: '',
       password: '',
+      passwordConfirmation: '',
       day: '',
       month: '',
       year: '',
@@ -47,6 +51,8 @@ export default function RegisterScreen() {
       regionId: '',
       cityId: '',
       accepted: false,
+      guardianEmail: '',
+      minorNoticeAccepted: false,
     },
   });
   const countryId = form.watch('countryId');
@@ -154,44 +160,76 @@ export default function RegisterScreen() {
   async function onSubmit(values: RegisterValues) {
     const dateOfBirth = composeDateOfBirth(values.year, values.month, values.day);
     if (!dateOfBirth || documents.length === 0) {
-      setError('Completa el lugar y acepta los documentos legales.');
-      setNotice(null);
+      notify.warning('Completa el lugar y acepta los documentos legales.');
       return;
     }
 
     setError(null);
-    setNotice(null);
 
     try {
       const result = await api.register({
         email: values.email,
         userName: values.userName,
+        givenNames: values.givenNames,
+        surnames: values.surnames,
+        phone: values.phone,
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
         regionId: values.regionId,
         cityId: values.cityId,
         acceptedDocumentIds: documents.map((document) => document.id),
+        guardianEmail: values.guardianEmail.trim() || undefined,
+        minorNoticeAccepted: values.minorNoticeAccepted,
       });
       if (result.status === 'PendingGuardianConsent') {
-        router.replace('/esperando-tutor');
+        form.reset();
+        notify.success('Creamos la cuenta. Confirma tu correo y luego ingresa para pedir la autorización de tu representante.', { placement: 'bottom' });
+        router.replace('/login');
         return;
       }
 
-      setNotice('Te enviamos un correo para confirmar la cuenta.');
+      form.reset();
+      notify.success('Te enviamos un correo para confirmar la cuenta. Ábrelo para activarla.', { placement: 'bottom' });
+      router.replace('/login');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     }
   }
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.glow} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <Image source={globe} resizeMode="contain" style={styles.globe} />
           <Text style={styles.title}>Registro</Text>
         </View>
-        <StatusMessage error={error ?? form.formState.errors.root?.message ?? null} notice={notice} />
+        <StatusMessage error={error ?? form.formState.errors.root?.message ?? null} notice={null} />
+        <Controller
+          control={form.control}
+          name="givenNames"
+          render={({ field }) => (
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Nombres" accessibilityLabel="Nombres" autoComplete="given-name" textContentType="givenName" autoCapitalize="words" />
+          )}
+        />
+        {form.formState.errors.givenNames?.message ? <Text style={styles.fieldError}>{form.formState.errors.givenNames.message}</Text> : null}
+        <Controller
+          control={form.control}
+          name="surnames"
+          render={({ field }) => (
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Apellidos" accessibilityLabel="Apellidos" autoComplete="family-name" textContentType="familyName" autoCapitalize="words" />
+          )}
+        />
+        {form.formState.errors.surnames?.message ? <Text style={styles.fieldError}>{form.formState.errors.surnames.message}</Text> : null}
+        <Controller
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Teléfono" accessibilityLabel="Teléfono" autoComplete="tel" textContentType="telephoneNumber" keyboardType="phone-pad" />
+          )}
+        />
+        {form.formState.errors.phone?.message ? <Text style={styles.fieldError}>{form.formState.errors.phone.message}</Text> : null}
         <Controller
           control={form.control}
           name="userName"
@@ -204,7 +242,7 @@ export default function RegisterScreen() {
           control={form.control}
           name="email"
           render={({ field }) => (
-            <WideField value={field.value} onChangeText={field.onChange} placeholder="Correo" accessibilityLabel="Correo" autoCapitalize="none" autoComplete="email" keyboardType="email-address" />
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Correo" accessibilityLabel="Correo" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" keyboardType="email-address" inputMode="email" />
           )}
         />
         {form.formState.errors.email?.message ? <Text style={styles.fieldError}>{form.formState.errors.email.message}</Text> : null}
@@ -216,53 +254,40 @@ export default function RegisterScreen() {
           )}
         />
         {form.formState.errors.password?.message ? <Text style={styles.fieldError}>{form.formState.errors.password.message}</Text> : null}
-        <Text style={styles.label}>País</Text>
-        {countries.map((country) => {
-          const selected = countryId === country.id;
-          return (
-            <Pressable
-              key={country.id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => form.setValue('countryId', country.id, { shouldValidate: true })}
-              style={[styles.country, selected && styles.countryOn]}
-            >
-              <Text style={styles.countryLabel}>{country.name}</Text>
-            </Pressable>
-          );
-        })}
+        <Controller
+          control={form.control}
+          name="passwordConfirmation"
+          render={({ field }) => (
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Confirmar contraseña" accessibilityLabel="Confirmar contraseña" secureTextEntry autoComplete="new-password" textContentType="newPassword" />
+          )}
+        />
+        {form.formState.errors.passwordConfirmation?.message ? <Text style={styles.fieldError}>{form.formState.errors.passwordConfirmation.message}</Text> : null}
+        <SelectField
+          label="País"
+          value={countryId}
+          placeholder="Selecciona un país"
+          options={countries}
+          disabled={countries.length === 0}
+          onChange={(id) => form.setValue('countryId', id, { shouldValidate: true })}
+        />
         {form.formState.errors.countryId?.message ? <Text style={styles.fieldError}>{form.formState.errors.countryId.message}</Text> : null}
-        <Text style={styles.label}>{selectedCountry?.regionLabel ?? 'Departamento'}</Text>
-        {regions.map((region) => {
-          const selected = regionId === region.id;
-          return (
-            <Pressable
-              key={region.id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => form.setValue('regionId', region.id, { shouldValidate: true })}
-              style={[styles.country, selected && styles.countryOn]}
-            >
-              <Text style={styles.countryLabel}>{region.name}</Text>
-            </Pressable>
-          );
-        })}
+        <SelectField
+          label={selectedCountry?.regionLabel ?? 'Departamento'}
+          value={regionId}
+          placeholder="Selecciona"
+          options={regions}
+          disabled={!countryId || regions.length === 0}
+          onChange={(id) => form.setValue('regionId', id, { shouldValidate: true })}
+        />
         {form.formState.errors.regionId?.message ? <Text style={styles.fieldError}>{form.formState.errors.regionId.message}</Text> : null}
-        <Text style={styles.label}>Ciudad</Text>
-        {cities.map((city) => {
-          const selected = cityId === city.id;
-          return (
-            <Pressable
-              key={city.id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => form.setValue('cityId', city.id, { shouldValidate: true })}
-              style={[styles.country, selected && styles.countryOn]}
-            >
-              <Text style={styles.countryLabel}>{city.name}</Text>
-            </Pressable>
-          );
-        })}
+        <SelectField
+          label="Ciudad"
+          value={cityId}
+          placeholder="Selecciona una ciudad"
+          options={cities}
+          disabled={!regionId || cities.length === 0}
+          onChange={(id) => form.setValue('cityId', id, { shouldValidate: true })}
+        />
         {form.formState.errors.cityId?.message ? <Text style={styles.fieldError}>{form.formState.errors.cityId.message}</Text> : null}
         <Text style={styles.label}>Fecha de nacimiento</Text>
         <View style={styles.dateRow}>
@@ -300,6 +325,28 @@ export default function RegisterScreen() {
           <Text style={styles.legal}>{accepted ? '☑' : '☐'} Acepto los documentos legales vigentes.</Text>
         </Pressable>
         {form.formState.errors.accepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.accepted.message}</Text> : null}
+        <Controller
+          control={form.control}
+          name="guardianEmail"
+          render={({ field }) => (
+            <WideField
+              value={field.value}
+              onChangeText={field.onChange}
+              placeholder="Correo de tu representante (opcional)"
+              accessibilityLabel="Correo de tu representante legal"
+              keyboardType="email-address"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+            />
+          )}
+        />
+        {form.formState.errors.guardianEmail?.message ? <Text style={styles.fieldError}>{form.formState.errors.guardianEmail.message}</Text> : null}
+        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: form.watch('minorNoticeAccepted') }} onPress={() => form.setValue('minorNoticeAccepted', !form.watch('minorNoticeAccepted'), { shouldValidate: true })}>
+          <Text style={styles.legal}>{form.watch('minorNoticeAccepted') ? '☑' : '☐'} Entendido: un adulto debe autorizar mi cuenta.</Text>
+        </Pressable>
+        {form.formState.errors.minorNoticeAccepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.minorNoticeAccepted.message}</Text> : null}
         <LogoAction
           label="Registrar Me"
           pendingLabel="Creando cuenta…"
@@ -308,10 +355,7 @@ export default function RegisterScreen() {
             void form.handleSubmit(onSubmit)();
           }}
         />
-        <Link href="/confirmar-correo" style={styles.back}>
-          Ya tengo el enlace para confirmar el correo
-        </Link>
-        <Link href="/login" style={styles.back}>
+        <Link href="/login" replace style={styles.back}>
           ¿Ya tienes cuenta? Ingresar
         </Link>
       </ScrollView>
@@ -320,13 +364,14 @@ export default function RegisterScreen() {
 }
 
 function WideField(props: TextInputProps) {
-  return <TextInput placeholderTextColor={theme.colors.gray400} {...props} style={styles.wide} />;
+  return <TextInput placeholderTextColor={theme.colors.textPlaceholder} keyboardAppearance="dark" {...props} style={styles.wide} />;
 }
 
 function DateBox(props: TextInputProps) {
   return (
     <TextInput
-      placeholderTextColor={theme.colors.gray400}
+      placeholderTextColor={theme.colors.textPlaceholder}
+      keyboardAppearance="dark"
       keyboardType="number-pad"
       maxLength={props.accessibilityLabel === 'Año' ? 4 : 2}
       {...props}
@@ -338,7 +383,16 @@ function DateBox(props: TextInputProps) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.bg,
+  },
+  glow: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '10%',
+    width: 520,
+    height: 520,
+    borderRadius: 260,
+    backgroundColor: theme.colors.bgGradientCenter,
   },
   content: {
     gap: 14,
@@ -356,41 +410,28 @@ const styles = StyleSheet.create({
     right: -36,
     width: '55%',
     aspectRatio: 1,
+    opacity: 0.25,
   },
   title: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.displayHeavyItalic,
-    fontSize: 56,
-    lineHeight: 64,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.displayHeavy,
+    fontSize: 48,
+    lineHeight: 56,
   },
   wide: {
     height: 52,
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.input,
     paddingHorizontal: 14,
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   label: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
-    fontSize: 16,
-  },
-  country: {
-    minHeight: 48,
-    justifyContent: 'center',
-    borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
-    paddingHorizontal: 14,
-  },
-  countryOn: {
-    borderWidth: 2,
-    borderColor: theme.colors.black,
-  },
-  countryLabel: {
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   dateRow: {
@@ -401,44 +442,38 @@ const styles = StyleSheet.create({
     width: 84,
     height: 48,
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.input,
     textAlign: 'center',
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   legal: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 12,
     lineHeight: 16,
   },
   fieldError: {
-    color: theme.colors.white,
+    color: theme.colors.danger,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 13,
   },
   warning: {
-    borderRadius: theme.radius.button,
-    backgroundColor: theme.colors.white,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    color: theme.colors.live,
+    color: theme.colors.danger,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   notice: {
-    borderRadius: theme.radius.button,
-    backgroundColor: theme.colors.white,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   back: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     textAlign: 'center',
   },

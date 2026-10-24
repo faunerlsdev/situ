@@ -24,21 +24,14 @@ export function StatusMessage({ error, notice }: { error: string | null; notice:
 
 const styles = StyleSheet.create({
   box: {
-    borderWidth: 1,
-    borderRadius: theme.radius.button,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     lineHeight: 22,
-    backgroundColor: theme.colors.white,
   },
   error: {
-    borderColor: theme.colors.live,
-    color: theme.colors.live,
+    color: theme.colors.danger,
   },
   notice: {
-    borderColor: theme.colors.ink,
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
   },
 });

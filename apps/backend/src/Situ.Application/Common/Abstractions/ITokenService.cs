@@ -6,7 +6,7 @@ namespace Situ.Application.Common.Abstractions;
 /// </summary>
 public interface ITokenService
 {
-    string CreateAccessToken(Guid userId, DateTimeOffset expiresAt);
+    string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null);
 
     string CreateRefreshToken();
 

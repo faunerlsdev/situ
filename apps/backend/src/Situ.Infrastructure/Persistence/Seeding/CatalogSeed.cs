@@ -206,6 +206,14 @@ internal static class CatalogSeed
         [SystemSettingKeys.MaxDevicesFree] = "Dispositivos activos permitidos en el plan Free.",
         [SystemSettingKeys.LoginMaxFailedAttempts] = "Intentos fallidos antes de bloquear el inicio de sesión.",
         [SystemSettingKeys.LoginLockoutMinutes] = "Minutos que dura el bloqueo por intentos fallidos.",
+        [SystemSettingKeys.GuardianMaxSendsPerMinorPerDay] = "Correos de autorización que un menor puede enviar en 24 horas.",
+        [SystemSettingKeys.GuardianMinMinutesBetweenSends] = "Minutos mínimos entre correos de autorización de un mismo menor.",
+        [SystemSettingKeys.GuardianMaxEmailChangesPerDay] = "Cambios del correo del representante que un menor puede hacer en 24 horas.",
+        [SystemSettingKeys.GuardianMaxSendsPerEmailPerHour] = "Solicitudes que un mismo correo de representante puede recibir en una hora.",
+        [SystemSettingKeys.GuardianMaxSendsPerEmailPerDay] = "Solicitudes que un mismo correo de representante puede recibir en un día.",
+        [SystemSettingKeys.GuardianMaxSendsPerIpPerHour] = "Solicitudes de autorización que una misma IP puede iniciar en una hora.",
+        [SystemSettingKeys.GuardianMaxCodeAttempts] = "Intentos fallidos antes de invalidar el código del representante.",
+        [SystemSettingKeys.GuardianMaxCodeResendsPer15Minutes] = "Reenvíos del código del representante cada 15 minutos.",
     };
 
     private static readonly (string Code, string Name, string Description, string ColorHex, int SortOrder, int TtlMinutes, double ImportanceWeight, MediaRequirement MediaRequirement)[] Categories =

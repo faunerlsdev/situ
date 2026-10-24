@@ -36,6 +36,15 @@ internal static class IdentityErrors
     public static Error InvalidEmail() =>
         Error.Validation("email.invalid", "El correo no es válido.");
 
+    public static Error InvalidGivenNames() =>
+        Error.Validation("person_name.invalid", "Escribe tus nombres. Solo letras, espacios, apóstrofos o guiones.");
+
+    public static Error InvalidSurnames() =>
+        Error.Validation("person_name.invalid", "Escribe tus apellidos. Solo letras, espacios, apóstrofos o guiones.");
+
+    public static Error InvalidPhone() =>
+        Error.Validation("phone.invalid", "El teléfono debe tener entre 7 y 15 dígitos.");
+
     public static Error InvalidUserName() =>
         Error.Validation(
             "username.invalid",

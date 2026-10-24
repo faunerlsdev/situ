@@ -42,6 +42,8 @@ export function toAppError(input: ErrorInput): AppError {
     status: input.status,
     apiCode: body.apiCode,
     retryAfter: body.retryAfter,
+    accessToken: body.accessToken,
+    accessTokenExpiresAt: body.accessTokenExpiresAt,
     fieldErrors: body.fieldErrors,
     userMessage: messageFor(code, body.apiCode),
     cause: input.cause,
@@ -80,7 +82,13 @@ function category(status: number): AppErrorCode {
   return 'UNKNOWN';
 }
 
-function readBody(data: unknown): { apiCode?: string; retryAfter?: string; fieldErrors?: Record<string, string> } {
+function readBody(data: unknown): {
+  apiCode?: string;
+  retryAfter?: string;
+  accessToken?: string;
+  accessTokenExpiresAt?: string;
+  fieldErrors?: Record<string, string>;
+} {
   if (typeof data !== 'object' || data === null) {
     return {};
   }
@@ -88,7 +96,12 @@ function readBody(data: unknown): { apiCode?: string; retryAfter?: string; field
   const record = data as Record<string, unknown>;
   const apiCode = typeof record.code === 'string' && record.code.length > 0 ? record.code : undefined;
   const retryAfter = typeof record.retryAfter === 'string' && record.retryAfter.length > 0 ? record.retryAfter : undefined;
-  return { apiCode, retryAfter, fieldErrors: readFieldErrors(record.errors) };
+  const accessToken = typeof record.accessToken === 'string' && record.accessToken.length > 0 ? record.accessToken : undefined;
+  const accessTokenExpiresAt =
+    typeof record.accessTokenExpiresAt === 'string' && record.accessTokenExpiresAt.length > 0
+      ? record.accessTokenExpiresAt
+      : undefined;
+  return { apiCode, retryAfter, accessToken, accessTokenExpiresAt, fieldErrors: readFieldErrors(record.errors) };
 }
 
 function readFieldErrors(value: unknown): Record<string, string> | undefined {

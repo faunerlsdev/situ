@@ -15,7 +15,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.bg,
   },
   body: {
     position: 'absolute',
@@ -23,7 +23,7 @@ const styles = StyleSheet.create({
     right: 24,
     bottom: 32,
     textAlign: 'center',
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
     lineHeight: 24,

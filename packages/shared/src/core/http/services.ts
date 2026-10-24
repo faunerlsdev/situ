@@ -14,6 +14,8 @@ import type {
   ListRegionsResponse,
   LoginRequest,
   PasswordResetRequest,
+  GuardianConsentReview,
+  GuardianConsentStatus,
   RegisterRequest,
   RegisterResponse,
   ResendConfirmationEmailRequest,
@@ -61,6 +63,70 @@ export function createServices(http: HttpClient) {
     },
     register(body: RegisterRequest) {
       return http.request<RegisterResponse>({ method: 'POST', url: '/api/v1/auth/register', data: body });
+    },
+    guardianConsentStatus() {
+      return http.request<GuardianConsentStatus>({ url: '/api/v1/guardianship/mine', requiresAuth: true });
+    },
+    requestGuardianConsent(body: { guardianEmail: string; minorNoticeAccepted: boolean; minorStatement?: string }) {
+      return http.request<GuardianConsentStatus>({
+        method: 'POST',
+        url: '/api/v1/guardianship/mine',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    resendGuardianConsent() {
+      return http.request<GuardianConsentStatus>({
+        method: 'POST',
+        url: '/api/v1/guardianship/mine/resend',
+        requiresAuth: true,
+      });
+    },
+    changeGuardianEmail(guardianEmail: string) {
+      return http.request<GuardianConsentStatus>({
+        method: 'POST',
+        url: '/api/v1/guardianship/mine/email',
+        data: { guardianEmail },
+        requiresAuth: true,
+      });
+    },
+    acknowledgeMinorNotice() {
+      return http.request<GuardianConsentStatus>({
+        method: 'POST',
+        url: '/api/v1/guardianship/mine/notice',
+        requiresAuth: true,
+      });
+    },
+    cancelGuardianRegistration() {
+      return http.request<void>({ method: 'DELETE', url: '/api/v1/guardianship/mine', requiresAuth: true });
+    },
+    guardianConsentReview(token: string) {
+      return http.request<GuardianConsentReview>({
+        url: `/api/v1/guardianship/consent/review?token=${encodeURIComponent(token)}`,
+      });
+    },
+    verifyGuardianEmailCode(token: string, code: string) {
+      return http.request<void>({
+        method: 'POST',
+        url: '/api/v1/guardianship/consent/verify-code',
+        data: { token, code },
+      });
+    },
+    resendGuardianEmailCode(token: string) {
+      return http.request<void>({
+        method: 'POST',
+        url: '/api/v1/guardianship/consent/resend-code',
+        data: { token },
+      });
+    },
+    optOutGuardianEmail(token: string) {
+      return http.request<void>({ method: 'POST', url: '/api/v1/guardianship/consent/opt-out', data: { token } });
+    },
+    revokeGuardianConsent(token: string) {
+      return http.request<void>({ method: 'POST', url: '/api/v1/guardianship/consent/revoke', data: { token } });
+    },
+    updateGuardianPermissions(body: { token: string; liveStreamingAuthorized: boolean; locationSharingAuthorized: boolean }) {
+      return http.request<void>({ method: 'POST', url: '/api/v1/guardianship/consent/permissions', data: body });
     },
     confirmEmail(body: ConfirmEmailRequest) {
       return http.request<void>({ method: 'POST', url: '/api/v1/auth/confirm-email', data: body });

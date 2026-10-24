@@ -17,7 +17,7 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-[radial-gradient(circle,var(--color-edge-center)_0%,var(--color-edge)_72%)]">
+    <div className="splash-gradient grid min-h-dvh place-items-center">
       <img
         src="/brand/situ-logo-vertical-naranja.png"
         alt="SITU"

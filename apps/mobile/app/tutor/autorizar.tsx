@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { GuardianDocumentType } from '@situ/shared';
-import { guardianDataSchema, messageFromUnknown } from '@situ/shared';
+import { guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { GuardianDataValues } from '@situ/shared';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -44,9 +44,10 @@ export default function GuardianScreen() {
     try {
       await api.submitGuardianData({ token, ...values });
       setStep('authorize');
-      setNotice('Te enviamos un correo para verificar tu identidad. Ábrelo y luego vuelve aquí para autorizar.');
+      setNotice(null);
+      notify.success('Te enviamos un correo para verificar tu identidad. Ábrelo y luego vuelve aquí para autorizar.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     }
   }
 
@@ -59,10 +60,11 @@ export default function GuardianScreen() {
         liveStreamingAuthorized: live,
         locationSharingAuthorized: location,
       });
-      setNotice('Autorización registrada. El menor puede continuar cuando su correo esté confirmado.');
+      setNotice(null);
       setStep('data');
+      notify.success('Autorización registrada. El menor puede continuar cuando su correo esté confirmado.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
@@ -73,9 +75,10 @@ export default function GuardianScreen() {
     setError(null);
     try {
       await api.declineGuardianConsent({ token });
-      setNotice('Rechazaste la autorización. La cuenta del menor sigue pendiente.');
+      setNotice(null);
+      notify.info('Rechazaste la autorización. La cuenta del menor sigue pendiente.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
@@ -125,7 +128,7 @@ export default function GuardianScreen() {
           </Pressable>
         </View>
       ) : null}
-      <Link href="/login" style={styles.link}>Volver a ingresar</Link>
+      <Link href="/login" replace style={styles.link}>Volver a ingresar</Link>
     </ScrollView>
   );
 }
@@ -149,11 +152,11 @@ function Field({
         control={control}
         name={name}
         render={({ field }) => (
-          <TextInput
+          <TextInput keyboardAppearance="dark"
             value={field.value}
             onChangeText={field.onChange}
             placeholder={label}
-            placeholderTextColor={theme.colors.gray400}
+            placeholderTextColor={theme.colors.textPlaceholder}
             accessibilityLabel={label}
             autoCapitalize="none"
             keyboardType={keyboardType}
@@ -172,11 +175,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
     padding: 24,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.bg,
   },
   title: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.displayHeavyItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.displayHeavy,
     fontSize: 36,
     textAlign: 'center',
   },
@@ -186,47 +189,47 @@ const styles = StyleSheet.create({
   input: {
     height: 52,
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.input,
     paddingHorizontal: 14,
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   label: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   choice: {
     minHeight: 48,
     justifyContent: 'center',
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.input,
     paddingHorizontal: 14,
   },
   choiceOn: {
     borderWidth: 2,
-    borderColor: theme.colors.black,
+    borderColor: theme.colors.overlay,
   },
   choiceLabel: {
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   action: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 22,
     textAlign: 'center',
   },
   link: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     textAlign: 'center',
   },
   fieldError: {
-    color: theme.colors.white,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 13,
   },

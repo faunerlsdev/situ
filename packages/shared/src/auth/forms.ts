@@ -17,6 +17,9 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
+    givenNames: z.string().trim().min(2, 'Escribe tus nombres.').max(80, 'Los nombres son demasiado largos.'),
+    surnames: z.string().trim().min(2, 'Escribe tus apellidos.').max(80, 'Los apellidos son demasiado largos.'),
+    phone: z.string().trim().min(7, 'Escribe un teléfono válido.').max(20, 'El teléfono es demasiado largo.'),
     userName: z
       .string()
       .trim()
@@ -26,6 +29,7 @@ export const registerSchema = z
       ),
     email: z.string().trim().email('El correo no es válido.'),
     password: passwordSchema,
+    passwordConfirmation: z.string().min(1, 'Confirma la contraseña.'),
     day: z.string().trim().min(1, 'Escribe el día.'),
     month: z.string().trim().min(1, 'Escribe el mes.'),
     year: z.string().trim().min(1, 'Escribe el año.'),
@@ -33,8 +37,25 @@ export const registerSchema = z
     regionId: z.string().min(1, 'Selecciona un departamento.'),
     cityId: z.string().min(1, 'Selecciona una ciudad.'),
     accepted: z.boolean().refine((value) => value, 'Debes aceptar los documentos legales vigentes.'),
+    guardianEmail: z.string().trim(),
+    minorNoticeAccepted: z.boolean(),
   })
   .superRefine((value, context) => {
+    if (value.password !== value.passwordConfirmation) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['passwordConfirmation'], message: 'Las contraseñas no coinciden.' });
+    }
+
+    if (value.guardianEmail.length > 0) {
+      if (!z.string().email().safeParse(value.guardianEmail).success) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'El correo no es válido.' });
+      } else if (value.guardianEmail.toLowerCase() === value.email.trim().toLowerCase()) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'Debe ser un correo distinto al tuyo.' });
+      }
+      if (!value.minorNoticeAccepted) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['minorNoticeAccepted'], message: 'Antes de enviarlo, marca Entendido.' });
+      }
+    }
+
     if (!composeDateOfBirth(value.year, value.month, value.day)) {
       context.addIssue({ code: z.ZodIssueCode.custom, path: ['day'], message: 'La fecha de nacimiento no es válida.' });
     }

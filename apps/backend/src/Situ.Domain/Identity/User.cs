@@ -14,12 +14,18 @@ public sealed class User : AggregateRoot
     {
         Email = null!;
         UserName = null!;
+        GivenNames = null!;
+        Surnames = null!;
+        Phone = null!;
         PasswordHash = null!;
         Locale = null!;
     }
 
     public Email Email { get; private set; }
     public UserName UserName { get; private set; }
+    public PersonName GivenNames { get; private set; }
+    public PersonName Surnames { get; private set; }
+    public PhoneNumber Phone { get; private set; }
     public string PasswordHash { get; private set; }
     public DateOnly DateOfBirth { get; private set; }
 
@@ -54,6 +60,9 @@ public sealed class User : AggregateRoot
     public static User Register(
         Email email,
         UserName userName,
+        PersonName givenNames,
+        PersonName surnames,
+        PhoneNumber phone,
         string passwordHash,
         DateOnly dateOfBirth,
         Guid countryId,
@@ -75,6 +84,9 @@ public sealed class User : AggregateRoot
         {
             Email = email,
             UserName = userName,
+            GivenNames = givenNames,
+            Surnames = surnames,
+            Phone = phone,
             PasswordHash = Guard.NotEmpty(passwordHash, nameof(passwordHash)),
             DateOfBirth = dateOfBirth,
             CountryId = Guard.NotEmpty(countryId, nameof(countryId)),
@@ -264,6 +276,26 @@ public sealed class User : AggregateRoot
         DeletionRequestedAt = null;
         Status = UserStatus.PendingEmailConfirmation;
         RecomputeActivation(now);
+    }
+
+    /// <summary>Removes the personal data of a registration that never became active. Keeps the row so references survive.</summary>
+    public void ErasePendingRegistration(DateTimeOffset now)
+    {
+        Guard.That(
+            Status == UserStatus.PendingGuardianConsent,
+            "user.not_pending",
+            "Only a registration waiting for a guardian can be erased this way.");
+
+        var suffix = Id.ToString("N")[..12];
+        Email = global::Situ.Domain.Common.Email.Create($"e{suffix}@removed.invalid");
+        UserName = global::Situ.Domain.Common.UserName.Create($"gone{suffix}");
+        GivenNames = PersonName.Create("Eliminado");
+        Surnames = PersonName.Create("Eliminado");
+        Phone = global::Situ.Domain.Common.PhoneNumber.Create("3000000000");
+        PasswordHash = "erased";
+        DateOfBirth = new DateOnly(2000, 1, 1);
+        TwoFactorSecret = null;
+        MarkDeleted(now);
     }
 
     /// <summary>Final step of account deletion: personal data is anonymized by the deletion job.</summary>

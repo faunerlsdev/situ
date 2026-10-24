@@ -23,10 +23,10 @@ export function SupportProviders({ children }: { children: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => bindNotify({
-    success: (message, options) => queue.enqueue({ kind: 'success', message, action: options?.action }),
-    error: (message, options) => queue.enqueue({ kind: 'error', message, action: options?.action }),
-    warning: (message, options) => queue.enqueue({ kind: 'warning', message, action: options?.action }),
-    info: (message, options) => queue.enqueue({ kind: 'info', message, action: options?.action }),
+    success: (message, options) => queue.enqueue({ kind: 'success', message, action: options?.action, placement: options?.placement }),
+    error: (message, options) => queue.enqueue({ kind: 'error', message, action: options?.action, placement: options?.placement }),
+    warning: (message, options) => queue.enqueue({ kind: 'warning', message, action: options?.action, placement: options?.placement }),
+    info: (message, options) => queue.enqueue({ kind: 'info', message, action: options?.action, placement: options?.placement }),
     brand: (message) => queue.enqueue({ kind: 'brand', message }),
     dismiss: (id) => queue.dismiss(id),
     confirm: (input) => dialogs.confirm(input),
@@ -79,7 +79,7 @@ export function SupportProviders({ children }: { children: ReactNode }) {
         </p>
       ) : null}
       {toast ? (
-        <div className="situ-toast fixed top-20 right-4 left-4 z-[80] lg:left-auto lg:w-[360px]">
+        <div className={`situ-toast fixed right-4 left-4 z-[80] lg:left-auto lg:w-[360px] ${toast.placement === 'bottom' ? 'bottom-6' : 'top-20'}`}>
           <article className={`flex gap-3 rounded-[12px] border-l-4 bg-white p-3 text-ink shadow-[0_4px_12px_rgba(0,0,0,.15)] ${accent[toast.kind]}`}>
             <p className="line-clamp-2 flex-1 font-sans text-small">{toast.message}</p>
           </article>

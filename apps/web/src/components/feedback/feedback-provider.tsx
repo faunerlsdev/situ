@@ -18,10 +18,10 @@ import { SituLoader } from './situ-loader';
 import { useReducedMotion } from './use-feedback';
 
 const accent: Record<ToastKind, string> = {
-  success: 'border-l-[#1FA35B]',
-  error: 'border-l-live',
+  success: 'border-l-app-success',
+  error: 'border-l-app-danger',
   warning: 'border-l-primary-light',
-  info: 'border-l-edge bg-edge text-white',
+  info: 'border-l-primary',
   brand: 'border-l-primary',
 };
 
@@ -38,10 +38,10 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => bindNotify({
-    success: (message, options) => queue.enqueue({ kind: 'success', message, action: options?.action }),
-    error: (message, options) => queue.enqueue({ kind: 'error', message, action: options?.action }),
-    warning: (message, options) => queue.enqueue({ kind: 'warning', message, action: options?.action }),
-    info: (message, options) => queue.enqueue({ kind: 'info', message, action: options?.action }),
+    success: (message, options) => queue.enqueue({ kind: 'success', message, action: options?.action, placement: options?.placement }),
+    error: (message, options) => queue.enqueue({ kind: 'error', message, action: options?.action, placement: options?.placement }),
+    warning: (message, options) => queue.enqueue({ kind: 'warning', message, action: options?.action, placement: options?.placement }),
+    info: (message, options) => queue.enqueue({ kind: 'info', message, action: options?.action, placement: options?.placement }),
     brand: (message) => queue.enqueue({ kind: 'brand', message }),
     dismiss: (id) => queue.dismiss(id),
     confirm: (input) => dialogs.confirm(input),
@@ -117,19 +117,20 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
     <>
       {children}
       {!online ? (
-        <p className="fixed top-[calc(env(safe-area-inset-top)+3.5rem)] right-0 left-0 z-[70] bg-edge px-4 py-2 text-center font-sans text-small font-bold text-white">
+        <p className="fixed top-[calc(env(safe-area-inset-top)+3.5rem)] right-0 left-0 z-[70] border-b border-primary-light bg-app-elevated px-4 py-2 text-center font-sans text-small font-bold text-app-text">
           {feedbackMessages.offline}
         </p>
       ) : null}
       {toast ? (
         <div
-          className={`fixed top-[calc(env(safe-area-inset-top)+4.5rem)] right-4 left-4 z-[80] lg:left-auto lg:w-[360px] ${reduced ? '' : 'situ-toast'}`}
+          className={`fixed right-4 left-4 z-[80] lg:left-auto lg:w-[360px] ${toast.placement === 'bottom' ? 'bottom-[calc(env(safe-area-inset-bottom)+1.5rem)]' : 'top-[calc(env(safe-area-inset-top)+4.5rem)]'} ${reduced ? '' : 'situ-toast'}`}
           onPointerEnter={() => queue.pause()}
           onPointerLeave={() => queue.resume()}
           onPointerDown={(event) => {
             const start = event.clientY;
             const move = (next: PointerEvent) => {
-              if (start - next.clientY > 40) {
+              const distance = toast.placement === 'bottom' ? next.clientY - start : start - next.clientY;
+              if (distance > 40) {
                 queue.dismiss(toast.id);
               }
             };
@@ -141,7 +142,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             window.addEventListener('pointerup', up);
           }}
         >
-          <article className={`flex gap-3 rounded-[12px] border-l-4 bg-white p-3 text-ink shadow-[0_4px_12px_rgba(0,0,0,.15)] ${accent[toast.kind]}`}>
+          <article className={`flex gap-3 rounded-[12px] p-3 shadow-app ${toast.kind === 'success' ? 'bg-primary text-app-on' : toast.kind === 'error' ? 'bg-app-danger-solid text-white' : `border-l-4 bg-app-elevated text-app-text ${accent[toast.kind]}`}`}>
             {toast.kind === 'brand' ? (
               <img src="/brand/situ-isotipo-naranja-claro.png" alt="" className="size-8 object-contain" />
             ) : (
@@ -149,7 +150,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
             )}
             <p className="line-clamp-2 flex-1 font-sans text-small">{toast.message}</p>
             {toast.action ? (
-              <button type="button" className="font-sans text-small font-bold text-primary" onClick={toast.action.onPress}>
+              <button type="button" className={`font-sans text-small font-bold ${toast.kind === 'success' ? 'text-app-on' : toast.kind === 'error' ? 'text-white' : 'text-primary'}`} onClick={toast.action.onPress}>
                 {toast.action.label}
               </button>
             ) : null}
@@ -157,27 +158,27 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         </div>
       ) : null}
       {dialog ? (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/55 p-6" role="presentation">
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-black/60 p-6" role="presentation">
           <div
             ref={dialogRef}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="feedback-title"
             aria-describedby="feedback-body"
-            className="w-full max-w-[340px] rounded-[20px] bg-white p-6 text-center"
+            className="w-full max-w-[340px] rounded-[20px] bg-app-elevated p-6 text-center"
           >
-            <p id="feedback-title" className="font-display text-[20px] font-bold text-ink">{dialog.request.title}</p>
-            <p id="feedback-body" className="mt-2 font-sans text-[15px] text-ink">{dialog.request.message}</p>
+            <p id="feedback-title" className="font-display text-[20px] font-bold text-app-text">{dialog.request.title}</p>
+            <p id="feedback-body" className="mt-2 font-sans text-[15px] text-app-muted">{dialog.request.message}</p>
             <div className="mt-5 grid gap-2">
               <button
                 type="button"
-                className={`h-12 rounded-[4px] font-sans text-body font-bold text-white ${dialog.kind === 'confirm' && dialog.request.type === 'danger' ? 'bg-live' : 'bg-primary'}`}
+                className={`h-12 rounded-[8px] font-sans text-body font-bold ${dialog.kind === 'confirm' && dialog.request.type === 'danger' ? 'bg-app-danger-solid text-white' : 'bg-primary text-app-on'}`}
                 onClick={() => dialogs.answer(true)}
               >
                 {dialog.kind === 'confirm' ? (dialog.request.confirmText ?? feedbackMessages.understood) : (dialog.request.buttonText ?? feedbackMessages.understood)}
               </button>
               {dialog.kind === 'confirm' ? (
-                <button type="button" className="h-12 rounded-[4px] border border-ink font-sans text-body font-bold text-ink" onClick={() => dialogs.answer(false)}>
+                <button type="button" className="h-12 rounded-[8px] border border-app-border font-sans text-body font-bold text-app-text" onClick={() => dialogs.answer(false)}>
                   {dialog.request.cancelText ?? feedbackMessages.cancel}
                 </button>
               ) : null}

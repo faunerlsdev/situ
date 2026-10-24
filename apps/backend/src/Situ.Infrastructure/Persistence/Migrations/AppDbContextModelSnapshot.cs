@@ -520,6 +520,70 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Minutos que dura el bloqueo por intentos fallidos.",
                             Key = "auth.lockout_minutes",
                             Value = "15"
+                        },
+                        new
+                        {
+                            Id = new Guid("ba8ded5c-3fce-64d4-82e1-a1370a7e9170"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Correos de autorización que un menor puede enviar en 24 horas.",
+                            Key = "guardian.max_sends_per_minor_per_day",
+                            Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("6be3ab7e-c5a4-8535-09be-2711ea1ec4a2"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos mínimos entre correos de autorización de un mismo menor.",
+                            Key = "guardian.min_minutes_between_sends",
+                            Value = "2"
+                        },
+                        new
+                        {
+                            Id = new Guid("7b7b2b17-e14e-6479-c4fc-90345df0ddc5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Cambios del correo del representante que un menor puede hacer en 24 horas.",
+                            Key = "guardian.max_email_changes_per_day",
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("a0d03d7e-316d-76c1-52b7-9866c4c52fbf"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Solicitudes que un mismo correo de representante puede recibir en una hora.",
+                            Key = "guardian.max_sends_per_email_per_hour",
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("e12d5519-958a-1c80-62f9-22ebd854044c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Solicitudes que un mismo correo de representante puede recibir en un día.",
+                            Key = "guardian.max_sends_per_email_per_day",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Id = new Guid("59f3b24c-ced4-fdc8-9aad-a76c14a885eb"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Solicitudes de autorización que una misma IP puede iniciar en una hora.",
+                            Key = "guardian.max_sends_per_ip_per_hour",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Id = new Guid("91b88a67-a2b6-ea6a-196d-08deae416ba7"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Intentos fallidos antes de invalidar el código del representante.",
+                            Key = "guardian.max_code_attempts",
+                            Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("0198133f-f2c7-48ff-b35f-9204170ead5f"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Reenvíos del código del representante cada 15 minutos.",
+                            Key = "guardian.max_code_resends_per_15_minutes",
+                            Value = "3"
                         });
                 });
 
@@ -1563,6 +1627,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AuthorizationChannel")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("authorization_channel");
+
                     b.Property<string>("AuthorizationIpAddress")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
@@ -1580,6 +1649,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("DeclineReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("decline_reason");
 
                     b.Property<DateTimeOffset?>("DeclinedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1636,6 +1710,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("minor_heard_at");
 
+                    b.Property<string>("MinorStatement")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("minor_statement");
+
                     b.Property<Guid>("MinorUserId")
                         .HasColumnType("uuid")
                         .HasColumnName("minor_user_id");
@@ -1686,6 +1765,110 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("TokenHash"), false);
 
                     b.ToTable("guardian_consents");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Guardianship.GuardianConsentDispatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("DestinationEmail")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("destination_email");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("MinorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("minor_user_id");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_guardian_consent_dispatches");
+
+                    b.HasIndex("DestinationEmail")
+                        .HasDatabaseName("ix_guardian_consent_dispatches_destination_email");
+
+                    b.HasIndex("MinorUserId")
+                        .HasDatabaseName("ix_guardian_consent_dispatches_minor_user_id");
+
+                    b.HasIndex("SentAt")
+                        .HasDatabaseName("ix_guardian_consent_dispatches_sent_at");
+
+                    b.ToTable("guardian_consent_dispatches");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Guardianship.GuardianConsentExpiryAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ConsentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("consent_id");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<bool>("PersonalDataDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("personal_data_deleted");
+
+                    b.HasKey("Id")
+                        .HasName("pk_guardian_consent_expiry_audits");
+
+                    b.HasIndex("ConsentId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_guardian_consent_expiry_audits_consent_id");
+
+                    b.ToTable("guardian_consent_expiry_audits");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Guardianship.GuardianEmailOptOut", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_guardian_email_opt_outs");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("ux_guardian_email_opt_outs_email");
+
+                    b.ToTable("guardian_email_opt_outs");
                 });
 
             modelBuilder.Entity("Situ.Domain.Identity.LoginAttempt", b =>
@@ -1819,6 +2002,10 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_attempts");
+
                     b.Property<string>("Purpose")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -1897,6 +2084,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("failed_login_attempts");
 
+                    b.Property<string>("GivenNames")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("given_names");
+
                     b.Property<DateTimeOffset?>("GuardianConsentGrantedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("guardian_consent_granted_at");
@@ -1924,6 +2117,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("phone");
+
                     b.Property<Guid>("RegionId")
                         .HasColumnType("uuid")
                         .HasColumnName("region_id");
@@ -1933,6 +2132,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("status");
+
+                    b.Property<string>("Surnames")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("surnames");
 
                     b.Property<DateTimeOffset?>("SuspendedUntil")
                         .HasColumnType("timestamp with time zone")
@@ -5052,6 +5257,16 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_guardian_consents_minor_user_id");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Guardianship.GuardianConsentDispatch", b =>
+                {
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("MinorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_guardian_consent_dispatches_minor_user_id");
                 });
 
             modelBuilder.Entity("Situ.Domain.Identity.LoginAttempt", b =>

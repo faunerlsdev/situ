@@ -29,7 +29,14 @@ export async function POST(request: Request) {
   } catch (cause) {
     if (cause instanceof AppError) {
       return NextResponse.json(
-        { code: cause.apiCode, detail: cause.userMessage, retryAfter: cause.retryAfter, status: cause.status },
+        {
+          code: cause.apiCode,
+          detail: cause.userMessage,
+          retryAfter: cause.retryAfter,
+          status: cause.status,
+          accessToken: cause.accessToken,
+          accessTokenExpiresAt: cause.accessTokenExpiresAt,
+        },
         { status: cause.status ?? 500 },
       );
     }

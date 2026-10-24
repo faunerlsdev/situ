@@ -10,15 +10,21 @@ namespace Situ.Api.Auth;
 
 public sealed class JwtTokenService(JwtOptions options) : ITokenService
 {
-    public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt)
+    public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null)
     {
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)),
             SecurityAlgorithms.HmacSha256);
+        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) };
+        if (!string.IsNullOrWhiteSpace(scope))
+        {
+            claims.Add(new Claim("scope", scope));
+        }
+
         var token = new JwtSecurityToken(
             issuer: options.Issuer,
             audience: options.Audience,
-            claims: [new Claim(JwtRegisteredClaimNames.Sub, userId.ToString())],
+            claims: claims,
             expires: expiresAt.UtcDateTime,
             signingCredentials: credentials);
         return new JwtSecurityTokenHandler().WriteToken(token);

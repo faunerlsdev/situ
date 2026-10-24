@@ -27,9 +27,13 @@ export function RegisterForm({
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      givenNames: '',
+      surnames: '',
+      phone: '',
       userName: '',
       email: '',
       password: '',
+      passwordConfirmation: '',
       day: '',
       month: '',
       year: '',
@@ -37,6 +41,8 @@ export function RegisterForm({
       regionId: '',
       cityId: '',
       accepted: false,
+      guardianEmail: '',
+      minorNoticeAccepted: false,
     },
   });
   const countryId = form.watch('countryId');
@@ -126,18 +132,28 @@ export function RegisterForm({
       const result = await api.register({
         email: values.email,
         userName: values.userName,
+        givenNames: values.givenNames,
+        surnames: values.surnames,
+        phone: values.phone,
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
         regionId: values.regionId,
         cityId: values.cityId,
         acceptedDocumentIds: documents.map((document) => document.id),
+        guardianEmail: values.guardianEmail.trim() || undefined,
+        minorNoticeAccepted: values.minorNoticeAccepted,
       });
-      notify.success(
-        result.status === 'PendingGuardianConsent'
-          ? 'Creamos la cuenta. Confirma tu correo. Como eres menor de edad, la cuenta sigue pendiente hasta que tu acudiente autorice el enlace que le enviamos.'
-          : 'Te enviamos un correo para confirmar la cuenta.',
-      );
+      if (result.status === 'PendingGuardianConsent') {
+        form.reset();
+        notify.success('Creamos la cuenta. Confirma tu correo y luego ingresa para pedir la autorización de tu representante.', { placement: 'bottom' });
+        router.push('/login');
+        return;
+      }
+
+      form.reset();
+      notify.success('Te enviamos un correo para confirmar la cuenta. Ábrelo para activarla.', { placement: 'bottom' });
+      router.push('/login');
     } catch (cause) {
       presentError(cause, setFormError, () => {
         void onSubmit(values);
@@ -150,8 +166,8 @@ export function RegisterForm({
 
   if (loadError) {
     return (
-      <main className="relative min-h-dvh bg-primary px-6 py-16">
-        <h1 className="font-display text-[56px] leading-none font-extrabold text-white italic">Registro</h1>
+      <main className="relative min-h-dvh splash-gradient px-6 py-16">
+        <h1 className="font-display text-[56px] leading-none font-extrabold text-app-text italic">Registro</h1>
         <div className="relative mt-6">
           <QueryError message={loadError} onRetry={() => router.refresh()} />
         </div>
@@ -160,14 +176,18 @@ export function RegisterForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="relative min-h-dvh overflow-hidden bg-primary px-6 py-8" noValidate>
-      <img src="/icons/nav-mapa-globo.png" alt="" className="pointer-events-none absolute -top-8 -right-6 w-[55%] max-w-md object-contain mix-blend-multiply" />
-      <h1 className="relative mt-24 font-display text-[56px] leading-none font-extrabold text-white italic">Registro</h1>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="relative min-h-dvh overflow-hidden splash-gradient px-6 py-8" noValidate>
+      <img src="/icons/nav-mapa-globo-dark.png" alt="" className="pointer-events-none absolute -top-8 -right-6 w-[55%] max-w-md object-contain opacity-25" />
+      <h1 className="relative mt-24 font-display text-[48px] leading-none font-extrabold text-app-text italic">Registro</h1>
       <div className="relative mt-6 flex flex-col gap-3.5">
         <FormStatus error={formError} notice={null} />
+        <TextInput id="givenNames" label="Nombres" autoComplete="given-name" error={errors.givenNames?.message} registration={form.register('givenNames')} />
+        <TextInput id="surnames" label="Apellidos" autoComplete="family-name" error={errors.surnames?.message} registration={form.register('surnames')} />
+        <TextInput id="phone" label="Teléfono" type="tel" autoComplete="tel" error={errors.phone?.message} registration={form.register('phone')} />
         <TextInput id="userName" label="Nombre de usuario" autoComplete="username" error={errors.userName?.message} registration={form.register('userName')} />
         <TextInput id="email" label="Correo" type="email" autoComplete="email" error={errors.email?.message} registration={form.register('email')} />
         <TextInput id="password" label="Contraseña" type="password" autoComplete="new-password" error={errors.password?.message} registration={form.register('password')} />
+        <TextInput id="passwordConfirmation" label="Confirmar contraseña" type="password" autoComplete="new-password" error={errors.passwordConfirmation?.message} registration={form.register('passwordConfirmation')} />
         <SelectInput id="countryId" label="País" error={errors.countryId?.message} disabled={countries.length === 0} registration={form.register('countryId')}>
           <option value="">Selecciona un país</option>
           {countries.map((country) => (
@@ -187,7 +207,7 @@ export function RegisterForm({
           ))}
         </SelectInput>
         <fieldset>
-          <legend className="font-sans text-body font-bold text-white italic">Fecha de nacimiento</legend>
+          <legend className="font-sans text-body font-bold text-app-text italic">Fecha de nacimiento</legend>
           <div className="mt-2 flex gap-2.5">
             <input aria-label="Día" inputMode="numeric" maxLength={2} placeholder="Día" className={dateClass} {...form.register('day')} />
             <input aria-label="Mes" inputMode="numeric" maxLength={2} placeholder="Mes" className={dateClass} {...form.register('month')} />
@@ -196,16 +216,16 @@ export function RegisterForm({
           {errors.day?.message ? <FieldError id="birth-error" message={errors.day.message} /> : null}
         </fieldset>
         {belowMinimum ? (
-          <p role="status" className="rounded-[4px] bg-white px-3 py-3 font-sans text-body font-bold text-live">
+          <p role="status" className="font-sans text-body font-bold text-app-danger">
             En {selectedCountry?.name} la edad mínima para registrarse es {selectedCountry?.minimumAge} años.
           </p>
         ) : null}
         {minor && !belowMinimum ? (
-          <p role="status" className="rounded-[4px] bg-white px-3 py-3 font-sans text-body font-bold text-ink">
+          <p role="status" className="font-sans text-body font-bold text-app-text">
             Como eres menor de edad, la cuenta queda pendiente. Tu acudiente debe abrir el enlace que le enviamos, verificar su correo y autorizar la cuenta.
           </p>
         ) : null}
-        <div className="font-sans text-[12px] leading-4 font-bold text-white italic">
+        <div className="font-sans text-[12px] leading-4 font-bold text-app-muted italic [&_a]:text-primary">
           {documents.map((document) => (
             <a key={document.id} href={document.url} className="block underline">{legalLabel(document.type)}</a>
           ))}
@@ -214,14 +234,24 @@ export function RegisterForm({
             Acepto los documentos legales vigentes.
           </label>
           {errors.accepted?.message ? <FieldError id="accepted-error" message={errors.accepted.message} /> : null}
+          <label className="font-sans text-body font-bold text-app-text italic" htmlFor="guardianEmail">
+            Correo de tu representante (opcional)
+            <input id="guardianEmail" type="email" inputMode="email" autoComplete="email" className="mt-1 h-[52px] w-full rounded-[8px] border border-app-border bg-app-input px-3 text-app-text outline-none" {...form.register('guardianEmail')} />
+          </label>
+          {errors.guardianEmail?.message ? <FieldError id="guardian-email-error" message={errors.guardianEmail.message} /> : null}
+          <label className="flex items-start gap-2 font-sans text-body font-bold text-app-text italic">
+            <input type="checkbox" className="mt-0.5" {...form.register('minorNoticeAccepted')} />
+            Entendido: un adulto debe autorizar mi cuenta.
+          </label>
+          {errors.minorNoticeAccepted?.message ? <FieldError id="notice-error" message={errors.minorNoticeAccepted.message} /> : null}
         </div>
-        <button type="submit" disabled={pending} className="mt-2 flex flex-col items-center active:scale-95 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="mt-2 flex w-full flex-col items-center gap-2 disabled:opacity-60">
           <img src="/brand/situ-isotipo-negro.png" alt="" width={72} height={94} className="h-[94px] w-[72px] object-contain" />
-          <span className="text-stamp font-sans text-[28px] leading-none font-bold text-white italic">
+          <span className="flex h-[52px] w-full items-center justify-center rounded-[8px] bg-primary font-sans text-[18px] font-bold text-app-on italic">
             {pending ? 'Creando cuenta…' : 'Registrar Me'}
           </span>
         </button>
-        <Link href="/login" className="text-center font-sans text-body font-bold text-white italic">
+        <Link href="/login" className="text-center font-sans text-body font-bold text-primary italic">
           ¿Ya tienes cuenta? Ingresar
         </Link>
       </div>
@@ -248,15 +278,16 @@ function TextInput({
     <div>
       <input
         id={id}
-        type={type}
         placeholder={label}
-        autoComplete={autoComplete}
         spellCheck={false}
         aria-label={label}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
         className={fieldClass}
         {...registration}
+        type={type}
+        autoComplete={autoComplete}
+        inputMode={type === 'email' ? 'email' : type === 'tel' ? 'tel' : undefined}
       />
       {error ? <FieldError id={`${id}-error`} message={error} /> : null}
     </div>
@@ -279,7 +310,7 @@ function SelectInput({
   children: ReactNode;
 }) {
   return (
-    <label className="font-sans text-body font-bold text-white italic" htmlFor={id}>
+    <label className="font-sans text-body font-bold text-app-text italic" htmlFor={id}>
       {label}
       <select id={id} disabled={disabled} aria-invalid={error ? true : undefined} className={`${fieldClass} mt-2`} {...registration}>
         {children}
@@ -309,7 +340,7 @@ function legalLabel(type: LegalDocument['type']) {
 }
 
 const fieldClass =
-  'h-[52px] w-full rounded-[2px] bg-white px-3 font-sans text-body font-bold text-ink italic outline-none placeholder:text-gray400';
+  'h-[52px] w-full rounded-[8px] border border-app-border bg-app-input focus:border-[1.5px] focus:border-primary px-3 font-sans text-body font-bold text-app-text italic outline-none placeholder:text-app-placeholder';
 
 const dateClass =
-  'h-12 w-[84px] rounded-[2px] bg-white text-center font-sans text-body font-bold text-ink italic outline-none placeholder:text-gray400';
+  'h-12 w-[84px] rounded-[8px] border border-app-border bg-app-input text-center font-sans text-body font-bold text-app-text italic outline-none placeholder:text-app-placeholder';

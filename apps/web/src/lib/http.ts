@@ -1,7 +1,14 @@
 import { createHttpClient, createServices, defaultApiUrl, readApiUrl, sessionEvents } from '@situ/shared';
 
+let guardianAccessToken: string | null = null;
+
+export function setGuardianAccessToken(token: string | null): void {
+  guardianAccessToken = token;
+}
+
 export const http = createHttpClient({
   baseUrl: readApiUrl(process.env.NEXT_PUBLIC_API_URL, defaultApiUrl),
+  getAccessToken: () => guardianAccessToken,
   onSessionExpired: () => {
     if (typeof window !== 'undefined') {
       sessionEvents.emitExpired();

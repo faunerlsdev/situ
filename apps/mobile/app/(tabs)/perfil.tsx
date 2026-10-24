@@ -40,15 +40,15 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
     padding: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.bg,
   },
   title: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.display,
     fontSize: 28,
   },
   body: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
     lineHeight: 24,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   buttonLabel: {
-    color: theme.colors.white,
+    color: theme.colors.textOnPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },

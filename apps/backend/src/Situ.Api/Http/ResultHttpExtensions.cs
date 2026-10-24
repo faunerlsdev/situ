@@ -34,6 +34,7 @@ public static class ResultHttpExtensions
         ErrorType.NotFound => StatusCodes.Status404NotFound,
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.Locked => StatusCodes.Status423Locked,
+        ErrorType.RateLimited => StatusCodes.Status429TooManyRequests,
         ErrorType.Failure => StatusCodes.Status500InternalServerError,
         _ => StatusCodes.Status500InternalServerError,
     };
@@ -46,6 +47,7 @@ public static class ResultHttpExtensions
         ErrorType.NotFound => "Not found",
         ErrorType.Conflict => "Conflict",
         ErrorType.Locked => "Locked",
+        ErrorType.RateLimited => "Too many requests",
         ErrorType.Failure => "Failure",
         _ => "Failure",
     };

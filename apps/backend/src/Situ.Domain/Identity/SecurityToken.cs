@@ -18,6 +18,7 @@ public sealed class SecurityToken : AuditableEntity
     public string TokenHash { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? ConsumedAt { get; private set; }
+    public int FailedAttempts { get; private set; }
 
     public static SecurityToken Issue(
         Guid userId,
@@ -51,4 +52,16 @@ public sealed class SecurityToken : AuditableEntity
 
     /// <summary>Invalidates the token without using it (e.g. a newer one was issued).</summary>
     public void Invalidate(DateTimeOffset now) => ConsumedAt ??= now;
+
+    /// <summary>Counts a wrong code. The token dies after <paramref name="maximum"/> failures.</summary>
+    public void RegisterFailedAttempt(DateTimeOffset now, int maximum)
+    {
+        Guard.That(ConsumedAt is null, "security_token.already_used", "This code was already used.");
+        Guard.That(ExpiresAt > now, "security_token.expired", "This code has expired.");
+        FailedAttempts++;
+        if (FailedAttempts >= maximum)
+        {
+            ConsumedAt = now;
+        }
+    }
 }

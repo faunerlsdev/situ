@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Guardianship.RequestGuardianConsent;
 using Situ.Application.Features.Legal;
 using Situ.Domain.Common;
 using Situ.Domain.Identity;
@@ -33,6 +34,21 @@ public sealed class RegisterUserHandler(
         if (!UserName.TryCreate(request.UserName, out var userName))
         {
             return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidUserName());
+        }
+
+        if (!PersonName.TryCreate(request.GivenNames, out var givenNames))
+        {
+            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidGivenNames());
+        }
+
+        if (!PersonName.TryCreate(request.Surnames, out var surnames))
+        {
+            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidSurnames());
+        }
+
+        if (!PhoneNumber.TryCreate(request.Phone, out var phone))
+        {
+            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
         }
 
         var country = await db.Countries
@@ -86,6 +102,9 @@ public sealed class RegisterUserHandler(
             user = User.Register(
                 emailAddress,
                 userName,
+                givenNames,
+                surnames,
+                phone,
                 passwords.Hash(request.Password),
                 request.DateOfBirth,
                 country.Id,
@@ -133,9 +152,23 @@ public sealed class RegisterUserHandler(
                 Error.Conflict("user.already_exists", "Ya existe una cuenta con ese correo o usuario."));
         }
 
-        if (!await TrySendAsync(emailAddress.Value, userName.Value, plainToken, cancellationToken))
+        if (!await TrySendAsync(emailAddress.Value, givenNames.Value, plainToken, cancellationToken))
         {
             return Result<RegisterUserResponse>.Failure(IdentityErrors.EmailSendFailed());
+        }
+
+        if (user.IsMinor(now) && !string.IsNullOrWhiteSpace(request.GuardianEmail) && request.MinorNoticeAccepted)
+        {
+            await GuardianConsentRequests.OpenAsync(
+                db,
+                email,
+                links,
+                user,
+                request.GuardianEmail,
+                now,
+                null,
+                request.IpAddress,
+                cancellationToken);
         }
 
         return Result<RegisterUserResponse>.Success(new RegisterUserResponse(user.Id, user.Status));

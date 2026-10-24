@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
@@ -56,11 +57,30 @@ public sealed class SubmitGuardianDataHandler(
             SecurityTokenCodec.Hash(plainToken),
             now,
             MinorProtectionPolicy.GuardianEmailVerificationLifetime));
+        var previousCodes = await db.SecurityTokens
+            .Where(item =>
+                item.UserId == consent.MinorUserId
+                && item.Purpose == SecurityTokenPurpose.GuardianEmailCode
+                && item.ConsumedAt == null)
+            .ToListAsync(cancellationToken);
+        foreach (var token in previousCodes)
+        {
+            token.Invalidate(now);
+        }
+
+        var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
+        db.SecurityTokens.Add(SecurityToken.Issue(
+            consent.MinorUserId,
+            SecurityTokenPurpose.GuardianEmailCode,
+            SecurityTokenCodec.Hash(code),
+            now,
+            MinorProtectionPolicy.GuardianEmailCodeLifetime));
         await db.SaveChangesAsync(cancellationToken);
 
         var (subject, body) = GuardianConsentMail.Verification(
             consent.GuardianFullName!,
-            links.GuardianEmailVerification(plainToken));
+            links.GuardianEmailVerification(plainToken),
+            code);
         try
         {
             await email.SendAsync(consent.GuardianContactEmail!, subject, body, cancellationToken);

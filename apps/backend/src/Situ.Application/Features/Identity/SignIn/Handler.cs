@@ -50,9 +50,23 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
         }
 
         var eligibility = user.EvaluateSignIn(now);
+        if (eligibility == SignInEligibility.PendingGuardianConsent)
+        {
+            await RecordAsync(user.Id, login, request, false, LoginFailureReason.PendingGuardianConsent, now, cancellationToken);
+            var accessExpiresAt = now.AddMinutes(30);
+            var accessToken = tokens.CreateAccessToken(user.Id, accessExpiresAt, "guardian_consent");
+            return Result<SignInResponse>.Failure(AuthErrors.GuardianConsentRequired(accessToken, accessExpiresAt));
+        }
+
         if (eligibility != SignInEligibility.Allowed)
         {
             return await RejectAsync(user, login, request, ToReason(eligibility), now, user.LockoutEndAt, cancellationToken);
+        }
+
+        if (user.EmailConfirmedAt is null)
+        {
+            await RecordAsync(user.Id, login, request, false, LoginFailureReason.EmailUnconfirmed, now, cancellationToken);
+            return Result<SignInResponse>.Failure(AuthErrors.EmailUnconfirmed());
         }
 
         var deviceResult = await AcceptDeviceAsync(user, request, now, cancellationToken);

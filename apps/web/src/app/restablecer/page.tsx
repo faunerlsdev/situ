@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<main className="min-h-dvh bg-primary" />}>
+    <Suspense fallback={<main className="min-h-dvh splash-gradient" />}>
       <NewPasswordForm />
     </Suspense>
   );

@@ -59,7 +59,7 @@ psql situ -c "SELECT postgis_version();"
 
 `apps/backend/src/Situ.Api/appsettings.json` solo tiene valores públicos: logging, `AllowedHosts` y JWT (`Issuer`, `Audience`, `AccessTokenMinutes`, `RefreshTokenDays`). No lleva secreto.
 
-`apps/backend/src/Situ.Api/appsettings.Development.json` también se versiona. Lleva la cadena `ConnectionStrings:Default` sin contraseña (`Host=localhost;Port=5432;Database=situ;Username=<USUARIO>`) y un nivel de logging más detallado. El usuario real y la contraseña no van en ese archivo.
+`apps/backend/src/Situ.Api/appsettings.Development.json` no se versiona: está en `.gitignore`. Ahí puede ir la cadena `ConnectionStrings:Default` de tu máquina y el logging de desarrollo.
 
 En desarrollo, los valores sensibles viven en user-secrets de `Situ.Api` (fuera del repositorio):
 

@@ -23,6 +23,7 @@ obj/
 .vs/
 TestResults/
 **/appsettings.Local.json
+**/appsettings.Development.json
 
 # Entorno
 .env

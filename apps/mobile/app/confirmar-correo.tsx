@@ -1,29 +1,28 @@
-import { messageFromUnknown } from '@situ/shared';
+import { messageFromUnknown, notify } from '@situ/shared';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { StatusMessage } from '@/components/status-message';
+import { PrimaryButton } from '@/components/primary-button';
 import { api } from '@/lib/api';
 import { searchParam } from '@/lib/device';
 import { theme } from '@/theme/theme';
 
+const logo = require('../assets/images/brand/situ-logo-vertical-naranja.png');
+
 export default function ConfirmEmailScreen() {
-  const params = useLocalSearchParams<{ token?: string | string[] }>();
+  const params = useLocalSearchParams<{ token?: string | string[]; email?: string | string[] }>();
   const token = searchParam(params.token);
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [email, setEmail] = useState(searchParam(params.email));
   const [pending, setPending] = useState(false);
 
   async function confirm() {
     setPending(true);
-    setError(null);
     try {
       await api.confirmEmail({ token });
-      setNotice('Correo confirmado. Ya puedes ingresar.');
+      notify.success('Correo confirmado. Ya puedes ingresar.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
@@ -31,44 +30,53 @@ export default function ConfirmEmailScreen() {
 
   async function resend() {
     setPending(true);
-    setError(null);
-    setNotice(null);
     try {
       await api.resendConfirmationEmail({ email: email.trim() });
-      setNotice('Si la cuenta existe y falta confirmar el correo, enviaremos un enlace nuevo.');
+      notify.success('Si la cuenta existe y falta confirmar el correo, enviaremos un enlace nuevo.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Confirmar correo</Text>
-      <StatusMessage error={error} notice={notice} />
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Image source={logo} resizeMode="contain" accessibilityLabel="SITU" style={styles.logo} />
+      <Text style={styles.title}>{token ? 'Confirmar correo' : 'Reenviar enlace'}</Text>
+      {token ? null : (
+        <Text style={styles.lede}>
+          Tu correo todavía no está confirmado. Escribe el correo de la cuenta y te enviamos el enlace de nuevo.
+        </Text>
+      )}
       {token ? (
-        <Pressable accessibilityRole="button" disabled={pending} onPress={() => void confirm()}>
-          <Text style={styles.action}>{pending ? 'Confirmando…' : 'Confirmar mi correo'}</Text>
-        </Pressable>
+        <PrimaryButton label="Confirmar mi correo" pendingLabel="Confirmando…" pending={pending} onPress={() => void confirm()} />
       ) : (
         <View style={styles.form}>
           <TextInput
+            keyboardAppearance="dark"
             value={email}
             onChangeText={setEmail}
             placeholder="Correo"
-            placeholderTextColor={theme.colors.gray400}
+            placeholderTextColor={theme.colors.textPlaceholder}
             autoCapitalize="none"
+            autoComplete="email"
             keyboardType="email-address"
             accessibilityLabel="Correo"
             style={styles.input}
           />
-          <Pressable accessibilityRole="button" disabled={pending} onPress={() => void resend()}>
-            <Text style={styles.action}>{pending ? 'Enviando…' : 'Reenviar enlace'}</Text>
-          </Pressable>
+          <PrimaryButton
+            label="Reenviar enlace"
+            pendingLabel="Enviando…"
+            pending={pending}
+            disabled={email.trim().length === 0}
+            onPress={() => void resend()}
+          />
         </View>
       )}
-      <Link href="/login" style={styles.link}>Volver a ingresar</Link>
+      <Link href="/login" replace style={styles.link}>
+        Volver a ingresar
+      </Link>
     </ScrollView>
   );
 }
@@ -79,12 +87,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
     padding: 24,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.bg,
+  },
+  logo: {
+    alignSelf: 'center',
+    width: 96,
+    height: 104,
   },
   title: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.displayHeavyItalic,
-    fontSize: 42,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.displayHeavy,
+    fontSize: 36,
+    lineHeight: 42,
+    textAlign: 'center',
+  },
+  lede: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fontFamily.sans,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: 'center',
   },
   form: {
@@ -93,21 +114,17 @@ const styles = StyleSheet.create({
   input: {
     height: 52,
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.input,
     paddingHorizontal: 14,
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
-  action: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
-    fontSize: 22,
-    textAlign: 'center',
-  },
   link: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     textAlign: 'center',
   },

@@ -41,6 +41,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<GuardianConsent> GuardianConsents => Set<GuardianConsent>();
 
+    public DbSet<GuardianEmailOptOut> GuardianEmailOptOuts => Set<GuardianEmailOptOut>();
+
+    public DbSet<GuardianConsentDispatch> GuardianConsentDispatches => Set<GuardianConsentDispatch>();
+
+    public DbSet<GuardianConsentExpiryAudit> GuardianConsentExpiryAudits => Set<GuardianConsentExpiryAudit>();
+
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -147,6 +153,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         configurationBuilder.Properties<DateTimeOffset?>().HaveConversion<NullableUtcDateTimeOffsetConverter>();
         configurationBuilder.Properties<Situ.Domain.Common.Email>().HaveConversion<EmailConverter, EmailComparer>().HaveMaxLength(254);
         configurationBuilder.Properties<Situ.Domain.Common.UserName>().HaveConversion<UserNameConverter, UserNameComparer>().HaveMaxLength(30);
+        configurationBuilder.Properties<Situ.Domain.Common.PersonName>().HaveConversion<PersonNameConverter, PersonNameComparer>().HaveMaxLength(80);
+        configurationBuilder.Properties<Situ.Domain.Common.PhoneNumber>().HaveConversion<PhoneNumberConverter, PhoneNumberComparer>().HaveMaxLength(16);
         configurationBuilder.Properties<Situ.Domain.Common.GeoPoint>()
             .HaveConversion<GeoPointConverter, GeoPointComparer>()
             .HaveColumnType("geography(point, 4326)");

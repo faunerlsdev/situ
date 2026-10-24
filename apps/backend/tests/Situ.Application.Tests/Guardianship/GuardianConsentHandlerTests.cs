@@ -130,7 +130,7 @@ public class GuardianConsentHandlerTests
         var user = await SeedMinorAsync(db, clock, confirmEmail: true);
         await SeedConsentAsync(db, user.Id, "public-token", clock.UtcNow);
 
-        var declined = await new DeclineGuardianConsentHandler(db, clock)
+        var declined = await new DeclineGuardianConsentHandler(db, clock, new FakeEmailSender())
             .Handle(new DeclineGuardianConsentRequest("public-token"), CancellationToken.None);
         var again = await Authorize(db, new FakeEmailSender(), clock).Handle(
             new AuthorizeGuardianConsentRequest("public-token", true, true, null, null),
@@ -157,7 +157,7 @@ public class GuardianConsentHandlerTests
         var drop = GuardianConsent.Request(user.Id, "otro@situ.test", Hash("drop"), "2026-01", clock.UtcNow, clock.UtcNow);
         db.AddRange(keep, drop);
         await db.SaveChangesAsync();
-        var job = new ExpireGuardianConsentsHandler(db, clock);
+        var job = new ExpireGuardianConsentsHandler(db, clock, new FakeEmailSender());
 
         var early = await job.Handle(new ExpireGuardianConsentsRequest(), CancellationToken.None);
         clock.UtcNow = clock.UtcNow.Add(MinorProtectionPolicy.DefaultGuardianResponseWindow);
@@ -182,13 +182,16 @@ public class GuardianConsentHandlerTests
     private static VerifyGuardianEmailHandler Verify(IdentityTestDb db, FixedClock clock) => new(db, clock);
 
     private static AuthorizeGuardianConsentHandler Authorize(IdentityTestDb db, FakeEmailSender email, FixedClock clock) =>
-        new(db, clock, new FakeSigner(), email);
+        new(db, clock, new FakeSigner(), email, new FakeLinks());
 
     private static async Task<User> SeedMinorAsync(IdentityTestDb db, FixedClock clock, bool confirmEmail)
     {
         var user = User.Register(
             Email.Create("menor@situ.test"),
             UserName.Create("menor"),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
             "hashed:Clave123",
             DateOnly.FromDateTime(clock.UtcNow.UtcDateTime).AddYears(-14),
             Guid.NewGuid(),

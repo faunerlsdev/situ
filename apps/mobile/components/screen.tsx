@@ -19,6 +19,6 @@ const styles = StyleSheet.create({
   content: {
     gap: 16,
     padding: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.bg,
   },
 });

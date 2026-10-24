@@ -5,7 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { api, setAccessToken, setSessionHandlers } from '@/lib/api';
+import { api, isGuardianSession, setAccessToken, setSessionHandlers } from '@/lib/api';
 
 const accessKey = 'situ.accessToken';
 const refreshKey = 'situ.refreshToken';
@@ -77,7 +77,7 @@ async function doRefresh(): Promise<string | null> {
 }
 
 async function ensureFresh() {
-  if (biometricLocked) {
+  if (biometricLocked || isGuardianSession()) {
     return;
   }
   const accessToken = await SecureStore.getItemAsync(accessKey);
@@ -124,6 +124,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   setSessionHandlers({
     prepareRequest: ensureFresh,
     refreshAccessToken: async () => {
+      if (isGuardianSession()) {
+        return null;
+      }
+
       const next = await refreshOnce();
       if (!next) {
         const remaining = await SecureStore.getItemAsync(refreshKey);

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { messageFromUnknown, resetPasswordSchema } from '@situ/shared';
+import { messageFromUnknown, notify, resetPasswordSchema } from '@situ/shared';
 import type { ResetPasswordValues } from '@situ/shared';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -16,7 +16,6 @@ export default function ResetPasswordScreen() {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
   const token = searchParam(params.token);
   const [error, setError] = useState<string | null>(token ? null : 'El enlace no incluye el código de recuperación.');
-  const [notice, setNotice] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const form = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
@@ -48,31 +47,30 @@ export default function ResetPasswordScreen() {
 
   async function onSubmit(values: ResetPasswordValues) {
     setError(null);
-    setNotice(null);
     try {
       await api.resetPassword({ token, password: values.password });
-      setNotice('Contraseña actualizada. Ya puedes ingresar.');
+      notify.success('Contraseña actualizada. Ya puedes ingresar.');
       setReady(false);
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     }
   }
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.title}>Nueva contraseña</Text>
-      <StatusMessage error={error} notice={notice} />
+      <StatusMessage error={error} notice={null} />
       {ready ? (
         <>
           <Controller
             control={form.control}
             name="password"
             render={({ field }) => (
-              <TextInput
+              <TextInput keyboardAppearance="dark"
                 value={field.value}
                 onChangeText={field.onChange}
                 placeholder="Contraseña nueva"
-                placeholderTextColor={theme.colors.gray400}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 secureTextEntry
                 accessibilityLabel="Contraseña nueva"
                 style={styles.input}
@@ -84,11 +82,11 @@ export default function ResetPasswordScreen() {
             control={form.control}
             name="confirmation"
             render={({ field }) => (
-              <TextInput
+              <TextInput keyboardAppearance="dark"
                 value={field.value}
                 onChangeText={field.onChange}
                 placeholder="Repite la contraseña"
-                placeholderTextColor={theme.colors.gray400}
+                placeholderTextColor={theme.colors.textPlaceholder}
                 secureTextEntry
                 accessibilityLabel="Repite la contraseña"
                 style={styles.input}
@@ -106,7 +104,7 @@ export default function ResetPasswordScreen() {
           />
         </>
       ) : null}
-      <Link href="/login" style={styles.link}>Volver a ingresar</Link>
+      <Link href="/login" replace style={styles.link}>Volver a ingresar</Link>
     </ScrollView>
   );
 }
@@ -117,31 +115,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 16,
     padding: 24,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.bg,
   },
   title: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.displayHeavyItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.displayHeavy,
     fontSize: 42,
     textAlign: 'center',
   },
   input: {
     height: 52,
     borderRadius: theme.radius.input,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.input,
     paddingHorizontal: 14,
-    color: theme.colors.ink,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   fieldError: {
-    color: theme.colors.white,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 13,
   },
   link: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     textAlign: 'center',
   },

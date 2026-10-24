@@ -1,11 +1,17 @@
 import { createHttpClient, createServices, defaultApiUrl, readApiUrl, sessionEvents } from '@situ/shared';
 
 let accessToken: string | null = null;
+let guardianOnly = false;
 let prepareHandler: (() => Promise<void>) | null = null;
 let refreshHandler: (() => Promise<string | null>) | null = null;
 
-export function setAccessToken(token: string | null): void {
+export function setAccessToken(token: string | null, options?: { guardian?: boolean }): void {
   accessToken = token;
+  guardianOnly = options?.guardian === true && token !== null;
+}
+
+export function isGuardianSession(): boolean {
+  return guardianOnly;
 }
 
 export function setSessionHandlers(handlers: {

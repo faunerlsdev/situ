@@ -6,9 +6,9 @@ import { StatusMessage } from '@/components/status-message';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
-const live = require('../../assets/images/icons/situ-pin-mapa.png');
+const live = require('../../assets/images/icons/situ-pin-mapa-dark.png');
 const isotipo = require('../../assets/images/brand/situ-isotipo-negro.png');
-const news = require('../../assets/images/icons/situ-noticias.png');
+const news = require('../../assets/images/icons/situ-noticias-dark.png');
 
 const examples = [
   {
@@ -75,14 +75,14 @@ export default function MapScreen() {
           <Image source={live} resizeMode="contain" style={styles.live} />
         </Pressable>
       ))}
-      <Pressable accessibilityRole="button" accessibilityLabel="Centrar en mi ubicación" style={[styles.locate, theme.shadowSheet]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Centrar en mi ubicación" style={[styles.locate, theme.shadow]}>
         <View style={styles.locateDot} />
       </Pressable>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Reportar"
         onPress={() => setSheet(true)}
-        style={[styles.fab, theme.shadowSheet]}
+        style={[styles.fab, theme.shadow]}
       >
         <Image source={isotipo} resizeMode="contain" style={styles.fabMark} />
       </Pressable>
@@ -91,11 +91,11 @@ export default function MapScreen() {
           <Text style={styles.commentTitle}>{current.title}</Text>
           <Text style={styles.commentBody}>{current.detail}</Text>
           <StatusMessage error={error} notice={notice} />
-          <TextInput
+          <TextInput keyboardAppearance="dark"
             value={comment}
             onChangeText={setComment}
             placeholder="Comentario"
-            placeholderTextColor={theme.colors.gray400}
+            placeholderTextColor={theme.colors.textPlaceholder}
             accessibilityLabel="Comentario"
             style={styles.input}
           />
@@ -121,7 +121,7 @@ function ReportSheet({ visible, onClose }: { visible: boolean; onClose: () => vo
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.sheetWrap}>
         <Pressable accessibilityLabel="Cerrar" style={styles.sheetBackdrop} onPress={onClose} />
-        <View style={[styles.sheet, theme.shadowSheet]}>
+        <View style={[styles.sheet, theme.shadow]}>
           <View style={styles.handle} />
           <Text style={styles.sheetTitle}>Reportar</Text>
           <View style={styles.sheetDivider} />
@@ -145,7 +145,7 @@ function ReportSheet({ visible, onClose }: { visible: boolean; onClose: () => vo
 const styles = StyleSheet.create({
   map: {
     flex: 1,
-    backgroundColor: theme.colors.bgDarkEdge,
+    backgroundColor: theme.colors.mapWater,
   },
   glow: {
     position: 'absolute',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 140,
-    backgroundColor: theme.colors.bgDarkCenter,
+    backgroundColor: theme.colors.mapRoad,
   },
   pinHit: {
     position: 'absolute',
@@ -172,7 +172,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surfaceElevated,
+    ...theme.shadow,
   },
   locateDot: {
     width: 14,
@@ -190,7 +191,10 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.surfaceElevated,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    ...theme.shadow,
   },
   fabMark: {
     width: 40,
@@ -203,16 +207,16 @@ const styles = StyleSheet.create({
     bottom: 76,
     gap: 8,
     borderRadius: 20,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     padding: 12,
   },
   commentTitle: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   commentBody: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 13,
   },
@@ -220,9 +224,9 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: theme.radius.input,
     borderWidth: 1,
-    borderColor: theme.colors.gray200,
+    borderColor: theme.colors.border,
     paddingHorizontal: 10,
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
   },
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   sendLabel: {
-    color: theme.colors.white,
+    color: theme.colors.textOnPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
   },
   sheetBackdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: theme.colors.black,
+    backgroundColor: theme.colors.overlay,
     opacity: 0.4,
   },
   sheet: {
@@ -259,10 +263,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: theme.colors.gray200,
+    backgroundColor: theme.colors.border,
   },
   sheetTitle: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.display,
     fontSize: 22,
   },
@@ -271,7 +275,7 @@ const styles = StyleSheet.create({
     backgroundImage: `linear-gradient(90deg, transparent, ${theme.colors.primary}, transparent)`,
   },
   sheetBody: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
     lineHeight: 22,
@@ -288,14 +292,14 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: theme.radius.button,
     borderWidth: 1,
-    borderColor: theme.colors.gray200,
+    borderColor: theme.colors.border,
   },
   cellIcon: {
     width: 36,
     height: 28,
   },
   cellLabel: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 13,
   },

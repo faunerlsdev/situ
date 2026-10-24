@@ -1,9 +1,10 @@
 import { AppError } from '../http/errors';
 import { messageFor } from '../http/errorMessages';
-import type { ToastAction } from './toastQueue';
+import type { ToastAction, ToastPlacement } from './toastQueue';
 
 export type NotifyOptions = {
   action?: ToastAction;
+  placement?: ToastPlacement;
 };
 
 type Bridge = {

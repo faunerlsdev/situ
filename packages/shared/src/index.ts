@@ -10,7 +10,7 @@ export { toAppError, shouldRetry } from './core/http/normalize';
 export { readApiUrl, httpTimeouts } from './core/config/env';
 export { sessionEvents } from './core/feedback/sessionEvents';
 export { createToastQueue, toastDuration } from './core/feedback/toastQueue';
-export type { ToastInput, ToastKind, ToastQueue, ToastRecord } from './core/feedback/toastQueue';
+export type { ToastInput, ToastKind, ToastPlacement, ToastQueue, ToastRecord } from './core/feedback/toastQueue';
 export { createDialogStore } from './core/feedback/dialogStore';
 export type { ConfirmRequest, ConfirmType } from './core/feedback/dialogStore';
 export { feedbackMessages } from './core/feedback/messages';
@@ -61,9 +61,11 @@ export type {
   Region,
   RegisterRequest,
   RegisterResponse,
+  GuardianConsentStatus,
+  GuardianConsentReview,
   ResendConfirmationEmailRequest,
   SubmitGuardianDataRequest,
   AuthorizeGuardianConsentRequest,
   AuthorizeGuardianConsentResponse,
 } from './api/types';
-export { brandColors, brandFonts, brandRadius, defaultApiUrl, sites } from './brand/tokens';
+export { appColors, brandColors, brandFonts, brandRadius, defaultApiUrl, sites } from './brand/tokens';

@@ -40,6 +40,44 @@ public sealed class EmailComparer : ValueComparer<Email>
     }
 }
 
+public sealed class PersonNameConverter : ValueConverter<PersonName, string>
+{
+    public PersonNameConverter()
+        : base(name => name.Value, value => PersonName.Create(value))
+    {
+    }
+}
+
+public sealed class PersonNameComparer : ValueComparer<PersonName>
+{
+    public PersonNameComparer()
+        : base(
+            (left, right) => left!.Value == right!.Value,
+            value => value.Value.GetHashCode(StringComparison.Ordinal),
+            value => PersonName.Create(value.Value))
+    {
+    }
+}
+
+public sealed class PhoneNumberConverter : ValueConverter<PhoneNumber, string>
+{
+    public PhoneNumberConverter()
+        : base(phone => phone.Value, value => PhoneNumber.Create(value))
+    {
+    }
+}
+
+public sealed class PhoneNumberComparer : ValueComparer<PhoneNumber>
+{
+    public PhoneNumberComparer()
+        : base(
+            (left, right) => left!.Value == right!.Value,
+            value => value.Value.GetHashCode(StringComparison.Ordinal),
+            value => PhoneNumber.Create(value.Value))
+    {
+    }
+}
+
 public sealed class UserNameConverter : ValueConverter<UserName, string>
 {
     public UserNameConverter()

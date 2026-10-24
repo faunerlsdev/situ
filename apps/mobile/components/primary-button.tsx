@@ -32,8 +32,8 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
-    borderRadius: 999,
+    minHeight: 52,
+    borderRadius: theme.radius.button,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   label: {
-    color: theme.colors.white,
+    color: theme.colors.textOnPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },

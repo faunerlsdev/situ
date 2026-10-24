@@ -58,7 +58,11 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(AuthorizationPolicies.User, policy => policy.RequireAuthenticatedUser());
+    options.AddPolicy(AuthorizationPolicies.User, policy =>
+        policy.RequireAuthenticatedUser().RequireAssertion(context =>
+            context.User.FindFirst("scope")?.Value is not AuthorizationPolicies.GuardianConsentScope));
+    options.AddPolicy(AuthorizationPolicies.GuardianConsent, policy =>
+        policy.RequireAuthenticatedUser().RequireClaim("scope", AuthorizationPolicies.GuardianConsentScope));
     options.AddPolicy(AuthorizationPolicies.Staff, policy =>
         policy.RequireAuthenticatedUser().RequireRole(AuthorizationPolicies.Staff));
 });

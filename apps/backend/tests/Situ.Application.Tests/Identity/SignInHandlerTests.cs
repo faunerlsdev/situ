@@ -196,14 +196,17 @@ public class SignInHandlerTests
         Assert.NotNull((await db.UserDevices.SingleAsync()).RevokedAt);
     }
 
-    private static SignInRequest Request(string login, string password, string device) =>
-        new(login, password, device, DevicePlatform.Web, "Tests", "1.0", null, "127.0.0.1", "tests");
-
-    private static async Task<User> SeedUserAsync(IdentityTestDb db)
+    [Fact]
+    public async Task Unconfirmed_email_rejects_sign_in_without_counting_as_a_bad_password()
     {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(RegistrationCatalog.Now);
         var user = User.Register(
             Email.Create("ana@situ.test"),
             UserName.Create("ana"),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
             "hashed:Clave123",
             DateOnly.FromDateTime(RegistrationCatalog.Now.UtcDateTime).AddYears(-30),
             Guid.NewGuid(),
@@ -214,13 +217,78 @@ public class SignInHandlerTests
             RegistrationCatalog.Now);
         db.Users.Add(user);
         await db.SaveChangesAsync();
+        var handler = new SignInHandler(db, clock, new FakePasswords(), new FakeTokens());
+
+        var result = await handler.Handle(Request("ana@situ.test", "Clave123", "phone"), CancellationToken.None);
+
+        Assert.Equal(ErrorType.Forbidden, result.Error!.Type);
+        Assert.Equal("auth.email_unconfirmed", result.Error.Code);
+        Assert.Equal("Tu correo todavía no está confirmado.", result.Error.Message);
+        Assert.Equal(0, (await db.Users.SingleAsync()).FailedLoginAttempts);
+    }
+
+    [Fact]
+    public async Task Pending_guardian_consent_returns_a_restricted_token_instead_of_a_session()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(RegistrationCatalog.Now);
+        var user = User.Register(
+            Email.Create("menor@situ.test"),
+            UserName.Create("menor"),
+            PersonName.Create("Luz"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
+            "hashed:Clave123",
+            DateOnly.FromDateTime(RegistrationCatalog.Now.UtcDateTime).AddYears(-15),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "es-CO",
+            14,
+            RegistrationCatalog.Now);
+        user.ConfirmEmail(RegistrationCatalog.Now);
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var result = await new SignInHandler(db, clock, new FakePasswords(), new FakeTokens())
+            .Handle(Request("menor@situ.test", "Clave123", "phone"), CancellationToken.None);
+
+        Assert.Equal("auth.guardian_consent_required", result.Error!.Code);
+        Assert.Equal("guardian_consent", result.Error.Extensions["scope"]);
+        Assert.Contains("guardian_consent", result.Error.Extensions["accessToken"]!.ToString(), StringComparison.Ordinal);
+        Assert.Equal(0, (await db.Users.SingleAsync()).FailedLoginAttempts);
+        Assert.Empty(db.UserDevices);
+    }
+
+    private static SignInRequest Request(string login, string password, string device) =>
+        new(login, password, device, DevicePlatform.Web, "Tests", "1.0", null, "127.0.0.1", "tests");
+
+    private static async Task<User> SeedUserAsync(IdentityTestDb db)
+    {
+        var user = User.Register(
+            Email.Create("ana@situ.test"),
+            UserName.Create("ana"),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
+            "hashed:Clave123",
+            DateOnly.FromDateTime(RegistrationCatalog.Now.UtcDateTime).AddYears(-30),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "es-CO",
+            14,
+            RegistrationCatalog.Now);
+        user.ConfirmEmail(RegistrationCatalog.Now);
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
         return user;
     }
 
     private sealed class FakeTokens : ITokenService
     {
-        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt) =>
-            "access:" + userId.ToString("N") + ":" + expiresAt.UtcTicks;
+        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null) =>
+            "access:" + userId.ToString("N") + ":" + expiresAt.UtcTicks + ":" + (scope ?? "session");
 
         public string CreateRefreshToken() => Guid.NewGuid().ToString("N");
 

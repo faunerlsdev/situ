@@ -8,6 +8,7 @@ public enum ErrorType
     Unauthorized,
     Forbidden,
     Locked,
+    RateLimited,
     Failure,
 }
 
@@ -61,6 +62,9 @@ public sealed record Error
             retryAfter is { } moment
                 ? new Dictionary<string, object?> { ["retryAfter"] = moment }
                 : null);
+
+    public static Error RateLimited(string code, string message, DateTimeOffset retryAfter) =>
+        new(code, message, ErrorType.RateLimited, new Dictionary<string, object?> { ["retryAfter"] = retryAfter });
 
     public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
 

@@ -31,28 +31,41 @@ public sealed class ConfirmEmailEndpoint : IEndpoint
     }
 
     private static async Task<IResult> HandleGet(
-        string token,
+        string? token,
         IHandler<ConfirmEmailRequest, Result<ConfirmEmailResponse>> handler,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return AuthLinkPage.Show(
+                "No pudimos confirmar el correo",
+                "El enlace de confirmación no es válido.",
+                success: false,
+                StatusCodes.Status404NotFound);
+        }
+
         var result = await handler.Handle(new ConfirmEmailRequest(token), cancellationToken);
         if (result.IsFailure)
         {
-            return result.ToHttpResult();
+            return AuthLinkPage.Show(
+                "No pudimos confirmar el correo",
+                result.Error!.Message,
+                success: false,
+                StatusCode(result.Error.Type));
         }
 
-        return Results.Content(
-            """
-            <!doctype html>
-            <html lang="es">
-            <meta charset="utf-8">
-            <title>Correo confirmado · SITU</title>
-            <body style="font-family: sans-serif; padding: 2rem;">
-              <h1>Correo confirmado</h1>
-              <p>Ya puedes ingresar a SITU. Si eres menor de edad, la cuenta sigue pendiente de la autorización de tu acudiente.</p>
-            </body>
-            </html>
-            """,
-            "text/html; charset=utf-8");
+        return AuthLinkPage.Show(
+            "Correo confirmado",
+            "Ya puedes ingresar a SITU. Si eres menor de edad, la cuenta sigue pendiente de la autorización de tu acudiente.",
+            success: true,
+            StatusCodes.Status200OK);
     }
+
+    private static int StatusCode(ErrorType type) => type switch
+    {
+        ErrorType.Validation => StatusCodes.Status400BadRequest,
+        ErrorType.NotFound => StatusCodes.Status404NotFound,
+        ErrorType.Conflict => StatusCodes.Status409Conflict,
+        _ => StatusCodes.Status400BadRequest,
+    };
 }

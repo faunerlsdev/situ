@@ -21,4 +21,16 @@ public sealed class PublicLinks(EmailOptions options) : IPublicLinks
         var root = options.ApiPublicBaseUrl.TrimEnd('/');
         return $"{root}/api/v1/guardianship/consent/verify-email?token={Uri.EscapeDataString(plainToken)}";
     }
+
+    public string GuardianReview(string plainToken)
+    {
+        var root = options.WebPublicBaseUrl.TrimEnd('/');
+        return $"{root}/tutor/autorizar?token={Uri.EscapeDataString(plainToken)}";
+    }
+
+    public string GuardianManage(string plainToken)
+    {
+        var root = options.WebPublicBaseUrl.TrimEnd('/');
+        return $"{root}/tutor/gestionar?token={Uri.EscapeDataString(plainToken)}";
+    }
 }

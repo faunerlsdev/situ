@@ -13,8 +13,10 @@ import {
 } from '@expo-google-fonts/source-sans-3';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 
 import { FeedbackProvider } from '@/providers/feedback-provider';
 import { SessionProvider, useSession } from '@/providers/session-provider';
@@ -25,7 +27,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'index',
 };
 
 export default function RootLayout() {
@@ -60,14 +62,16 @@ function RootNavigator() {
   }, [fontsReady, isReady]);
 
   if (!isReady || !fontsReady) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: theme.colors.bg }} />;
   }
 
   return (
+    <>
+    <StatusBar style="light" />
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: theme.colors.surface },
+        contentStyle: { backgroundColor: theme.colors.bg },
       }}
     >
       <Stack.Protected guard={!isSignedIn}>
@@ -76,9 +80,10 @@ function RootNavigator() {
       <Stack.Protected guard={isSignedIn}>
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>
-      <Stack.Screen name="confirmar-correo" options={{ contentStyle: { backgroundColor: theme.colors.primary } }} />
-      <Stack.Screen name="restablecer" options={{ contentStyle: { backgroundColor: theme.colors.primary } }} />
-      <Stack.Screen name="tutor" options={{ contentStyle: { backgroundColor: theme.colors.primary } }} />
+      <Stack.Screen name="confirmar-correo" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
+      <Stack.Screen name="restablecer" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
+      <Stack.Screen name="tutor" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
     </Stack>
+    </>
   );
 }

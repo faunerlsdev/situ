@@ -1,4 +1,4 @@
-import { brandColors, brandFonts, brandRadius } from '@situ/shared';
+import { appColors, brandFonts } from '@situ/shared';
 
 export const fontFamily = {
   sans: 'SourceSans3_400Regular',
@@ -11,12 +11,16 @@ export const fontFamily = {
 } as const;
 
 export const theme = {
-  colors: brandColors,
+  colors: appColors,
   brandFonts,
   fontFamily,
-  radius: brandRadius,
-  shadowSheet: {
-    boxShadow: '0 4px 12px rgb(0 0 0 / 25%)',
+  radius: {
+    input: 8,
+    button: 8,
+    card: 12,
+  },
+  shadow: {
+    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
   },
   type: {
     display: { fontFamily: fontFamily.displayHeavy, fontSize: 40, lineHeight: 44 },

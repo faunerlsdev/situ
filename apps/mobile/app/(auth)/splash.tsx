@@ -11,19 +11,21 @@ export default function SplashRoute() {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    let active = true;
     const animation = Animated.timing(opacity, {
       toValue: 1,
       duration: 400,
-      useNativeDriver: true,
+      useNativeDriver: false,
     });
 
     animation.start(({ finished }) => {
-      if (finished) {
+      if (active && finished) {
         router.replace('/login');
       }
     });
 
     return () => {
+      active = false;
       animation.stop();
     };
   }, [opacity, router]);
@@ -43,14 +45,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.bgDarkEdge,
+    backgroundColor: theme.colors.bg,
   },
   glow: {
     position: 'absolute',
     width: 520,
     height: 520,
     borderRadius: 260,
-    backgroundColor: theme.colors.bgDarkCenter,
+    backgroundColor: theme.colors.bgGradientCenter,
   },
   logo: {
     width: 130,

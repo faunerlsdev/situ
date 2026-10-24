@@ -12,7 +12,8 @@ public sealed class AuthorizeGuardianConsentHandler(
     IApplicationDbContext db,
     IClock clock,
     IGuardianConsentSigner signer,
-    IEmailSender email)
+    IEmailSender email,
+    IPublicLinks links)
     : IHandler<AuthorizeGuardianConsentRequest, Result<AuthorizeGuardianConsentResponse>>
 {
     public async Task<Result<AuthorizeGuardianConsentResponse>> Handle(
@@ -20,6 +21,11 @@ public sealed class AuthorizeGuardianConsentHandler(
         CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
+        if (!request.DataProcessingAccepted)
+        {
+            return Result<AuthorizeGuardianConsentResponse>.Failure(GuardianErrors.DataProcessingRequired());
+        }
+
         var consent = await FindConsentAsync(request.Token, cancellationToken);
         if (consent is null)
         {
@@ -52,7 +58,8 @@ public sealed class AuthorizeGuardianConsentHandler(
                 request.LocationSharingAuthorized,
                 Clip(request.IpAddress, 64),
                 Clip(request.UserAgent, 512),
-                now);
+                now,
+                "web");
         }
         catch (DomainException exception)
         {
@@ -60,6 +67,14 @@ public sealed class AuthorizeGuardianConsentHandler(
         }
 
         user.GrantGuardianConsent(now);
+        var managePlain = SecurityTokenCodec.CreatePlain();
+        db.SecurityTokens.Add(SecurityToken.Issue(
+            user.Id,
+            SecurityTokenPurpose.GuardianConsentManagement,
+            SecurityTokenCodec.Hash(managePlain),
+            now,
+            TimeSpan.FromDays(365)));
+        consent.RetireLink(SecurityTokenCodec.Hash(SecurityTokenCodec.CreatePlain()));
         await db.SaveChangesAsync(cancellationToken);
 
         var (subject, body) = GuardianConsentMail.Receipt(
@@ -72,12 +87,16 @@ public sealed class AuthorizeGuardianConsentHandler(
             consent.LocationSharingAuthorized,
             consent.NoticeVersion,
             signature,
-            now);
+            now,
+            links.GuardianManage(managePlain));
         try
         {
             await email.SendAsync(consent.GuardianContactEmail!, subject, body, cancellationToken);
             consent.MarkReceiptSent(now);
             await db.SaveChangesAsync(cancellationToken);
+            var notice = GuardianConsentMail.MinorAuthorized();
+            await RevokeGuardianConsent.RevokeGuardianConsentHandler.TrySendAsync(
+                email, user.Email.Value, notice.Subject, notice.Body, cancellationToken);
         }
         catch (OperationCanceledException)
         {

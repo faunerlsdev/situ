@@ -1,67 +1,122 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { GuardianDocumentType } from '@situ/shared';
-import { guardianDataSchema, notify, presentError } from '@situ/shared';
+import type { GuardianConsentReview, GuardianDocumentType } from '@situ/shared';
+import { guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { GuardianDataValues } from '@situ/shared';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { SituLoader } from '@/components/feedback/situ-loader';
 import { api } from '@/lib/api';
-import { FieldError, FormStatus } from './login-form';
 
 const documents: { value: GuardianDocumentType; label: string }[] = [
   { value: 'CitizenshipCard', label: 'Cédula de ciudadanía' },
   { value: 'ForeignerCard', label: 'Cédula de extranjería' },
   { value: 'Passport', label: 'Pasaporte' },
-  { value: 'Other', label: 'Otro documento' },
+  { value: 'Other', label: 'Otro' },
 ];
+
+type Step = 'notice' | 'data' | 'code' | 'decision' | 'done';
 
 export function GuardianForm() {
   const params = useSearchParams();
   const token = params.get('token') ?? '';
-  const [step, setStep] = useState<'data' | 'authorize'>('data');
-  const [notice, setNotice] = useState<string | null>(token ? null : 'El enlace de autorización no incluye el código.');
-  const [formError, setFormError] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>('notice');
+  const [review, setReview] = useState<GuardianConsentReview | null>(null);
+  const [loading, setLoading] = useState(token.length > 0);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [code, setCode] = useState('');
+  const [reason, setReason] = useState('');
   const [live, setLive] = useState(false);
   const [location, setLocation] = useState(false);
-  const [pending, setPending] = useState(false);
+  const [treatment, setTreatment] = useState(false);
+  const [readingTreatment, setReadingTreatment] = useState(false);
+  const [done, setDone] = useState('');
   const form = useForm<GuardianDataValues>({
     resolver: zodResolver(guardianDataSchema),
-    defaultValues: {
-      fullName: '',
-      documentType: 'CitizenshipCard',
-      documentNumber: '',
-      contactEmail: '',
-    },
+    defaultValues: { fullName: '', documentType: 'CitizenshipCard', documentNumber: '', contactEmail: '' },
   });
 
-  async function onSubmit(values: GuardianDataValues) {
-    setFormError(null);
-    setNotice(null);
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    let active = true;
+    void api.guardianConsentReview(token).then((value) => {
+      if (active) {
+        setReview(value);
+      }
+    }).catch((cause: unknown) => {
+      if (active) {
+        setError(messageFromUnknown(cause));
+      }
+    }).finally(() => {
+      if (active) {
+        setLoading(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [token]);
+
+  async function submitData(values: GuardianDataValues) {
+    setPending(true);
+    setError(null);
     try {
       await api.submitGuardianData({ token, ...values });
-      setStep('authorize');
-      notify.info('Te enviamos un correo para verificar tu identidad. Ábrelo y luego vuelve aquí para autorizar.');
+      setStep('code');
     } catch (cause) {
-      presentError(cause, setFormError);
+      setError(messageFromUnknown(cause));
+    } finally {
+      setPending(false);
     }
   }
 
-  async function authorize() {
+  async function verify() {
     setPending(true);
-    setFormError(null);
+    setError(null);
     try {
-      await api.authorizeGuardianConsent({
-        token,
-        liveStreamingAuthorized: live,
-        locationSharingAuthorized: location,
-      });
-      notify.success('Autorización registrada. El menor puede continuar cuando su correo esté confirmado.');
-      setStep('data');
+      await api.verifyGuardianEmailCode(token, code.trim());
+      setStep('decision');
     } catch (cause) {
-      presentError(cause, setFormError);
+      setError(messageFromUnknown(cause));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function openTreatment() {
+    setReadingTreatment(true);
+  }
+
+  function acceptTreatment() {
+    setTreatment(true);
+    setReadingTreatment(false);
+    setError(null);
+  }
+
+  async function authorize() {
+    if (!treatment) {
+      setError('Para autorizar, acepta el tratamiento de los datos.');
+      setReadingTreatment(true);
+      return;
+    }
+    if (review?.requiresLiveAuthorization && !live) {
+      setError('Como el menor tiene menos de 16 años, la transmisión en vivo necesita tu autorización específica.');
+      return;
+    }
+    setPending(true);
+    setError(null);
+    try {
+      await api.authorizeGuardianConsent({ token, liveStreamingAuthorized: live, locationSharingAuthorized: location, dataProcessingAccepted: true });
+      setDone('Registramos tu autorización. Te enviaremos la constancia al correo que verificaste.');
+      setStep('done');
+    } catch (cause) {
+      setError(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
@@ -69,92 +124,140 @@ export function GuardianForm() {
 
   async function decline() {
     setPending(true);
-    setFormError(null);
+    setError(null);
     try {
-      await api.declineGuardianConsent({ token });
-      notify.info('Rechazaste la autorización. La cuenta del menor sigue pendiente.');
+      await api.declineGuardianConsent({ token, reason: reason.trim() || undefined });
+      setDone('Rechazaste la autorización. El menor verá que la cuenta no fue autorizada.');
+      setStep('done');
     } catch (cause) {
-      presentError(cause, setFormError);
+      setError(messageFromUnknown(cause));
     } finally {
       setPending(false);
     }
   }
 
-  const errors = form.formState.errors;
+  async function optOut() {
+    setPending(true);
+    setError(null);
+    try {
+      await api.optOutGuardianEmail(token);
+      setDone('Listo. No volveremos a enviarte solicitudes de autorización.');
+      setStep('done');
+      notify.info('Dejaremos de enviarte estas solicitudes.');
+    } catch (cause) {
+      setError(messageFromUnknown(cause));
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-primary px-6 py-10">
-      <h1 className="text-center font-display text-[40px] leading-none font-extrabold text-white italic">Autorización del acudiente</h1>
-      <FormStatus error={formError} notice={notice} />
-      {token && step === 'data' ? (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-[80%] max-w-[360px] flex-col gap-3" noValidate>
-          <TextField id="fullName" label="Nombre completo" error={errors.fullName?.message} registration={form.register('fullName')} />
-          <label className="font-sans text-body font-bold text-white italic" htmlFor="documentType">
-            Documento
-            <select id="documentType" className="mt-1 h-[52px] w-full rounded-[2px] bg-white px-3 text-ink" {...form.register('documentType')}>
-              {documents.map((document) => (
-                <option key={document.value} value={document.value}>{document.label}</option>
-              ))}
+    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-5 px-6 py-10">
+      <p className="font-display text-4xl font-extrabold text-[#FF6400]">SITU</p>
+      <h1 className="font-display text-3xl font-bold">Autorización de un menor</h1>
+      {loading ? <SituLoader label="Cargando la solicitud" /> : null}
+      {!token ? <p role="alert" className="rounded-[8px] bg-[#F8E8E6] px-3 py-2 font-sans text-[#8E1B16]">El enlace de autorización no es válido.</p> : null}
+      {error ? <p role="alert" className="rounded-[8px] bg-[#F8E8E6] px-3 py-2 font-sans text-[#8E1B16]">{error}</p> : null}
+      {!loading && review && step === 'notice' ? (
+        <section className="flex flex-col gap-4 font-sans leading-6">
+          <p>Un menor pidió usar SITU y escribió tu correo para que decidas. Estos son los únicos datos que te mostramos.</p>
+          <dl className="overflow-hidden rounded-2xl border border-[#E4DFD6] bg-white">
+            <Fact label="Usuario" value={review.userName} />
+            <Fact label="Edad" value={`${review.age} años`} />
+            <Fact label="Ciudad" value={review.city} />
+            {review.minorStatement ? <Fact label="Mensaje" value={review.minorStatement} /> : null}
+          </dl>
+          <p className="text-sm text-[#6B675F]">Aviso versión {review.noticeVersion}. La solicitud vence el {new Date(review.expiresAt).toLocaleDateString('es-CO')}.</p>
+          <button type="button" onClick={() => setStep('data')} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white">Continuar</button>
+        </section>
+      ) : null}
+      {step === 'data' ? (
+        <form onSubmit={form.handleSubmit(submitData)} className="flex flex-col gap-3 font-sans" noValidate>
+          <label>Nombre completo<input className="mt-1 h-12 w-full rounded-[8px] border border-[#D5D0C8] bg-white px-3" {...form.register('fullName')} /></label>
+          {form.formState.errors.fullName ? <p className="text-[#8E1B16]">{form.formState.errors.fullName.message}</p> : null}
+          <label>Tipo de documento
+            <select className="mt-1 h-12 w-full rounded-[8px] border border-[#D5D0C8] bg-white px-3" {...form.register('documentType')}>
+              {documents.map((document) => <option key={document.value} value={document.value}>{document.label}</option>)}
             </select>
           </label>
-          {errors.documentType?.message ? <FieldError id="document-type-error" message={errors.documentType.message} /> : null}
-          <TextField id="documentNumber" label="Número de documento" error={errors.documentNumber?.message} registration={form.register('documentNumber')} />
-          <TextField id="contactEmail" label="Correo de contacto" type="email" error={errors.contactEmail?.message} registration={form.register('contactEmail')} />
-          <button type="submit" disabled={form.formState.isSubmitting} className="font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
-            {form.formState.isSubmitting ? 'Enviando…' : 'Continuar'}
-          </button>
+          <label>Número de documento<input className="mt-1 h-12 w-full rounded-[8px] border border-[#D5D0C8] bg-white px-3" {...form.register('documentNumber')} /></label>
+          {form.formState.errors.documentNumber ? <p className="text-[#8E1B16]">{form.formState.errors.documentNumber.message}</p> : null}
+          <label>Correo<input type="email" inputMode="email" className="mt-1 h-12 w-full rounded-[8px] border border-[#D5D0C8] bg-white px-3" {...form.register('contactEmail')} /></label>
+          {form.formState.errors.contactEmail ? <p className="text-[#8E1B16]">{form.formState.errors.contactEmail.message}</p> : null}
+          <button type="submit" disabled={pending} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white disabled:opacity-60">Enviar código</button>
         </form>
       ) : null}
-      {token && step === 'authorize' ? (
-        <div className="flex w-[80%] max-w-[360px] flex-col gap-3 font-sans text-body font-bold text-white italic">
-          <label className="flex items-start gap-2">
-            <input type="checkbox" checked={live} onChange={(event) => setLive(event.target.checked)} />
-            Autorizo que el menor transmita en vivo.
-          </label>
-          <label className="flex items-start gap-2">
-            <input type="checkbox" checked={location} onChange={(event) => setLocation(event.target.checked)} />
-            Autorizo que el menor comparta su ubicación.
-          </label>
-          <button type="button" disabled={pending} onClick={() => void authorize()} className="font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
-            {pending ? 'Guardando…' : 'Autorizar'}
-          </button>
-          <button type="button" disabled={pending} onClick={() => void decline()} className="font-sans text-body font-bold text-white underline disabled:opacity-60">
-            Rechazar
-          </button>
-        </div>
+      {step === 'code' ? (
+        <section className="flex flex-col gap-3 font-sans">
+          <p>Te enviamos un código de 6 dígitos. Vence en 10 minutos.</p>
+          <input inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} aria-label="Código de verificación" className="h-12 rounded-[8px] border border-[#D5D0C8] bg-white px-3 tracking-[0.3em]" />
+          <button type="button" disabled={pending} onClick={() => void verify()} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white disabled:opacity-60">Verificar correo</button>
+          <button type="button" disabled={pending} onClick={() => void api.resendGuardianEmailCode(token).catch((cause: unknown) => setError(messageFromUnknown(cause)))} className="font-bold text-[#FF6400]">Reenviar código</button>
+        </section>
       ) : null}
-      <Link href="/login" className="font-sans text-body font-bold text-white italic">Volver a ingresar</Link>
+      {readingTreatment ? (
+        <TreatmentNotice
+          onAccept={acceptTreatment}
+          onBack={() => setReadingTreatment(false)}
+        />
+      ) : null}
+      {step === 'decision' && !readingTreatment ? (
+        <section className="flex flex-col gap-3 font-sans">
+          <div className="rounded-2xl border border-[#E4DFD6] bg-white p-4">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5 accent-[#FF6400]"
+                checked={treatment}
+                onChange={(event) => {
+                  if (event.target.checked) {
+                    openTreatment();
+                    return;
+                  }
+                  setTreatment(false);
+                }}
+              />
+              <span className="font-bold">Acepto el tratamiento de datos</span>
+            </label>
+            <button type="button" onClick={openTreatment} className="mt-3 ml-8 font-bold text-[#FF6400] underline">Ver tratamiento de datos</button>
+          </div>
+          <label className="flex items-start gap-3 rounded-2xl border border-[#E4DFD6] bg-white p-4"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6400]" checked={live} onChange={(event) => setLive(event.target.checked)} /> Permitir transmisiones en vivo{review?.requiresLiveAuthorization ? ' (obligatorio: el menor tiene menos de 16 años)' : ''}</label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[#E4DFD6] bg-white p-4"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6400]" checked={location} onChange={(event) => setLocation(event.target.checked)} /> Permitir compartir ubicación con amigos</label>
+          <button type="button" disabled={pending} onClick={() => void authorize()} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white disabled:opacity-60">Autorizar</button>
+          <label>Motivo del rechazo, si quieres<textarea value={reason} onChange={(event) => setReason(event.target.value)} className="mt-1 min-h-20 w-full rounded-[8px] border border-[#D5D0C8] bg-white px-3 py-2" /></label>
+          <button type="button" disabled={pending} onClick={() => void decline()} className="font-bold underline">Rechazar</button>
+          <button type="button" disabled={pending} onClick={() => void optOut()} className="text-left text-sm underline">No conozco a este menor / no quiero recibir más solicitudes de SITU</button>
+        </section>
+      ) : null}
+      {step === 'done' ? <p className="font-sans text-lg">{done}</p> : null}
     </main>
   );
 }
 
-function TextField({
-  id,
-  label,
-  error,
-  registration,
-  type = 'text',
-}: {
-  id: string;
-  label: string;
-  error?: string;
-  registration: UseFormRegisterReturn;
-  type?: string;
-}) {
+function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <label className="font-sans text-body font-bold text-white italic" htmlFor={id}>
-        {label}
-        <input
-          id={id}
-          type={type}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${id}-error` : undefined}
-          className="mt-1 h-[52px] w-full rounded-[2px] bg-white px-3 text-ink outline-none"
-          {...registration}
-        />
-      </label>
-      {error ? <FieldError id={`${id}-error`} message={error} /> : null}
+    <div className="grid grid-cols-[6.5rem_1fr] gap-3 border-b border-[#E4DFD6] px-4 py-3 last:border-b-0">
+      <dt className="text-sm text-[#6B675F]">{label}</dt>
+      <dd className="font-bold">{value}</dd>
     </div>
+  );
+}
+
+function TreatmentNotice({ onAccept, onBack }: { onAccept: () => void; onBack: () => void }) {
+  return (
+    <section className="flex flex-col gap-4 font-sans leading-6">
+      <h2 className="font-display text-2xl font-bold">Tratamiento de datos</h2>
+      <p>Para dejar constancia de esta autorización, SITU trata estos datos del adulto responsable:</p>
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Nombre completo</li>
+        <li>Tipo y número de documento</li>
+        <li>Correo de contacto</li>
+        <li>La decisión de autorizar, rechazar o revocar</li>
+        <li>Los permisos de transmisión en vivo y de ubicación</li>
+      </ul>
+      <p>La finalidad es permitir o negar el uso de la cuenta del menor, según la Ley 1581 de 2012. Puedes conocer, actualizar, rectificar y revocar esta autorización. Para ejercer esos derechos escribe a SITU desde la página de soporte.</p>
+      <button type="button" onClick={onAccept} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white">Sí, acepto</button>
+      <button type="button" onClick={onBack} className="font-bold text-[#FF6400]">Volver</button>
+    </section>
   );
 }

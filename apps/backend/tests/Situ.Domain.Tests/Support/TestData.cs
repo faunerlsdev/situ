@@ -13,6 +13,9 @@ internal static class TestData
         return User.Register(
             Email.Create($"user{years}@situ.test"),
             UserName.Create($"user{years}"),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create("3001234567"),
             "hash",
             birthDate,
             Guid.CreateVersion7(),

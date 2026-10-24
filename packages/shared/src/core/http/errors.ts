@@ -18,6 +18,8 @@ export class AppError extends Error {
   readonly userMessage: string;
   readonly apiCode?: string;
   readonly retryAfter?: string;
+  readonly accessToken?: string;
+  readonly accessTokenExpiresAt?: string;
 
   constructor(input: {
     code: AppErrorCode;
@@ -27,6 +29,8 @@ export class AppError extends Error {
     cause?: unknown;
     apiCode?: string;
     retryAfter?: string;
+    accessToken?: string;
+    accessTokenExpiresAt?: string;
   }) {
     super(input.userMessage, { cause: input.cause });
     this.name = 'AppError';
@@ -36,5 +40,7 @@ export class AppError extends Error {
     this.fieldErrors = input.fieldErrors;
     this.apiCode = input.apiCode;
     this.retryAfter = input.retryAfter;
+    this.accessToken = input.accessToken;
+    this.accessTokenExpiresAt = input.accessTokenExpiresAt;
   }
 }

@@ -1,35 +1,28 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { messageFromUnknown, passwordResetRequestSchema } from '@situ/shared';
+import { messageFromUnknown, notify, passwordResetRequestSchema } from '@situ/shared';
 import type { PasswordResetRequestValues } from '@situ/shared';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AuthField } from '@/components/auth-field';
 import { LogoAction } from '@/components/logo-action';
-import { StatusMessage } from '@/components/status-message';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
 export default function RecoverScreen() {
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const form = useForm<PasswordResetRequestValues>({
     resolver: zodResolver(passwordResetRequestSchema),
     defaultValues: { email: '' },
   });
 
   async function onSubmit(values: PasswordResetRequestValues) {
-    setError(null);
-    setNotice(null);
-
     try {
       await api.requestPasswordReset(values);
-      setNotice('Si el correo está registrado, enviaremos el enlace para elegir una contraseña nueva.');
+      notify.success('Si el correo está registrado, enviaremos el enlace para elegir una contraseña nueva.');
     } catch (cause) {
-      setError(messageFromUnknown(cause));
+      notify.error(messageFromUnknown(cause));
     }
   }
 
@@ -38,13 +31,12 @@ export default function RecoverScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Recuperar</Text>
         <Text style={styles.lede}>Escribe el correo de tu cuenta. Si está registrado, te enviaremos un enlace.</Text>
-        <StatusMessage error={error} notice={notice} />
         <Controller
           control={form.control}
           name="email"
           render={({ field }) => (
             <AuthField
-              icon={<SymbolView name={{ ios: 'person.fill', android: 'person', web: 'person' }} tintColor={theme.colors.ink} size={20} />}
+              icon={<SymbolView name={{ ios: 'person.fill', android: 'person', web: 'person' }} tintColor={theme.colors.textPrimary} size={20} />}
               value={field.value}
               onChangeText={field.onChange}
               placeholder="Correo"
@@ -65,7 +57,7 @@ export default function RecoverScreen() {
           }}
         />
         <View style={styles.back}>
-          <Link href="/login" style={styles.link}>
+          <Link href="/login" replace style={styles.link}>
             Volver a ingresar
           </Link>
         </View>
@@ -77,7 +69,7 @@ export default function RecoverScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.bg,
   },
   content: {
     flexGrow: 1,
@@ -87,21 +79,21 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
   },
   title: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.displayHeavyItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.displayHeavy,
     fontSize: 48,
     lineHeight: 56,
     textAlign: 'center',
   },
   lede: {
-    color: theme.colors.white,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
     textAlign: 'center',
   },
   link: {
-    color: theme.colors.white,
-    fontFamily: theme.fontFamily.sansBoldItalic,
+    color: theme.colors.textPrimary,
+    fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   back: {
@@ -111,7 +103,7 @@ const styles = StyleSheet.create({
     width: '80%',
     maxWidth: 360,
     alignSelf: 'center',
-    color: theme.colors.white,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 13,
   },

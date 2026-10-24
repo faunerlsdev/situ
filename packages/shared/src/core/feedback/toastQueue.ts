@@ -1,5 +1,7 @@
 export type ToastKind = 'success' | 'error' | 'warning' | 'info' | 'brand';
 
+export type ToastPlacement = 'top' | 'bottom';
+
 export type ToastAction = {
   label: string;
   onPress: () => void;
@@ -9,6 +11,7 @@ export type ToastInput = {
   kind: ToastKind;
   message: string;
   action?: ToastAction;
+  placement?: ToastPlacement;
 };
 
 export type ToastRecord = ToastInput & {
@@ -33,7 +36,7 @@ export function toastDuration(kind: ToastKind, hasAction: boolean): number {
     return 5_000;
   }
 
-  return 3_000;
+  return 5_000;
 }
 
 export function createToastQueue(options: QueueOptions = {}) {
@@ -116,7 +119,7 @@ export function createToastQueue(options: QueueOptions = {}) {
       return waiting.length;
     },
     enqueue(input: ToastInput): string | null {
-      const key = `${input.kind}:${input.message}`;
+      const key = `${input.kind}:${input.placement ?? 'top'}:${input.message}`;
       const at = now();
       const last = recent.get(key);
       if (last !== undefined && at - last < dedupMs) {

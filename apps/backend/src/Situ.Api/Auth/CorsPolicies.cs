@@ -11,7 +11,7 @@ public static class CorsPolicies
             return false;
         }
 
-        if (uri.Host is not ("localhost" or "127.0.0.1"))
+        if (uri.Host is not ("localhost" or "127.0.0.1" or "192.168.1.119"))
         {
             return false;
         }

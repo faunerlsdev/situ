@@ -105,7 +105,7 @@ export function MapPlaceholder() {
       )}
       <StatusMessage error={error} notice={notice} />
       <Text style={styles.label}>Comentario</Text>
-      <TextInput
+      <TextInput keyboardAppearance="dark"
         value={comment}
         onChangeText={setComment}
         editable={current !== undefined && !pending}
@@ -144,18 +144,18 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.display,
     fontSize: 40,
   },
   lede: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 15,
     lineHeight: 22,
   },
   body: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 15,
     lineHeight: 22,
@@ -168,45 +168,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: theme.colors.gray200,
+    borderColor: theme.colors.border,
     paddingHorizontal: 16,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.input,
   },
   modeSelected: {
-    borderColor: theme.colors.ink,
-    backgroundColor: theme.colors.ink,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primarySoft,
   },
   modeLabel: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   modeLabelSelected: {
-    color: theme.colors.white,
+    color: theme.colors.primary,
   },
   list: {
     gap: 8,
   },
   example: {
     borderWidth: 1,
-    borderColor: theme.colors.gray200,
+    borderColor: theme.colors.border,
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: theme.colors.white,
-  },
-  exampleSelected: {
-    borderColor: theme.colors.ink,
     backgroundColor: theme.colors.surface,
   },
+  exampleSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primarySoft,
+  },
   exampleTitle: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
   place: {
     marginTop: 4,
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 14,
   },
@@ -214,11 +214,11 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: theme.colors.ink,
+    backgroundColor: theme.colors.mapWater,
   },
   road: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: theme.colors.mapRoad,
     borderRadius: 999,
   },
   roadHorizontal: {
@@ -250,12 +250,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryLight,
   },
   section: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.display,
     fontSize: 28,
   },
   label: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 14,
   },

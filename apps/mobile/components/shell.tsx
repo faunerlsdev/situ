@@ -9,11 +9,11 @@ import { theme } from '@/theme/theme';
 
 const wordmark = require('../assets/images/brand/situ-wordmark-naranja.png');
 const searchIcon = require('../assets/images/icons/ic-buscar.png');
-const newsIcon = require('../assets/images/icons/situ-noticias.png');
-const mapIcon = require('../assets/images/icons/nav-mapa-globo.png');
-const chismeIcon = require('../assets/images/icons/nav-chisme-megafono.png');
-const liveIcon = require('../assets/images/icons/nav-en-vivo.png');
-const messagesIcon = require('../assets/images/icons/nav-mensajes.png');
+const newsIcon = require('../assets/images/icons/situ-noticias-dark.png');
+const mapIcon = require('../assets/images/icons/nav-mapa-globo-dark.png');
+const chismeIcon = require('../assets/images/icons/nav-chisme-megafono-dark.png');
+const liveIcon = require('../assets/images/icons/nav-en-vivo-dark.png');
+const messagesIcon = require('../assets/images/icons/nav-mensajes-dark.png');
 
 type ShellContextValue = {
   openDrawer: () => void;
@@ -120,7 +120,7 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalFill}>
         <Pressable accessibilityLabel="Cerrar menú" style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.drawer, { paddingTop: insets.top + 24 }, theme.shadowSheet]}>
+        <View style={[styles.drawer, { paddingTop: insets.top + 24 }, theme.shadow]}>
           <Text style={styles.drawerTitle}>Mi SITU</Text>
           <Pressable accessibilityRole="button" onPress={() => go('/perfil')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Perfil</Text>
@@ -154,10 +154,10 @@ function SearchSheet({ visible, onClose }: { visible: boolean; onClose: () => vo
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.searchScreen, { paddingTop: insets.top + 12 }]}>
-        <TextInput
+        <TextInput keyboardAppearance="dark"
           autoFocus
           placeholder="Buscar"
-          placeholderTextColor={theme.colors.gray400}
+          placeholderTextColor={theme.colors.textPlaceholder}
           accessibilityLabel="Buscar"
           style={styles.searchInput}
         />
@@ -206,10 +206,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.gray200,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceElevated,
   },
   avatarText: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
   },
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
     height: 32,
   },
   inactive: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
   dot: {
     width: 4,
@@ -259,18 +261,17 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: theme.colors.black,
-    opacity: 0.4,
+    backgroundColor: theme.colors.overlay,
   },
   drawer: {
     width: 280,
     height: '100%',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     paddingHorizontal: 20,
     gap: 8,
   },
   drawerTitle: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.display,
     fontSize: 28,
     marginBottom: 12,
@@ -280,18 +281,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   drawerLabel: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
   },
   soon: {
-    color: theme.colors.gray600,
+    color: theme.colors.textSecondary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 13,
   },
   searchScreen: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     paddingHorizontal: 16,
     gap: 12,
   },
@@ -299,9 +300,9 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: theme.radius.input,
     borderWidth: 1,
-    borderColor: theme.colors.gray200,
+    borderColor: theme.colors.border,
     paddingHorizontal: 14,
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
   },
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.bg,
     padding: 24,
   },
   news: {
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     height: 68,
   },
   emptyTitle: {
-    color: theme.colors.ink,
+    color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 22,
   },

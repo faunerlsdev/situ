@@ -80,17 +80,41 @@ export type ListLegalDocumentsResponse = {
 export type RegisterRequest = {
   email: string;
   userName: string;
+  givenNames: string;
+  surnames: string;
+  phone: string;
   password: string;
   dateOfBirth: string;
   countryId: string;
   regionId: string;
   cityId: string;
   acceptedDocumentIds: string[];
+  guardianEmail?: string;
+  minorNoticeAccepted?: boolean;
 };
 
 export type RegisterResponse = {
   userId: string;
   status: string;
+};
+
+export type GuardianConsentStatus = {
+  status: 'NotRequested' | 'Requested' | 'EmailVerified' | 'Authorized' | 'Declined' | 'Expired' | 'Revoked';
+  maskedEmail: string | null;
+  expiresAt: string | null;
+  resendsRemaining: number;
+  retryAfter: string | null;
+  minorNoticeRecorded: boolean;
+};
+
+export type GuardianConsentReview = {
+  userName: string;
+  age: number;
+  city: string;
+  minorStatement: string | null;
+  noticeVersion: string;
+  expiresAt: string;
+  requiresLiveAuthorization: boolean;
 };
 
 export type ConfirmEmailRequest = {
@@ -129,6 +153,7 @@ export type AuthorizeGuardianConsentRequest = {
   token: string;
   liveStreamingAuthorized: boolean;
   locationSharingAuthorized: boolean;
+  dataProcessingAccepted?: boolean;
 };
 
 export type AuthorizeGuardianConsentResponse = {
@@ -138,6 +163,7 @@ export type AuthorizeGuardianConsentResponse = {
 
 export type DeclineGuardianConsentRequest = {
   token: string;
+  reason?: string;
 };
 
 export type CommentRequest = {

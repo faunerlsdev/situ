@@ -7,6 +7,7 @@ public sealed record AuthorizeGuardianConsentRequest(
     bool LiveStreamingAuthorized,
     bool LocationSharingAuthorized,
     string? IpAddress,
-    string? UserAgent);
+    string? UserAgent,
+    bool DataProcessingAccepted = true);
 
 public sealed record AuthorizeGuardianConsentResponse(Guid UserId, UserStatus Status);

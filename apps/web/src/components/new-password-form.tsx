@@ -59,19 +59,19 @@ export function NewPasswordForm() {
   const errors = form.formState.errors;
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-primary px-6 py-10" noValidate>
-      <h1 className="font-display text-[42px] leading-none font-extrabold text-white italic">Nueva contraseña</h1>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-dvh flex-col items-center justify-center gap-4 splash-gradient px-6 py-10" noValidate>
+      <h1 className="font-display text-[42px] leading-none font-extrabold text-app-text italic">Nueva contraseña</h1>
       <FormStatus error={formError} notice={notice} />
       {ready ? (
         <>
           <PasswordField id="password" label="Contraseña nueva" error={errors.password?.message} registration={form.register('password')} />
           <PasswordField id="confirmation" label="Repite la contraseña" error={errors.confirmation?.message} registration={form.register('confirmation')} />
-          <button type="submit" disabled={form.formState.isSubmitting} className="font-sans text-[22px] font-bold text-white italic disabled:opacity-60">
+          <button type="submit" disabled={form.formState.isSubmitting} className="font-sans text-[22px] font-bold text-app-text italic disabled:opacity-60">
             {form.formState.isSubmitting ? 'Guardando…' : 'Guardar contraseña'}
           </button>
         </>
       ) : null}
-      <Link href="/login" className="font-sans text-body font-bold text-white italic">Volver a ingresar</Link>
+      <Link href="/login" className="font-sans text-body font-bold text-app-text italic">Volver a ingresar</Link>
     </form>
   );
 }
@@ -97,7 +97,7 @@ function PasswordField({
         aria-label={label}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="h-[52px] w-full rounded-[2px] bg-white px-3 font-sans text-body font-bold text-ink italic outline-none placeholder:text-gray400"
+        className="h-[52px] w-full rounded-[8px] border border-app-border bg-app-input focus:border-[1.5px] focus:border-primary px-3 font-sans text-body font-bold text-app-text italic outline-none placeholder:text-app-placeholder"
         {...registration}
       />
       {error ? <FieldError id={`${id}-error`} message={error} /> : null}

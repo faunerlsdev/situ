@@ -15,7 +15,7 @@ export function SiteHeader() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-gray200 bg-white">
+    <header className="border-b border-app-border bg-app-surface">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
         <Link href="/" className="rounded-full">
           <BrandMark />
@@ -30,7 +30,7 @@ export function SiteHeader() {
                     href={link.href}
                     aria-current={current ? 'page' : undefined}
                     className={`inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold ${
-                      current ? 'bg-ink text-white' : 'text-ink hover:bg-surface'
+                      current ? 'bg-primary text-app-on' : 'text-app-text hover:bg-app-elevated'
                     }`}
                   >
                     {link.label}

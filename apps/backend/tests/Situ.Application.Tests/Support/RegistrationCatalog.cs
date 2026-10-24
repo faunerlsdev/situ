@@ -39,6 +39,12 @@ internal sealed class FakeLinks : IPublicLinks
 
     public string GuardianEmailVerification(string plainToken) =>
         $"https://situ.test/api/v1/guardianship/consent/verify-email?token={Uri.EscapeDataString(plainToken)}";
+
+    public string GuardianReview(string plainToken) =>
+        $"https://situ.test/tutor/autorizar?token={Uri.EscapeDataString(plainToken)}";
+
+    public string GuardianManage(string plainToken) =>
+        $"https://situ.test/tutor/gestionar?token={Uri.EscapeDataString(plainToken)}";
 }
 
 internal sealed class FakePasswords : IPasswordHasher
@@ -77,6 +83,9 @@ internal static class RegistrationCatalog
         return new RegisterUserRequest(
             email,
             "ana",
+            "Ana",
+            "Pérez",
+            "3001234567",
             password ?? "Clave123",
             birth,
             catalog.CountryId,
@@ -92,7 +101,7 @@ internal static class RegistrationCatalog
         const string marker = "token=";
         var start = body.IndexOf(marker, StringComparison.Ordinal);
         Assert.True(start >= 0, body);
-        var value = body[(start + marker.Length)..].Split(['\r', '\n', ' '], 2, StringSplitOptions.RemoveEmptyEntries)[0];
+        var value = body[(start + marker.Length)..].Split(['\r', '\n', ' ', '"', '\'', '<', '>'], 2, StringSplitOptions.RemoveEmptyEntries)[0];
         return Uri.UnescapeDataString(value);
     }
 }
