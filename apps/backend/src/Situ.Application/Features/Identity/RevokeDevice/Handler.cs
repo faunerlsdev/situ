@@ -21,6 +21,13 @@ public sealed class RevokeDeviceHandler(IApplicationDbContext db, IClock clock, 
             return Result.Failure(Error.NotFound("auth.device_not_found", "No encontramos ese dispositivo."));
         }
 
+        if (currentUser.DeviceId == device.Id)
+        {
+            return Result.Failure(Error.Conflict(
+                "auth.current_device",
+                "Este es el dispositivo que estás usando. Ciérralo desde Cerrar sesión."));
+        }
+
         var now = clock.UtcNow;
         device.Revoke(now);
         var tokens = await db.RefreshTokens
@@ -31,6 +38,7 @@ public sealed class RevokeDeviceHandler(IApplicationDbContext db, IClock clock, 
             token.Revoke(now);
         }
 
+        await Notifications.DeviceAlerts.ForgetDevicesAsync(db, [device.Id], cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

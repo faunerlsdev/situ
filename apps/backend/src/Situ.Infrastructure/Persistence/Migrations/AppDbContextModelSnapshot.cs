@@ -584,7 +584,332 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Reenvíos del código del representante cada 15 minutos.",
                             Key = "guardian.max_code_resends_per_15_minutes",
                             Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("36ce246e-89eb-34b6-596d-491bfe5204c5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión del catálogo de categorías. Sube en cada cambio del panel.",
+                            Key = "reports.catalog_version",
+                            Value = "1"
+                        },
+                        new
+                        {
+                            Id = new Guid("299ad7d3-1684-a379-8afe-c0eaec3c5672"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Tamaño máximo de una imagen de reporte, en bytes.",
+                            Key = "reports.max_image_bytes",
+                            Value = "10485760"
+                        },
+                        new
+                        {
+                            Id = new Guid("b2940ee3-8bc6-0e79-a434-f503cfbe747c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Tamaño máximo de un video de reporte, en bytes.",
+                            Key = "reports.max_video_bytes",
+                            Value = "104857600"
+                        },
+                        new
+                        {
+                            Id = new Guid("56be27e0-278c-1ad7-4bde-746657f1b749"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Duración máxima de un video de reporte, en segundos.",
+                            Key = "reports.max_video_seconds",
+                            Value = "60"
+                        },
+                        new
+                        {
+                            Id = new Guid("54b1448c-e468-4228-f918-253bbef3988b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Imágenes máximas por reporte.",
+                            Key = "reports.max_images",
+                            Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("838da7e2-a185-60c6-dbd3-0867c5bda4fd"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Videos máximos por reporte.",
+                            Key = "reports.max_videos",
+                            Value = "1"
+                        },
+                        new
+                        {
+                            Id = new Guid("49d155ed-dc35-1873-210d-f1b359285f50"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Distancia máxima, en metros, para confirmar un reporte.",
+                            Key = "reports.confirmation_radius_meters",
+                            Value = "2000"
+                        },
+                        new
+                        {
+                            Id = new Guid("fbb88722-e86e-e028-2f51-533f20ee0dfb"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Porcentaje del TTL que suma un voto de sigue ahí.",
+                            Key = "reports.confirmation_extension_percent",
+                            Value = "25"
+                        },
+                        new
+                        {
+                            Id = new Guid("b9f7f0f4-15ff-1dde-0f03-62118010e53b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos mínimos que suma un voto de sigue ahí.",
+                            Key = "reports.confirmation_min_extension_minutes",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Id = new Guid("d1fe7f63-d6e0-f77c-5cc3-94c70071f355"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Horas antes de borrar un archivo que no se asoció a un reporte.",
+                            Key = "reports.pending_media_hours",
+                            Value = "24"
+                        },
+                        new
+                        {
+                            Id = new Guid("95eb09f1-2333-10d1-5346-36c8f448f29e"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Máximo de caracteres de la descripción de un reporte. El dominio sigue rechazando más de 1000.",
+                            Key = "reports.description_max_length",
+                            Value = "1000"
+                        },
+                        new
+                        {
+                            Id = new Guid("5b779df6-fa32-dfeb-45ca-7520cc2a721c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto del panel inferior cuando se quiere mirar el mapa.",
+                            Key = "panel.browse_copy",
+                            Value = "Quiero chismosear"
+                        },
+                        new
+                        {
+                            Id = new Guid("c57ed59f-80cf-527f-c3a6-c10ae087aafa"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto del panel inferior cuando se quiere publicar.",
+                            Key = "panel.report_copy",
+                            Value = "Quiero reportar algo"
+                        },
+                        new
+                        {
+                            Id = new Guid("cdd2e3cc-0f04-d20e-1ea3-6ac9beba5d06"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión mínima de la app iOS.",
+                            Key = "app.ios.min_supported_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("748ad046-c6ec-c36b-13dd-bf25a1e15d0e"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Última versión publicada de la app iOS.",
+                            Key = "app.ios.latest_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("08ed0c13-9bce-37a2-caf8-561565ee185a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión mínima de la app Android.",
+                            Key = "app.android.min_supported_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("6698c5fc-0ddd-a083-70f9-52c967bd1fcc"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Última versión publicada de la app Android.",
+                            Key = "app.android.latest_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("e44a2e93-6866-0d14-7630-7619361681f9"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión mínima de la web.",
+                            Key = "app.web.min_supported_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("6b02d73e-123d-7c60-9ea8-3df391d52f47"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Última versión publicada de la web.",
+                            Key = "app.web.latest_version",
+                            Value = "0.1.0"
+                        },
+                        new
+                        {
+                            Id = new Guid("14185d9e-c96d-3229-7427-7c3094a27b79"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Denuncias distintas que mandan un reporte o comentario a revisión.",
+                            Key = "moderation.complaint_threshold",
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("3ff56be3-0b28-1e3c-a215-8b976675fed3"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Comentarios anónimos que una persona puede publicar por día.",
+                            Key = "comments.max_anonymous_per_day",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("3d53c47b-fef6-42da-0d4d-588119b2c52a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Días de gracia antes de borrar una cuenta.",
+                            Key = "account.deletion_grace_days",
+                            Value = "14"
+                        },
+                        new
+                        {
+                            Id = new Guid("67f468e6-630f-9cca-09d7-9609ba28d80d"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Pushes que una persona puede recibir en una hora antes de agruparlos.",
+                            Key = "notifications.max_pushes_per_hour",
+                            Value = "6"
+                        },
+                        new
+                        {
+                            Id = new Guid("1582f5f1-5156-ade8-b3cd-2cbaf2905437"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Ciudades de interés adicionales permitidas. Hoy aplica a todos los planes.",
+                            Key = "notifications.max_interest_cities",
+                            Value = "3"
+                        },
+                        new
+                        {
+                            Id = new Guid("bd6ba2ae-be95-8c7a-614f-e87eb7d9a118"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos que vive la ubicación aproximada usada solo para alertas de proximidad.",
+                            Key = "notifications.alert_location_ttl_minutes",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("896ff7b6-df57-8b7d-ebbc-4b9899a9b78a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Trabajos de notificación que se procesan en cada lote.",
+                            Key = "notifications.dispatch_batch_size",
+                            Value = "50"
+                        },
+                        new
+                        {
+                            Id = new Guid("945fc2ee-3ace-90a5-4898-cbebe06ebdd6"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Mensajes máximos por lote hacia Expo Push.",
+                            Key = "notifications.push_batch_size",
+                            Value = "100"
+                        },
+                        new
+                        {
+                            Id = new Guid("1fcb5b43-144a-32c5-5926-77304b18e23a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Días mínimos entre cambios del nombre de usuario.",
+                            Key = "profile.username_change_days",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("c84209b0-abbf-981d-f5c7-5e373133afd9"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Nombres de usuario reservados, separados por coma. Se tratan igual que un nombre ya tomado.",
+                            Key = "profile.reserved_usernames",
+                            Value = "admin,administrador,soporte,support,situ,somossitu,moderador,moderator,ayuda,help,root,system,sistema,staff,oficial"
+                        },
+                        new
+                        {
+                            Id = new Guid("4907ff6e-2b6b-e914-9bd2-b22d60e80acd"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Términos que no pueden aparecer en el nombre, el usuario o la bio.",
+                            Key = "profile.blocked_terms",
+                            Value = "odio,nazi,porn,xxx,puta,mierda"
+                        },
+                        new
+                        {
+                            Id = new Guid("b6e4d61b-f8cc-b20a-c148-d69513e1bfcc"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Tamaño máximo de una foto de perfil, en bytes.",
+                            Key = "profile.avatar_max_bytes",
+                            Value = "5242880"
+                        },
+                        new
+                        {
+                            Id = new Guid("d01def08-e123-709a-9103-7d69b8e4d0b6"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "URL de los términos de uso.",
+                            Key = "legal.terms_url",
+                            Value = "https://somossitu.com/terminos"
+                        },
+                        new
+                        {
+                            Id = new Guid("40274796-e1be-33dd-c421-d47bcc59127f"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "URL de la política de tratamiento de datos.",
+                            Key = "legal.privacy_url",
+                            Value = "https://somossitu.com/privacidad"
+                        },
+                        new
+                        {
+                            Id = new Guid("54937a00-04dc-ef31-4bf8-63a7ca435f32"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "URL de soporte.",
+                            Key = "legal.support_url",
+                            Value = "https://somossitu.com/soporte"
                         });
+                });
+
+            modelBuilder.Entity("Situ.Domain.Anonymity.AnonymousParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer")
+                        .HasColumnName("index");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("target_type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_anonymous_participants");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_anonymous_participants_user_id");
+
+                    b.HasIndex("TargetType", "TargetId", "Index")
+                        .IsUnique()
+                        .HasDatabaseName("ux_anonymous_participants_target_type_target_id_index");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("TargetType", "TargetId", "Index"), false);
+
+                    b.HasIndex("TargetType", "TargetId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_anonymous_participants_target_type_target_id_user_id");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("TargetType", "TargetId", "UserId"), false);
+
+                    b.ToTable("anonymous_participants");
                 });
 
             modelBuilder.Entity("Situ.Domain.Geography.City", b =>
@@ -2161,6 +2486,10 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("user_name");
 
+                    b.Property<DateTimeOffset?>("UserNameChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("user_name_changed_at");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 
@@ -2689,11 +3018,19 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_complaints");
 
-                    b.HasIndex("ReporterId")
-                        .HasDatabaseName("ix_complaints_reporter_id");
-
                     b.HasIndex("ResolvedByStaffId")
                         .HasDatabaseName("ix_complaints_resolved_by_staff_id");
+
+                    b.HasIndex("ReporterId", "TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_complaints_reporter_id_target_type_target_id")
+                        .HasFilter("status IN ('Open', 'InReview')");
+
+                    b.HasIndex("Status", "IsPriority", "CreatedAt")
+                        .HasDatabaseName("ix_complaints_status_is_priority_created_at");
+
+                    b.HasIndex("TargetType", "TargetId", "Status")
+                        .HasDatabaseName("ix_complaints_target_type_target_id_status");
 
                     b.ToTable("complaints");
                 });
@@ -3440,6 +3777,68 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.ToTable("user_reputations");
                 });
 
+            modelBuilder.Entity("Situ.Domain.Notifications.DeviceAlertLocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<double?>("AccuracyMeters")
+                        .HasColumnType("double precision")
+                        .HasColumnName("accuracy_meters");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geography(point, 4326)")
+                        .HasColumnName("location");
+
+                    b.Property<DateTimeOffset>("ReportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reported_at");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_device_alert_locations");
+
+                    b.HasIndex("DeviceId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_device_alert_locations_device_id");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("DeviceId"), false);
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_device_alert_locations_expires_at");
+
+                    b.HasIndex("Location")
+                        .HasDatabaseName("ix_device_alert_locations_location");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_device_alert_locations_user_id");
+
+                    b.ToTable("device_alert_locations");
+                });
+
             modelBuilder.Entity("Situ.Domain.Notifications.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3452,9 +3851,20 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(400)")
                         .HasColumnName("body");
 
+                    b.Property<int>("BundleCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("bundle_count");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("GroupKey")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("group_key");
 
                     b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("timestamp with time zone")
@@ -3492,8 +3902,18 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_notifications");
 
-                    b.HasIndex("RecipientId")
-                        .HasDatabaseName("ix_notifications_recipient_id");
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_recipient_id_created_at");
+
+                    b.HasIndex("RecipientId", "GroupKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_notifications_recipient_id_group_key")
+                        .HasFilter("group_key IS NOT NULL");
+
+                    b.HasIndex("RecipientId", "TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_notifications_recipient_id_target_type_target_id")
+                        .HasFilter("target_id IS NOT NULL");
 
                     b.ToTable("notifications");
                 });
@@ -3551,6 +3971,64 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_notification_deliveries_notification_id");
 
                     b.ToTable("notification_deliveries");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Notifications.NotificationJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<DateTimeOffset>("AvailableAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("available_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("last_error");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notification_jobs");
+
+                    b.HasIndex("Kind", "SubjectId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_notification_jobs_kind_subject_id");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Kind", "SubjectId"), false);
+
+                    b.HasIndex("Status", "AvailableAt")
+                        .HasDatabaseName("ix_notification_jobs_status_available_at");
+
+                    b.ToTable("notification_jobs");
                 });
 
             modelBuilder.Entity("Situ.Domain.Notifications.NotificationPreference", b =>
@@ -3629,6 +4107,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("notify_important_news");
 
+                    b.Property<bool>("NotifyNearbyReports")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_nearby_reports");
+
                     b.Property<bool>("PushEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("push_enabled");
@@ -3640,6 +4124,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<TimeOnly?>("QuietHoursStart")
                         .HasColumnType("time without time zone")
                         .HasColumnName("quiet_hours_start");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("America/Bogota")
+                        .HasColumnName("time_zone_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -3959,6 +4451,116 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasName("pk_avatar_gallery_items");
 
                     b.ToTable("avatar_gallery_items");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("e0815563-ad7d-2dd9-c6f1-c17b4da44701"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/01.png",
+                            IsActive = true,
+                            Name = "Isotipo",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("58a6631b-5ea8-8009-11bd-c6f9232820fa"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/02.png",
+                            IsActive = true,
+                            Name = "Pin",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("17c39a1a-0fb8-c9d2-8289-59aa4c9a721f"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/03.png",
+                            IsActive = true,
+                            Name = "Megáfono",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("d3965a1e-3fc6-9ac3-b75e-03569a1b1d1b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/04.png",
+                            IsActive = true,
+                            Name = "Mapa",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("8cf97b9e-c6cb-ebbd-d2c5-0e834f1c16a9"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/05.png",
+                            IsActive = true,
+                            Name = "En vivo",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = new Guid("7cbf7190-f4fa-eedf-07a0-8ab678bb1704"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/06.png",
+                            IsActive = true,
+                            Name = "Mensajes",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("105bee35-295a-db26-02b9-c83e01167fc8"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/07.png",
+                            IsActive = true,
+                            Name = "Noticias",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("14f682a3-9c8a-ab87-7ab2-23194369c67c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/08.png",
+                            IsActive = true,
+                            Name = "Buscar",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("938ee6eb-b5d6-ebb0-2b66-c6b064a6c01a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/09.png",
+                            IsActive = true,
+                            Name = "Isotipo oscuro",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("e596b987-b91b-727a-d122-2508e68a4dd5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/10.png",
+                            IsActive = true,
+                            Name = "Genérico",
+                            SortOrder = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("721a65bc-05fb-172f-d98b-0d7a64dc88fa"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/11.png",
+                            IsActive = true,
+                            Name = "Evento",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("72628ba1-f367-e6bb-1a7b-77eceefa2d6e"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ImageUrl = "/assets/avatars/12.png",
+                            IsActive = true,
+                            Name = "Vía",
+                            SortOrder = 12
+                        });
                 });
 
             modelBuilder.Entity("Situ.Domain.Profiles.LocationShareRecipient", b =>
@@ -4114,8 +4716,8 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnName("avatar_url");
 
                     b.Property<string>("Bio")
-                        .HasMaxLength(280)
-                        .HasColumnType("character varying(280)")
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)")
                         .HasColumnName("bio");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -4254,8 +4856,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasIndex("AuthorId")
                         .HasDatabaseName("ix_comments_author_id");
 
-                    b.HasIndex("ParentCommentId")
-                        .HasDatabaseName("ix_comments_parent_comment_id");
+                    b.HasIndex("ParentCommentId", "CreatedAt")
+                        .HasDatabaseName("ix_comments_parent_comment_id_created_at");
+
+                    b.HasIndex("TargetType", "TargetId", "CreatedAt")
+                        .HasDatabaseName("ix_comments_target_type_target_id_created_at");
 
                     b.ToTable("comments");
                 });
@@ -4388,11 +4993,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("visibility");
+
                     b.HasKey("Id")
                         .HasName("pk_reports");
-
-                    b.HasIndex("AuthorId")
-                        .HasDatabaseName("ix_reports_author_id");
 
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_reports_category_id");
@@ -4404,6 +5012,15 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SourceLiveStreamId")
                         .HasDatabaseName("ix_reports_source_live_stream_id");
+
+                    b.HasIndex("AuthorId", "CreatedAt")
+                        .HasDatabaseName("ix_reports_author_id_created_at");
+
+                    b.HasIndex("CityId", "Status")
+                        .HasDatabaseName("ix_reports_city_id_status");
+
+                    b.HasIndex("Status", "ExpiresAt")
+                        .HasDatabaseName("ix_reports_status_expires_at");
 
                     b.HasIndex("CityId", "Status", "ExpiresAt")
                         .HasDatabaseName("ix_reports_city_id_status_expires_at");
@@ -4508,139 +5125,207 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("719d1e3b-7764-63f5-eb4e-3391cfedd76e"),
-                            ButtonIconUrl = "/icons/categories/traffic_accident-button.svg",
-                            Code = "traffic_accident",
+                            Id = new Guid("55313b4b-bfcb-9343-4b29-2d7cd06cea72"),
+                            ButtonIconUrl = "/assets/categories/accidente_transito.png",
+                            Code = "accidente_transito",
                             ColorHex = "#E53935",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Choques, atropellos y vehículos varados.",
                             ImportanceWeight = 8.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/traffic_accident-map.svg",
-                            MediaRequirement = "PhotoOrVideoRequired",
+                            MapIconUrl = "/assets/categories/accidente_transito.png",
+                            MediaRequirement = "None",
                             Name = "Accidente de tránsito",
                             SortOrder = 1,
-                            TtlMinutes = 180
+                            TtlMinutes = 90
                         },
                         new
                         {
-                            Id = new Guid("9e19ae16-481b-cc89-b257-dc51d75c6c1e"),
-                            ButtonIconUrl = "/icons/categories/theft-button.svg",
-                            Code = "theft",
+                            Id = new Guid("8e0cf07e-5a2a-04b8-eb81-107d47d4b7ad"),
+                            ButtonIconUrl = "/assets/categories/hurto.png",
+                            Code = "hurto",
                             ColorHex = "#8E24AA",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Hurtos que están ocurriendo ahora.",
                             ImportanceWeight = 7.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/theft-map.svg",
-                            MediaRequirement = "PhotoOrVideoRequired",
+                            MapIconUrl = "/assets/categories/hurto.png",
+                            MediaRequirement = "None",
                             Name = "Hurto",
                             SortOrder = 2,
-                            TtlMinutes = 360
+                            TtlMinutes = 240
                         },
                         new
                         {
-                            Id = new Guid("a3656a6c-4570-8435-65d3-4c8e44c5adf0"),
-                            ButtonIconUrl = "/icons/categories/checkpoint-button.svg",
-                            Code = "checkpoint",
+                            Id = new Guid("83cb3751-e08a-7f93-d36a-518e809adfbd"),
+                            ButtonIconUrl = "/assets/categories/puesto_control.png",
+                            Code = "puesto_control",
                             ColorHex = "#1E88E5",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Retenes, controles y puestos de vigilancia.",
-                            ImportanceWeight = 5.0,
+                            ImportanceWeight = 4.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/checkpoint-map.svg",
+                            MapIconUrl = "/assets/categories/puesto_control.png",
                             MediaRequirement = "None",
-                            Name = "Retén",
+                            Name = "Puesto de control",
                             SortOrder = 3,
                             TtlMinutes = 120
                         },
                         new
                         {
-                            Id = new Guid("6f916ffa-7888-abc4-94b5-3369f7955b9a"),
-                            ButtonIconUrl = "/icons/categories/garbage-button.svg",
-                            Code = "garbage",
+                            Id = new Guid("3861576d-40b5-9671-fce7-260f1fc63e98"),
+                            ButtonIconUrl = "/assets/categories/basuras.png",
+                            Code = "basuras",
                             ColorHex = "#43A047",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Basura acumulada, escombros o vertimientos.",
-                            ImportanceWeight = 3.0,
+                            ImportanceWeight = 2.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/garbage-map.svg",
-                            MediaRequirement = "PhotoRequired",
+                            MapIconUrl = "/assets/categories/basuras.png",
+                            MediaRequirement = "None",
                             Name = "Basuras",
                             SortOrder = 4,
                             TtlMinutes = 1440
                         },
                         new
                         {
-                            Id = new Guid("896328c8-018a-02bf-a488-c3b2906cf314"),
-                            ButtonIconUrl = "/icons/categories/road_closed-button.svg",
-                            Code = "road_closed",
+                            Id = new Guid("5ac7e05f-5847-7558-956c-063441e1db3b"),
+                            ButtonIconUrl = "/assets/categories/via_cerrada.png",
+                            Code = "via_cerrada",
                             ColorHex = "#FB8C00",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Cierres, derrumbes y tramos que no se pueden pasar.",
+                            Description = "Cierres y tramos que no se pueden pasar.",
                             ImportanceWeight = 6.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/road_closed-map.svg",
-                            MediaRequirement = "PhotoOrVideoRequired",
+                            MapIconUrl = "/assets/categories/via_cerrada.png",
+                            MediaRequirement = "None",
                             Name = "Vía cerrada",
                             SortOrder = 5,
                             TtlMinutes = 240
                         },
                         new
                         {
-                            Id = new Guid("4c9c8d83-0acf-4a06-a01a-741463642574"),
-                            ButtonIconUrl = "/icons/categories/fire-button.svg",
-                            Code = "fire",
-                            ColorHex = "#F4511E",
+                            Id = new Guid("546ba84a-00b0-6347-276f-36084cec1fa5"),
+                            ButtonIconUrl = "/assets/categories/derrumbe.png",
+                            Code = "derrumbe",
+                            ColorHex = "#6D4C41",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Incendios, humo o explosiones.",
-                            ImportanceWeight = 9.0,
+                            Description = "Derrumbes y material sobre la vía.",
+                            ImportanceWeight = 8.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/fire-map.svg",
-                            MediaRequirement = "PhotoOrVideoRequired",
-                            Name = "Incendio",
+                            MapIconUrl = "/assets/categories/derrumbe.png",
+                            MediaRequirement = "None",
+                            Name = "Derrumbe",
                             SortOrder = 6,
-                            TtlMinutes = 180
+                            TtlMinutes = 480
                         },
                         new
                         {
-                            Id = new Guid("64d82747-b8d5-a72e-d1e5-70190a90ea12"),
-                            ButtonIconUrl = "/icons/categories/flood-button.svg",
-                            Code = "flood",
+                            Id = new Guid("28671b9d-62e5-cdb7-3d9c-c825a4e523d6"),
+                            ButtonIconUrl = "/assets/categories/inundacion.png",
+                            Code = "inundacion",
                             ColorHex = "#039BE5",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "Calles anegadas, crecientes y desbordamientos.",
                             ImportanceWeight = 8.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/flood-map.svg",
-                            MediaRequirement = "PhotoOrVideoRequired",
+                            MapIconUrl = "/assets/categories/inundacion.png",
+                            MediaRequirement = "None",
                             Name = "Inundación",
                             SortOrder = 7,
+                            TtlMinutes = 360
+                        },
+                        new
+                        {
+                            Id = new Guid("84757588-1679-13d9-8580-e6b189f51307"),
+                            ButtonIconUrl = "/assets/categories/manifestacion.png",
+                            Code = "manifestacion",
+                            ColorHex = "#8D6E63",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Marchas, plantones y bloqueos.",
+                            ImportanceWeight = 6.0,
+                            IsActive = true,
+                            IsAdultOnly = false,
+                            MapIconUrl = "/assets/categories/manifestacion.png",
+                            MediaRequirement = "None",
+                            Name = "Manifestación",
+                            SortOrder = 8,
+                            TtlMinutes = 180
+                        },
+                        new
+                        {
+                            Id = new Guid("839bd530-255b-36d0-fd39-c9334172d621"),
+                            ButtonIconUrl = "/assets/categories/incendio.png",
+                            Code = "incendio",
+                            ColorHex = "#F4511E",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Incendios, humo o explosiones.",
+                            ImportanceWeight = 9.0,
+                            IsActive = true,
+                            IsAdultOnly = false,
+                            MapIconUrl = "/assets/categories/incendio.png",
+                            MediaRequirement = "None",
+                            Name = "Incendio",
+                            SortOrder = 9,
+                            TtlMinutes = 180
+                        },
+                        new
+                        {
+                            Id = new Guid("e9c62b0b-a002-63b6-5d01-084e5ea731ac"),
+                            ButtonIconUrl = "/assets/categories/obra_vial.png",
+                            Code = "obra_vial",
+                            ColorHex = "#FDD835",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Obras que cambian el paso por la vía.",
+                            ImportanceWeight = 3.0,
+                            IsActive = true,
+                            IsAdultOnly = false,
+                            MapIconUrl = "/assets/categories/obra_vial.png",
+                            MediaRequirement = "None",
+                            Name = "Obra vial",
+                            SortOrder = 10,
                             TtlMinutes = 720
                         },
                         new
                         {
-                            Id = new Guid("7ff00faf-5a30-f419-d5f3-25240c9be956"),
-                            ButtonIconUrl = "/icons/categories/other-button.svg",
-                            Code = "other",
-                            ColorHex = "#757575",
+                            Id = new Guid("d4b90458-fde7-f8b2-9696-130c76805d82"),
+                            ButtonIconUrl = "/assets/categories/corte_servicio.png",
+                            Code = "corte_servicio",
+                            ColorHex = "#546E7A",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Cualquier otra novedad en la calle.",
+                            Description = "Cortes de agua, luz o gas.",
+                            ImportanceWeight = 4.0,
+                            IsActive = true,
+                            IsAdultOnly = false,
+                            MapIconUrl = "/assets/categories/corte_servicio.png",
+                            MediaRequirement = "None",
+                            Name = "Corte de servicio",
+                            SortOrder = 11,
+                            TtlMinutes = 360
+                        },
+                        new
+                        {
+                            Id = new Guid("c9238d94-25ec-683c-26b0-7246af41e7d5"),
+                            ButtonIconUrl = "/assets/categories/evento.png",
+                            Code = "evento",
+                            ColorHex = "#7CB342",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Eventos que ocupan el espacio público.",
                             ImportanceWeight = 2.0,
                             IsActive = true,
                             IsAdultOnly = false,
-                            MapIconUrl = "/icons/categories/other-map.svg",
+                            MapIconUrl = "/assets/categories/evento.png",
                             MediaRequirement = "None",
-                            Name = "Otro",
-                            SortOrder = 8,
-                            TtlMinutes = 180
+                            Name = "Evento",
+                            SortOrder = 12,
+                            TtlMinutes = 240
                         });
                 });
 
@@ -4739,6 +5424,116 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("CategoryId", "Locale"), false);
 
                     b.ToTable("report_category_translations");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("1ebcc22d-ad6c-86b7-e963-8d2087157fc1"),
+                            CategoryId = new Guid("55313b4b-bfcb-9343-4b29-2d7cd06cea72"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Choques, atropellos y vehículos varados.",
+                            Locale = "es-CO",
+                            Name = "Accidente de tránsito"
+                        },
+                        new
+                        {
+                            Id = new Guid("67ae33a0-b736-406c-7b56-30a6ca5561a9"),
+                            CategoryId = new Guid("8e0cf07e-5a2a-04b8-eb81-107d47d4b7ad"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Hurtos que están ocurriendo ahora.",
+                            Locale = "es-CO",
+                            Name = "Hurto"
+                        },
+                        new
+                        {
+                            Id = new Guid("983f528d-a6b7-6e77-6982-04b7d3aa210d"),
+                            CategoryId = new Guid("83cb3751-e08a-7f93-d36a-518e809adfbd"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Retenes, controles y puestos de vigilancia.",
+                            Locale = "es-CO",
+                            Name = "Puesto de control"
+                        },
+                        new
+                        {
+                            Id = new Guid("9b0307aa-aefa-eca4-d2f7-9f773dd6b375"),
+                            CategoryId = new Guid("3861576d-40b5-9671-fce7-260f1fc63e98"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Basura acumulada, escombros o vertimientos.",
+                            Locale = "es-CO",
+                            Name = "Basuras"
+                        },
+                        new
+                        {
+                            Id = new Guid("96e621c4-6abd-c66d-b7e7-d3e8aea34ea7"),
+                            CategoryId = new Guid("5ac7e05f-5847-7558-956c-063441e1db3b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Cierres y tramos que no se pueden pasar.",
+                            Locale = "es-CO",
+                            Name = "Vía cerrada"
+                        },
+                        new
+                        {
+                            Id = new Guid("586f102d-b247-fb01-652c-ea2e1cae24a4"),
+                            CategoryId = new Guid("546ba84a-00b0-6347-276f-36084cec1fa5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Derrumbes y material sobre la vía.",
+                            Locale = "es-CO",
+                            Name = "Derrumbe"
+                        },
+                        new
+                        {
+                            Id = new Guid("d0f5a633-6dae-a29a-76c4-9358294d37f5"),
+                            CategoryId = new Guid("28671b9d-62e5-cdb7-3d9c-c825a4e523d6"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Calles anegadas, crecientes y desbordamientos.",
+                            Locale = "es-CO",
+                            Name = "Inundación"
+                        },
+                        new
+                        {
+                            Id = new Guid("47646830-7260-864a-8747-4c455afd27fb"),
+                            CategoryId = new Guid("84757588-1679-13d9-8580-e6b189f51307"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Marchas, plantones y bloqueos.",
+                            Locale = "es-CO",
+                            Name = "Manifestación"
+                        },
+                        new
+                        {
+                            Id = new Guid("dddf1838-cb96-9bd2-b8b2-99fba4728fb3"),
+                            CategoryId = new Guid("839bd530-255b-36d0-fd39-c9334172d621"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Incendios, humo o explosiones.",
+                            Locale = "es-CO",
+                            Name = "Incendio"
+                        },
+                        new
+                        {
+                            Id = new Guid("42925d6a-4c74-2870-7698-9acc3a09d232"),
+                            CategoryId = new Guid("e9c62b0b-a002-63b6-5d01-084e5ea731ac"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Obras que cambian el paso por la vía.",
+                            Locale = "es-CO",
+                            Name = "Obra vial"
+                        },
+                        new
+                        {
+                            Id = new Guid("440d0708-b772-7936-a382-1b32ab8fc93c"),
+                            CategoryId = new Guid("d4b90458-fde7-f8b2-9696-130c76805d82"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Cortes de agua, luz o gas.",
+                            Locale = "es-CO",
+                            Name = "Corte de servicio"
+                        },
+                        new
+                        {
+                            Id = new Guid("2f92942a-bbe0-ecfc-a451-8115678d164c"),
+                            CategoryId = new Guid("c9238d94-25ec-683c-26b0-7246af41e7d5"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Eventos que ocupan el espacio público.",
+                            Locale = "es-CO",
+                            Name = "Evento"
+                        });
                 });
 
             modelBuilder.Entity("Situ.Domain.Reports.ReportConfirmation", b =>
@@ -4811,13 +5606,17 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("faces_blurred");
 
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
                     b.Property<string>("ProcessingStatus")
                         .IsRequired()
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("processing_status");
 
-                    b.Property<Guid>("ReportId")
+                    b.Property<Guid?>("ReportId")
                         .HasColumnType("uuid")
                         .HasColumnName("report_id");
 
@@ -4852,6 +5651,9 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_report_media");
+
+                    b.HasIndex("OwnerUserId")
+                        .HasDatabaseName("ix_report_media_owner_user_id");
 
                     b.HasIndex("ReportId")
                         .HasDatabaseName("ix_report_media_report_id");
@@ -4896,6 +5698,9 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_account_deletion_requests_user_id");
+
+                    b.HasIndex("Status", "ScheduledFor")
+                        .HasDatabaseName("ix_account_deletion_requests_status_scheduled_for");
 
                     b.ToTable("account_deletion_requests");
                 });
@@ -5161,6 +5966,25 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTimeOffset?>("OriginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("origin_at");
+
+                    b.Property<Guid?>("OriginTargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("origin_target_id");
+
+                    b.Property<string>("OriginTargetType")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("origin_target_type");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("scope");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -5168,14 +5992,17 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_user_blocks");
 
-                    b.HasIndex("BlockedUserId")
-                        .HasDatabaseName("ix_user_blocks_blocked_user_id");
+                    b.HasIndex("BlockedUserId", "Scope")
+                        .HasDatabaseName("ix_user_blocks_blocked_user_id_scope");
 
-                    b.HasIndex("BlockerId", "BlockedUserId")
+                    b.HasIndex("BlockerId", "Scope")
+                        .HasDatabaseName("ix_user_blocks_blocker_id_scope");
+
+                    b.HasIndex("BlockerId", "BlockedUserId", "Scope")
                         .IsUnique()
-                        .HasDatabaseName("ux_user_blocks_blocker_id_blocked_user_id");
+                        .HasDatabaseName("ux_user_blocks_blocker_id_blocked_user_id_scope");
 
-                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("BlockerId", "BlockedUserId"), false);
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("BlockerId", "BlockedUserId", "Scope"), false);
 
                     b.ToTable("user_blocks");
                 });
@@ -5220,6 +6047,16 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_staff_permissions_role_id");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Anonymity.AnonymousParticipant", b =>
+                {
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_anonymous_participants_user_id");
                 });
 
             modelBuilder.Entity("Situ.Domain.Geography.City", b =>
@@ -5599,6 +6436,23 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_user_reputations_user_id");
                 });
 
+            modelBuilder.Entity("Situ.Domain.Notifications.DeviceAlertLocation", b =>
+                {
+                    b.HasOne("Situ.Domain.Identity.UserDevice", null)
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_device_alert_locations_device_id");
+
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_device_alert_locations_user_id");
+                });
+
             modelBuilder.Entity("Situ.Domain.Notifications.Notification", b =>
                 {
                     b.HasOne("Situ.Domain.Identity.User", null)
@@ -5901,11 +6755,17 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Situ.Domain.Reports.ReportMedia", b =>
                 {
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_report_media_owner_user_id");
+
                     b.HasOne("Situ.Domain.Reports.Report", null)
                         .WithMany()
                         .HasForeignKey("ReportId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_report_media_report_id");
                 });
 

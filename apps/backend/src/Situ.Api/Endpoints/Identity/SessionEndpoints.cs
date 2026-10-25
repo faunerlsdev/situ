@@ -30,13 +30,26 @@ public sealed class SessionEndpoints : IEndpoint
             .WithTags("Identity")
             .Produces<ListMyDevicesResponse>()
             .RequireRateLimiting(AuthRateLimit.Policy)
-            .RequireAuthorization(AuthorizationPolicies.User);
+            .RequireAuthorization(AuthorizationPolicies.DeviceSession);
 
         group.MapDelete("/auth/devices/{deviceId:guid}", Revoke)
             .WithName("RevokeDevice")
             .WithTags("Identity")
             .RequireRateLimiting(AuthRateLimit.Policy)
-            .RequireAuthorization(AuthorizationPolicies.User);
+            .RequireAuthorization(AuthorizationPolicies.DeviceSession);
+
+        group.MapGet("/me/devices", ListDevices)
+            .WithName("ListMyAccountDevices")
+            .WithTags("Identity")
+            .Produces<ListMyDevicesResponse>()
+            .RequireRateLimiting(AuthRateLimit.Policy)
+            .RequireAuthorization(AuthorizationPolicies.DeviceSession);
+
+        group.MapDelete("/me/devices/{deviceId:guid}", Revoke)
+            .WithName("RevokeMyAccountDevice")
+            .WithTags("Identity")
+            .RequireRateLimiting(AuthRateLimit.Policy)
+            .RequireAuthorization(AuthorizationPolicies.DeviceSession);
     }
 
     private static async Task<IResult> SignOut(

@@ -14,5 +14,10 @@ public sealed class ComplaintConfiguration : IEntityTypeConfiguration<Complaint>
         builder.Property(e => e.Resolution).HasMaxLength(1000);
         builder.Required<Complaint, User>(e => e.ReporterId);
         builder.Optional<Complaint, User>(e => e.ResolvedByStaffId);
+        builder.HasIndex(e => new { e.Status, e.IsPriority, e.CreatedAt });
+        builder.HasIndex(e => new { e.TargetType, e.TargetId, e.Status });
+        builder.HasIndex(e => new { e.ReporterId, e.TargetType, e.TargetId })
+            .IsUnique()
+            .HasFilter("status IN ('Open', 'InReview')");
     }
 }

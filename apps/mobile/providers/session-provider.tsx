@@ -5,12 +5,14 @@ import * as SecureStore from 'expo-secure-store';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { api, isGuardianSession, setAccessToken, setSessionHandlers } from '@/lib/api';
+import { pauseAlertLocation, resumeAlertLocation } from '@/features/notifications/logic';
+import { api, isDeviceLimitSession, isGuardianSession, setAccessToken, setSessionHandlers } from '@/lib/api';
 
 const accessKey = 'situ.accessToken';
 const refreshKey = 'situ.refreshToken';
 const expiresKey = 'situ.accessExpiresAt';
 const biometricKey = 'situ.biometricUnlock';
+const pushTokenKey = 'situ.push.token';
 
 type SessionContextValue = {
   isReady: boolean;
@@ -77,7 +79,7 @@ async function doRefresh(): Promise<string | null> {
 }
 
 async function ensureFresh() {
-  if (biometricLocked || isGuardianSession()) {
+  if (biometricLocked || isGuardianSession() || isDeviceLimitSession()) {
     return;
   }
   const accessToken = await SecureStore.getItemAsync(accessKey);
@@ -104,12 +106,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     biometricLocked = false;
+    pauseAlertLocation();
+    await api.clearPushToken().catch(() => undefined);
     const refreshToken = await SecureStore.getItemAsync(refreshKey);
     if (refreshToken) {
       await api.signOut(refreshToken).catch(() => undefined);
     }
 
     await clearStoredSession();
+    await SecureStore.deleteItemAsync(pushTokenKey).catch(() => undefined);
     await SecureStore.deleteItemAsync(biometricKey);
     setCanUnlock(false);
     setSignedIn(false);
@@ -124,7 +129,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   setSessionHandlers({
     prepareRequest: ensureFresh,
     refreshAccessToken: async () => {
-      if (isGuardianSession()) {
+      if (isGuardianSession() || isDeviceLimitSession()) {
         return null;
       }
 
@@ -195,6 +200,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (session: AuthSession, biometric: boolean) => {
     biometricLocked = false;
+    resumeAlertLocation();
     await persist(session);
     if (biometric) {
       await SecureStore.setItemAsync(biometricKey, '1');

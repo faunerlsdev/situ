@@ -135,6 +135,7 @@ export type ResetPasswordRequest = {
 };
 
 export type ChangePasswordRequest = {
+  keepCurrentSession?: boolean;
   currentPassword: string;
   newPassword: string;
 };

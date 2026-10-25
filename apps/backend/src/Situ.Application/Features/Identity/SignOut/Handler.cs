@@ -28,6 +28,7 @@ public sealed class SignOutHandler(IApplicationDbContext db, IClock clock, IToke
         current.Revoke(now);
         var device = await db.UserDevices.FirstOrDefaultAsync(item => item.Id == current.UserDeviceId, cancellationToken);
         device?.Revoke(now);
+        await Notifications.DeviceAlerts.ForgetDevicesAsync(db, [current.UserDeviceId], cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

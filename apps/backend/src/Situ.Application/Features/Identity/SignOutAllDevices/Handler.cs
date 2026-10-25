@@ -31,6 +31,7 @@ public sealed class SignOutAllDevicesHandler(IApplicationDbContext db, IClock cl
             device.Revoke(now);
         }
 
+        await Notifications.DeviceAlerts.ForgetDevicesAsync(db, devices.Select(item => item.Id).ToArray(), cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return Result.Success();
     }

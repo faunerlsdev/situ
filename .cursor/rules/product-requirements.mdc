@@ -10,14 +10,15 @@ Al implementar una función, respeta estas reglas. Si el dominio ya las codifica
 ## Mapa y reportes
 
 - Panel del mapa: "Quiero chismosear" / "Quiero reportar algo".
-- Categorías dinámicas, administradas en el panel admin: TTL, peso de importancia, media requerida y flag solo-adultos.
-- Un reporte lleva fotos o video. Otros usuarios confirman "sigue ahí" o "ya no está", reaccionan y comentan.
+- Categorías dinámicas, administradas en el panel admin: TTL, peso de importancia, media requerida y flag solo-adultos. El catálogo público trae `catalogVersion` y ETag; si no cambió, responde 304.
+- Un reporte lleva fotos o video. La multimedia se sube antes y el reporte referencia `mediaIds`. Otros usuarios confirman "sigue ahí" o "ya no está", reaccionan y comentan.
+- Un menor de 18 solo puede publicar con visibilidad Public si el reporte es anónimo. Si no, el servidor responde 403 `report.minor_public_identity` y no cambia la visibilidad.
 
 ## Perfil, ubicación y anonimato
 
 - Perfil público o privado.
 - Ubicación configurable: tiempo real si el perfil es público; si no, la del último reporte. Compartir ubicación solo con amigos.
-- Anonimato en reportes, comentarios y transmisiones. Nombre visible: "Situero anónimo" o, dentro de una misma conversación, "Situero anónimo N" (el índice no se reutiliza entre publicaciones). Antigüedad: "Miembro desde mes/año", nunca el día exacto. El autor real se guarda para moderación y ley.
+- Anonimato en reportes, comentarios y transmisiones. Nombre visible: "Situero anónimo" o, dentro de una misma conversación, "Situero anónimo N" (el índice no se reutiliza entre publicaciones). Antigüedad: "Miembro desde mes/año", nunca el día exacto. El autor real se guarda para moderación y ley. Ninguna respuesta de reportes devuelve el id, el avatar ni el perfil de un autor anónimo. `hideAuthorOnMap` avisa al mapa que no debe mostrar ese avatar (RF-UBI-11).
 
 ## Notificaciones, planes y cuenta
 

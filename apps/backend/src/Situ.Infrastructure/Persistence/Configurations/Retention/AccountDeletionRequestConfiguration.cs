@@ -11,5 +11,6 @@ public sealed class AccountDeletionRequestConfiguration : IEntityTypeConfigurati
     public void Configure(EntityTypeBuilder<AccountDeletionRequest> builder)
     {
         builder.Required<AccountDeletionRequest, User>(e => e.UserId);
+        builder.HasIndex(e => new { e.Status, e.ScheduledFor });
     }
 }

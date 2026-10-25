@@ -13,5 +13,7 @@ public sealed class CommentConfiguration : IEntityTypeConfiguration<Comment>
         builder.Property(e => e.Text).HasMaxLength(500);
         builder.Required<Comment, User>(e => e.AuthorId);
         builder.Optional<Comment, Comment>(e => e.ParentCommentId);
+        builder.HasIndex(e => new { e.TargetType, e.TargetId, e.CreatedAt });
+        builder.HasIndex(e => new { e.ParentCommentId, e.CreatedAt });
     }
 }

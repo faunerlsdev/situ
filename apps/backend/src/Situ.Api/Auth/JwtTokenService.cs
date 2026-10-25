@@ -10,7 +10,7 @@ namespace Situ.Api.Auth;
 
 public sealed class JwtTokenService(JwtOptions options) : ITokenService
 {
-    public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null)
+    public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null, string? role = null, Guid? deviceId = null)
     {
         var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)),
@@ -19,6 +19,16 @@ public sealed class JwtTokenService(JwtOptions options) : ITokenService
         if (!string.IsNullOrWhiteSpace(scope))
         {
             claims.Add(new Claim("scope", scope));
+        }
+
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            claims.Add(new Claim("role", role));
+        }
+
+        if (deviceId is { } currentDevice)
+        {
+            claims.Add(new Claim("did", currentDevice.ToString()));
         }
 
         var token = new JwtSecurityToken(

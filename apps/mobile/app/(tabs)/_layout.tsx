@@ -21,7 +21,7 @@ export default function TabsLayout() {
       >
         <Tabs.Screen name="mapa" options={{ title: 'Mapa' }} />
         <Tabs.Screen name="chisme" options={{ title: 'Chisme' }} />
-        <Tabs.Screen name="notificaciones" options={{ title: 'En vivo' }} />
+        <Tabs.Screen name="notificaciones" options={{ title: 'Alertas' }} />
         <Tabs.Screen name="mensajes" options={{ title: 'Mensajes' }} />
         <Tabs.Screen name="amigos" options={{ href: null, title: 'Amigos' }} />
         <Tabs.Screen name="perfil" options={{ href: null, title: 'Perfil' }} />

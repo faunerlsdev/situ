@@ -1,8 +1,14 @@
+import { notificationMessages, notify, profileMessages } from '@situ/shared';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'expo-router';
+import * as Location from 'expo-location';
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { setMapPlace } from '@/features/reports/place';
+import { api } from '@/lib/api';
 
 import { useSession } from '@/providers/session-provider';
 import { theme } from '@/theme/theme';
@@ -25,7 +31,7 @@ const ShellContext = createContext<ShellContextValue | null>(null);
 const tabs = [
   { href: '/mapa', label: 'Mapa', icon: mapIcon },
   { href: '/chisme', label: 'Chisme', icon: chismeIcon },
-  { href: '/notificaciones', label: 'En vivo', icon: liveIcon },
+  { href: '/notificaciones', label: notificationMessages.tab, icon: liveIcon },
   { href: '/mensajes', label: 'Mensajes', icon: messagesIcon },
 ] as const;
 
@@ -96,7 +102,10 @@ export function WazeTabBar() {
               onPress={() => router.navigate(tab.href)}
               style={styles.tab}
             >
-              <Image source={tab.icon} resizeMode="contain" style={[styles.tabIcon, !active && styles.inactive]} />
+              <View>
+                <Image source={tab.icon} resizeMode="contain" style={[styles.tabIcon, !active && styles.inactive]} />
+                {tab.href === '/notificaciones' ? <UnreadBadge /> : null}
+              </View>
               {active ? <View style={styles.dot} /> : <View style={styles.dotSpacer} />}
             </Pressable>
           );
@@ -106,12 +115,26 @@ export function WazeTabBar() {
   );
 }
 
+function UnreadBadge() {
+  const unread = useQuery({ queryKey: ['notifications', 'unread'], queryFn: () => api.unreadNotificationCount() });
+  const count = Number(unread.data?.count ?? 0);
+  if (count <= 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.badge} accessibilityLabel={`${count} sin leer`}>
+      <Text style={styles.badgeText}>{count > 99 ? '99+' : String(count)}</Text>
+    </View>
+  );
+}
+
 function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const router = useRouter();
   const { signOut } = useSession();
   const insets = useSafeAreaInsets();
 
-  function go(href: '/perfil' | '/amigos') {
+  function go(href: '/perfil' | '/amigos' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
     onClose();
     router.push(href);
   }
@@ -122,16 +145,24 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
         <Pressable accessibilityLabel="Cerrar menú" style={styles.backdrop} onPress={onClose} />
         <View style={[styles.drawer, { paddingTop: insets.top + 24 }, theme.shadow]}>
           <Text style={styles.drawerTitle}>Mi SITU</Text>
-          <Pressable accessibilityRole="button" onPress={() => go('/perfil')} style={styles.drawerRow}>
-            <Text style={styles.drawerLabel}>Perfil</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.menu} onPress={() => go('/perfil')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>{profileMessages.menu}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" onPress={() => go('/amigos')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Amigos</Text>
           </Pressable>
-          <View style={styles.drawerRow}>
-            <Text style={styles.drawerLabel}>Ajustes</Text>
-            <Text style={styles.soon}>Próximamente</Text>
-          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mis reportes" onPress={() => go('/reportes')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>Mis reportes</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Privacidad" onPress={() => go('/bloqueados')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>Privacidad</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Mi cuenta" onPress={() => go('/cuenta')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>Mi cuenta</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={notificationMessages.settingsMenu} onPress={() => go('/ajustes')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>{notificationMessages.settingsMenu}</Text>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => {
@@ -150,24 +181,81 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
 
 function SearchSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ latitude: number; longitude: number; label: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  async function search() {
+    const text = query.trim();
+    if (text.length === 0) {
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const found = await Location.geocodeAsync(text);
+      if (found.length === 0) {
+        setResults([]);
+        notify.warning('No encontramos ese lugar.');
+        return;
+      }
+
+      const labeled = await Promise.all(found.slice(0, 5).map(async (item, index) => {
+        let label = text;
+        try {
+          const reversed = await Location.reverseGeocodeAsync(item);
+          const first = reversed[0];
+          const parts = first ? [first.name, first.street, first.city, first.region].filter((part) => part && part.length > 0) : [];
+          if (parts.length > 0) {
+            label = parts.join(', ');
+          }
+        } catch {
+          label = `${text} (${index + 1})`;
+        }
+        return { latitude: item.latitude, longitude: item.longitude, label };
+      }));
+      setResults(labeled);
+    } catch {
+      notify.warning('No pudimos buscar esa dirección.');
+    } finally {
+      setSearching(false);
+    }
+  }
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.searchScreen, { paddingTop: insets.top + 12 }]}>
-        <TextInput keyboardAppearance="dark"
+        <TextInput
+          keyboardAppearance="dark"
           autoFocus
-          placeholder="Buscar"
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={() => void search()}
+          placeholder="Buscar dirección o lugar"
           placeholderTextColor={theme.colors.textPlaceholder}
-          accessibilityLabel="Buscar"
+          accessibilityLabel="Buscar dirección o lugar"
           style={styles.searchInput}
         />
-        <Pressable accessibilityRole="button" onPress={onClose}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Cerrar búsqueda" onPress={onClose}>
           <Text style={styles.cancel}>Cerrar</Text>
         </Pressable>
-        <View style={styles.empty}>
-          <Image source={newsIcon} resizeMode="contain" style={styles.news} />
-          <Text style={styles.soon}>Próximamente</Text>
-        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Buscar" onPress={() => void search()} style={styles.drawerRow}>
+          <Text style={styles.drawerLabel}>{searching ? 'Buscando…' : 'Buscar'}</Text>
+        </Pressable>
+        {results.map((item) => (
+          <Pressable
+            key={`${item.latitude}-${item.longitude}-${item.label}`}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
+            onPress={() => {
+              setMapPlace(item);
+              onClose();
+            }}
+            style={styles.drawerRow}
+          >
+            <Text style={styles.drawerLabel}>{item.label}</Text>
+          </Pressable>
+        ))}
       </View>
     </Modal>
   );
@@ -254,6 +342,23 @@ const styles = StyleSheet.create({
   dotSpacer: {
     width: 4,
     height: 4,
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.dangerSolid,
+  },
+  badgeText: {
+    color: theme.colors.textOnDanger,
+    fontFamily: theme.fontFamily.sansBold,
+    fontSize: 11,
   },
   modalFill: {
     flex: 1,

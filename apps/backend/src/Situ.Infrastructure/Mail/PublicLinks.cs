@@ -33,4 +33,10 @@ public sealed class PublicLinks(EmailOptions options) : IPublicLinks
         var root = options.WebPublicBaseUrl.TrimEnd('/');
         return $"{root}/tutor/gestionar?token={Uri.EscapeDataString(plainToken)}";
     }
+
+    public string Absolute(string path)
+    {
+        var relative = path.StartsWith('/') ? path : "/" + path;
+        return options.ApiPublicBaseUrl.TrimEnd('/') + relative;
+    }
 }

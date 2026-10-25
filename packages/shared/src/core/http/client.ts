@@ -22,7 +22,7 @@ declare module 'axios' {
 }
 
 export type HttpRequest = {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   url: string;
   data?: unknown;
   headers?: Record<string, string>;
@@ -32,10 +32,18 @@ export type HttpRequest = {
   signal?: AbortSignal;
   onUploadProgress?: (percent: number) => void;
   baseURL?: string;
+  validateStatus?: (status: number) => boolean;
+};
+
+export type HttpResponse<T> = {
+  data: T | undefined;
+  status: number;
+  headers: Record<string, string>;
 };
 
 export type HttpClient = {
   request<T>(request: HttpRequest): Promise<T>;
+  requestResponse<T>(request: HttpRequest): Promise<HttpResponse<T>>;
 };
 
 export type HttpClientOptions = {
@@ -61,32 +69,47 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 
   return {
     async request<T>(request: HttpRequest): Promise<T> {
-      const response = await instance.request<T>({
-        url: request.url,
-        method: request.method ?? 'GET',
-        data: request.data,
-        headers: request.headers,
-        timeout: request.timeoutMs,
-        signal: request.signal,
-        baseURL: request.baseURL,
-        skipAuthRefresh: request.skipAuthRefresh,
-        requiresAuth: request.requiresAuth,
-        onUploadProgress: request.onUploadProgress
-          ? (event) => {
-              if (event.total && event.total > 0) {
-                request.onUploadProgress?.(Math.round((event.loaded / event.total) * 100));
-              }
-            }
-          : undefined,
-      });
-
-      if (response.status === 204 || response.data === '' || response.data === undefined) {
-        return undefined as T;
-      }
-
-      return response.data;
+      const response = await execute<T>(instance, request);
+      return response.data as T;
+    },
+    requestResponse<T>(request: HttpRequest) {
+      return execute<T>(instance, request);
     },
   };
+}
+
+async function execute<T>(instance: AxiosInstance, request: HttpRequest): Promise<HttpResponse<T>> {
+  const response = await instance.request<T>({
+    url: request.url,
+    method: request.method ?? 'GET',
+    data: request.data,
+    headers: request.headers,
+    timeout: request.timeoutMs,
+    signal: request.signal,
+    baseURL: request.baseURL,
+    skipAuthRefresh: request.skipAuthRefresh,
+    requiresAuth: request.requiresAuth,
+    validateStatus: request.validateStatus,
+    onUploadProgress: request.onUploadProgress
+      ? (event) => {
+          if (event.total && event.total > 0) {
+            request.onUploadProgress?.(Math.round((event.loaded / event.total) * 100));
+          }
+        }
+      : undefined,
+  });
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(response.headers)) {
+    if (typeof value === 'string') {
+      headers[key.toLowerCase()] = value;
+    }
+  }
+
+  if (response.status === 204 || response.status === 304 || response.data === '' || response.data === undefined) {
+    return { data: undefined, status: response.status, headers };
+  }
+
+  return { data: response.data, status: response.status, headers };
 }
 
 function attachInterceptors(

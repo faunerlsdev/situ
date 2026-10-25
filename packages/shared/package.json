@@ -10,10 +10,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "openapi": "openapi-typescript \"${OPENAPI_URL:-http://127.0.0.1:5080/openapi/v1.json}\" -o src/schema.d.ts",
+    "openapi:check": "openapi-typescript \"${OPENAPI_URL:-http://127.0.0.1:5080/openapi/v1.json}\" -o \"${TMPDIR:-/tmp}/situ-schema.d.ts\" && diff -q src/schema.d.ts \"${TMPDIR:-/tmp}/situ-schema.d.ts\"",
     "build": "tsc --noEmit"
   },
   "devDependencies": {
     "@situ/config": "workspace:*",
+    "openapi-typescript": "^7.13.0",
     "typescript": "^5.9.0",
     "vitest": "3.2.4"
   },

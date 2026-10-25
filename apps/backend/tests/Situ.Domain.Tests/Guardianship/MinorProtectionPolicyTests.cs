@@ -31,5 +31,26 @@ public class MinorProtectionPolicyTests
         Assert.Equal(guardianRequiredToStream, MinorProtectionPolicy.RequiresGuardianAuthorizationToStream(age));
         Assert.Equal(adultCategories, MinorProtectionPolicy.CanUseAdultOnlyCategories(age));
         Assert.Equal(personalizedAds, MinorProtectionPolicy.CanReceivePersonalizedAds(age));
+        Assert.Equal(age >= 18, MinorProtectionPolicy.CanUploadProfilePhoto(age));
+    }
+
+    [Fact]
+    public void A_minor_uses_their_name_on_a_comment_only_when_the_report_is_friends_only()
+    {
+        Assert.False(MinorProtectionPolicy.CanComment(17, ContentVisibility.Public, false));
+        Assert.True(MinorProtectionPolicy.CanComment(17, ContentVisibility.Public, true));
+        Assert.True(MinorProtectionPolicy.CanComment(17, ContentVisibility.FriendsOnly, false));
+        Assert.True(MinorProtectionPolicy.CanComment(17, ContentVisibility.FriendsOnly, true));
+        Assert.True(MinorProtectionPolicy.CanComment(18, ContentVisibility.Public, false));
+        Assert.True(MinorProtectionPolicy.CanComment(30, ContentVisibility.Public, false));
+    }
+
+    [Theory]
+    [InlineData(17, false, false)]
+    [InlineData(17, true, true)]
+    [InlineData(18, false, true)]
+    public void A_minor_shares_a_proximity_location_only_with_guardian_authorization(int age, bool guardianAuthorized, bool allowed)
+    {
+        Assert.Equal(allowed, MinorProtectionPolicy.CanShareProximityLocation(age, guardianAuthorized));
     }
 }

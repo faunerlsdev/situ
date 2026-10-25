@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Situ.Application.Common.Abstractions;
 using Situ.Domain.Administration;
+using Situ.Domain.Anonymity;
 using Situ.Domain.Common;
 using Situ.Domain.Geography;
 using Situ.Domain.Guardianship;
@@ -23,8 +24,9 @@ using Situ.Infrastructure.Persistence.Converters;
 
 namespace Situ.Application.Tests.Support;
 
-internal sealed class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbContext(options), IApplicationDbContext
+internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbContext(options), IApplicationDbContext
 {
+    public DbSet<AnonymousParticipant> AnonymousParticipants => Set<AnonymousParticipant>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
     public DbSet<StaffPermission> StaffPermissions => Set<StaffPermission>();
@@ -58,6 +60,8 @@ internal sealed class IdentityTestDb(DbContextOptions<IdentityTestDb> options) :
     public DbSet<ImportanceScoringConfig> ImportanceScoringConfigs => Set<ImportanceScoringConfig>();
     public DbSet<NewsItem> NewsItems => Set<NewsItem>();
     public DbSet<UserReputation> UserReputations => Set<UserReputation>();
+    public DbSet<DeviceAlertLocation> DeviceAlertLocations => Set<DeviceAlertLocation>();
+    public DbSet<NotificationJob> NotificationJobs => Set<NotificationJob>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationDelivery> NotificationDeliveries => Set<NotificationDelivery>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
@@ -88,10 +92,12 @@ internal sealed class IdentityTestDb(DbContextOptions<IdentityTestDb> options) :
     public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
 
-    public static IdentityTestDb Create()
+    public static IdentityTestDb Create() => Create(Guid.NewGuid().ToString());
+
+    public static IdentityTestDb Create(string databaseName)
     {
         var options = new DbContextOptionsBuilder<IdentityTestDb>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName)
             .Options;
         var db = new IdentityTestDb(options);
         db.Database.EnsureCreated();

@@ -1,4 +1,5 @@
 using Situ.Domain.Common;
+using Situ.Domain.Guardianship;
 using Situ.Domain.Reports;
 using Situ.Domain.Tests.Support;
 
@@ -36,6 +37,26 @@ public class ReportConfirmationTests
 
         Assert.Equal(confirmedAt.AddMinutes(20), report.ExpiresAt);
         Assert.True(report.IsVisible(confirmedAt));
+    }
+
+    [Fact]
+    public void Replacing_a_vote_does_not_count_it_twice()
+    {
+        var report = Create(TimeSpan.FromHours(2));
+        report.ReplaceConfirmation(null, ConfirmationType.StillThere, TimeSpan.FromMinutes(10), Now);
+        report.ReplaceConfirmation(ConfirmationType.StillThere, ConfirmationType.GoneNow, TimeSpan.FromMinutes(10), Now.AddMinutes(1));
+
+        Assert.Equal(0, report.StillThereCount);
+        Assert.Equal(1, report.GoneNowCount);
+    }
+
+    [Fact]
+    public void A_minor_public_report_must_be_anonymous()
+    {
+        Assert.False(MinorProtectionPolicy.CanPublishReport(16, ContentVisibility.Public, false));
+        Assert.True(MinorProtectionPolicy.CanPublishReport(16, ContentVisibility.Public, true));
+        Assert.True(MinorProtectionPolicy.CanPublishReport(16, ContentVisibility.FriendsOnly, false));
+        Assert.True(MinorProtectionPolicy.CanPublishReport(30, ContentVisibility.Public, false));
     }
 
     private static Report Create(TimeSpan lifetime) =>

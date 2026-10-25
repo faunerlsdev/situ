@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { GuardianDocumentType } from '@situ/shared';
 import { guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { GuardianDataValues } from '@situ/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -22,6 +23,7 @@ const documents: { value: GuardianDocumentType; label: string }[] = [
 export default function GuardianScreen() {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
   const token = searchParam(params.token);
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<'data' | 'authorize'>('data');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(token ? null : 'El enlace de autorización no incluye el código.');
@@ -62,6 +64,7 @@ export default function GuardianScreen() {
       });
       setNotice(null);
       setStep('data');
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
       notify.success('Autorización registrada. El menor puede continuar cuando su correo esté confirmado.');
     } catch (cause) {
       notify.error(messageFromUnknown(cause));

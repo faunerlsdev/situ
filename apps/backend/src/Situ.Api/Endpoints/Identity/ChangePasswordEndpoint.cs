@@ -15,6 +15,12 @@ public sealed class ChangePasswordEndpoint : IEndpoint
             .WithTags("Identity")
             .RequireRateLimiting(AuthRateLimit.Policy)
             .RequireAuthorization(AuthorizationPolicies.User);
+
+        group.MapPost("/me/password", Handle)
+            .WithName("ChangeMyPassword")
+            .WithTags("Identity")
+            .RequireRateLimiting(AuthRateLimit.Policy)
+            .RequireAuthorization(AuthorizationPolicies.User);
     }
 
     private static async Task<IResult> Handle(

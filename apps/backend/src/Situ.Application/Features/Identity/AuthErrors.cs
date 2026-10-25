@@ -11,10 +11,19 @@ internal static class AuthErrors
     public static Error InvalidCredentials() => Error.Unauthorized(InvalidCredentialsCode, InvalidCredentialsMessage);
 
     public static Error Locked(DateTimeOffset retryAfter) =>
-        Error.Locked("auth.locked", "La cuenta está bloqueada por demasiados intentos.", retryAfter);
+        Error.Locked("auth.locked", "Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.", retryAfter);
 
-    public static Error DeviceLimit() =>
-        Error.Forbidden("auth.device_limit", "Alcanzaste el número de dispositivos de tu plan.");
+    public static Error DeviceLimit(string accessToken, DateTimeOffset expiresAt) =>
+        new(
+            "auth.device_limit",
+            "Llegaste al límite de dispositivos de tu plan.",
+            ErrorType.Forbidden,
+            new Dictionary<string, object?>
+            {
+                ["accessToken"] = accessToken,
+                ["accessTokenExpiresAt"] = expiresAt,
+                ["scope"] = "device_management",
+            });
 
     public static Error PendingGuardian() =>
         Error.Forbidden("auth.pending_guardian", "Esta cuenta espera la autorización de un acudiente.");
@@ -38,7 +47,7 @@ internal static class AuthErrors
         Error.Forbidden("auth.suspended", "Esta cuenta está suspendida.");
 
     public static Error NotAllowed() =>
-        Error.Forbidden("auth.not_allowed", "Esta cuenta no puede ingresar.");
+        Error.Forbidden("auth.not_allowed", "Esta cuenta está bloqueada y no puede ingresar.");
 
     public static Error SessionInvalid() =>
         Error.Unauthorized("auth.session_invalid", "La sesión ya no es válida. Vuelve a ingresar.");

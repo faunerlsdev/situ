@@ -1,7 +1,9 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
 
-# pnpm 10 bloquea los scripts de instalación por defecto; solo permitimos los necesarios.
 onlyBuiltDependencies:
   - sharp
+
+patchedDependencies:
+  '@gorhom/bottom-sheet@5.2.14': patches/@gorhom__bottom-sheet@5.2.14.patch

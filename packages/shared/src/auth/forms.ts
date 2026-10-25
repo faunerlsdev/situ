@@ -131,7 +131,7 @@ export const adultAge = 18;
 export function lockoutRemainingLabel(retryAfter: string, now = Date.now()): string {
   const end = Date.parse(retryAfter);
   if (Number.isNaN(end)) {
-    return 'La cuenta está bloqueada por demasiados intentos.';
+    return 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.';
   }
 
   const remaining = end - now;

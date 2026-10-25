@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Domain.Administration;
+using Situ.Domain.Anonymity;
 using Situ.Domain.Geography;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
@@ -22,6 +23,8 @@ namespace Situ.Application.Common.Abstractions;
 /// </summary>
 public interface IApplicationDbContext
 {
+    DbSet<AnonymousParticipant> AnonymousParticipants { get; }
+
     DbSet<AuditLog> AuditLogs { get; }
 
     DbSet<StaffAssignment> StaffAssignments { get; }
@@ -87,6 +90,10 @@ public interface IApplicationDbContext
     DbSet<NewsItem> NewsItems { get; }
 
     DbSet<UserReputation> UserReputations { get; }
+
+    DbSet<DeviceAlertLocation> DeviceAlertLocations { get; }
+
+    DbSet<NotificationJob> NotificationJobs { get; }
 
     DbSet<Notification> Notifications { get; }
 

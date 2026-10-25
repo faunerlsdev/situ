@@ -6,6 +6,7 @@ export { errorMessages, apiMessages, messageFor } from './core/http/errorMessage
 export { createHttpClient } from './core/http/client';
 export type { HttpClient, HttpRequest } from './core/http/client';
 export { createServices } from './core/http/services';
+export type { InboxNotification, InterestCities, NotificationPage, NotificationSettings, SessionDevice } from './core/http/services';
 export { toAppError, shouldRetry } from './core/http/normalize';
 export { readApiUrl, httpTimeouts } from './core/config/env';
 export { sessionEvents } from './core/feedback/sessionEvents';
@@ -13,7 +14,7 @@ export { createToastQueue, toastDuration } from './core/feedback/toastQueue';
 export type { ToastInput, ToastKind, ToastPlacement, ToastQueue, ToastRecord } from './core/feedback/toastQueue';
 export { createDialogStore } from './core/feedback/dialogStore';
 export type { ConfirmRequest, ConfirmType } from './core/feedback/dialogStore';
-export { feedbackMessages } from './core/feedback/messages';
+export { feedbackMessages, loginErrorMessages, notificationMessages, profileMessages } from './core/feedback/messages';
 export { alertModal, bindNotify, confirm, notify, presentError } from './core/feedback/notify';
 export {
   adultAge,
@@ -69,3 +70,94 @@ export type {
   AuthorizeGuardianConsentResponse,
 } from './api/types';
 export { appColors, brandColors, brandFonts, brandRadius, defaultApiUrl, sites } from './brand/tokens';
+export {
+  absoluteMediaUrl,
+  categoriesUnder,
+  asNumber,
+  categoryHasChildren,
+  descriptionMaxLength,
+  formatDistance,
+  legacyLocalProfileKey,
+  mediaLimitsOf,
+  memberSinceLabel,
+  nextQueued,
+  panelCopyOf,
+  presentAuthor,
+  publishBlock,
+  reduceUploads,
+  rejectedMediaReason,
+  relativeTime,
+  reportMediaFallbacks,
+  reportStatusLabel,
+  resolveAppConfig,
+  resolveCatalog,
+  retryAfterLabel,
+  toMapMarkers,
+  validateReportForm,
+  withMinorVisibility,
+  zoomFromLongitudeDelta,
+} from './reports/logic';
+export {
+  anonymousBlockLeaks,
+  blockEndpoint,
+  blockRowLabel,
+  classifyWriteError,
+  commentLimit,
+  commentValidation,
+  complaintReasons,
+  composerAnonymity,
+  deletionDateLabel,
+  rateLimitCountdown,
+  reactionKinds,
+  reactionLabels,
+  rollbackReaction,
+  toggleReaction,
+} from './reports/interaction';
+export type {
+  AddCommentBody,
+  AddCommentResult,
+  BlockListItem,
+  CommentAuthor,
+  CommentItem,
+  CommentPage,
+  ComplaintBody,
+  ComplaintReasonCode,
+  ReactionCount,
+  ReactionKind,
+  ReactionResult,
+  ReactionSnapshot,
+  WriteFailure,
+} from './reports/interaction';
+export type {
+  AuthorPresentation,
+  CachedAppConfig,
+  CachedCatalog,
+  MapMarkerModel,
+  PublishBlock,
+  UploadAction,
+  UploadStatus,
+  UploadTask,
+} from './reports/logic';
+export type {
+  ConfirmReportBody,
+  ConfirmReportResponse,
+  ConfirmationType,
+  CreateReportBody,
+  CreateReportResponse,
+  MapItem,
+  AppConfig,
+  MapQuery,
+  MapResponse,
+  MediaRequirement,
+  SessionProfile,
+  MyReportsResponse,
+  ReportAuthor,
+  ReportCard,
+  ReportCatalog,
+  ReportCategory,
+  ReportComment,
+  ReportDetail,
+  ReportMedia,
+  ReportVisibility,
+  UploadMediaResponse,
+} from './reports/types';

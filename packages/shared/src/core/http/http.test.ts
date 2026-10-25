@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AppError } from './errors';
 import { toAppError } from './normalize';
 import { createRefreshGate } from './refreshGate';
+import { reportError } from './reportError';
 
 describe('toAppError', () => {
   it('maps each HTTP status to the expected code', () => {
@@ -61,5 +62,33 @@ describe('createRefreshGate', () => {
     const tokens = await Promise.all([gate(), gate(), gate()]);
     expect(calls).toBe(1);
     expect(tokens).toEqual(['next-token', 'next-token', 'next-token']);
+  });
+});
+
+describe('reportError', () => {
+  it('does not print coordinates from an alert location failure', () => {
+    const lines: string[] = [];
+    const original = console.error;
+    console.error = (...args: unknown[]) => {
+      lines.push(args.map((arg) => JSON.stringify(arg)).join(' '));
+    };
+    try {
+      reportError(new AppError({
+        code: 'SERVER',
+        userMessage: 'No pudimos completar la solicitud.',
+        cause: {
+          config: {
+            url: '/api/v1/devices/current/alert-location',
+            data: { latitude: 4.71, longitude: -74.07, accuracyMeters: 30 },
+          },
+        },
+      }));
+    } finally {
+      console.error = original;
+    }
+
+    const text = lines.join('\n');
+    expect(text).toContain('SERVER');
+    expect(text).not.toMatch(/latitude|longitude|4\.71|-74\.07/);
   });
 });

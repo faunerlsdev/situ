@@ -1,0 +1,575 @@
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Situ.Application.Common.Abstractions;
+using Situ.Application.Features.Identity.SignOut;
+using Situ.Application.Features.Reports.GetReport;
+using Situ.Application.Features.Notifications;
+using Situ.Application.Features.Notifications.Devices;
+using Situ.Application.Features.Notifications.Dispatch;
+using Situ.Application.Features.Notifications.Inbox;
+using Situ.Application.Features.Notifications.PurgeAlertLocations;
+using Situ.Application.Features.Notifications.Settings;
+using Situ.Application.Tests.Support;
+using Situ.Domain.Common;
+using Situ.Domain.Geography;
+using Situ.Domain.Guardianship;
+using Situ.Domain.Identity;
+using Situ.Domain.Notifications;
+using Situ.Domain.Reports;
+using Situ.Domain.Social;
+
+namespace Situ.Application.Tests.Notifications;
+
+public class NotificationFlowTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 10, 24, 15, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public async Task A_report_reaches_the_interest_city_an_extra_city_and_only_the_nearby_device()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("hurto", "Hurto");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor@situ.test", "autor", "3000000001");
+        var home = await UserAsync(db, catalog, 30, "casa@situ.test", "casa", "3000000002");
+        var extra = await UserAsync(db, catalog, 30, "otra@situ.test", "otra", "3000000003", catalog.OtherCityId);
+        var near = await UserAsync(db, catalog, 30, "cerca@situ.test", "cerca", "3000000004", catalog.OtherCityId);
+        var far = await UserAsync(db, catalog, 30, "lejos@situ.test", "lejos", "3000000005", catalog.OtherCityId);
+        db.UserInterestCities.Add(UserInterestCity.Create(extra.Id, catalog.CityId));
+        await PlaceAsync(db, near, 4.715, -74.072);
+        await PlaceAsync(db, far, 4.800, -74.072);
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+
+        var notes = await db.Notifications.OrderBy(item => item.RecipientId).ToListAsync();
+        Assert.Equal(3, notes.Count);
+        Assert.Contains(notes, item => item.RecipientId == home.Id && item.Body.Contains("Bogotá", StringComparison.Ordinal));
+        Assert.Contains(notes, item => item.RecipientId == extra.Id && item.Body.Contains("Hurto", StringComparison.Ordinal));
+        Assert.Contains(notes, item => item.RecipientId == near.Id && item.Body.Contains("Hurto a", StringComparison.Ordinal));
+        Assert.DoesNotContain(notes, item => item.RecipientId == far.Id || item.RecipientId == author.Id);
+        Assert.Equal(3, push.Notes.Count);
+        Assert.All(push.Notes, note =>
+        {
+            Assert.Equal(report.Id.ToString(), note.Payload.ReportId);
+            Assert.Equal(nameof(NotificationType.NearbyReport), note.Payload.Type);
+            Assert.Equal("Report", note.Payload.TargetType);
+            Assert.Equal(1, note.Badge);
+            AssertOpaque(note, author);
+        });
+    }
+
+    [Fact]
+    public async Task One_user_gets_a_single_friend_notification_when_several_triggers_match()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("accidente", "Accidente de tránsito");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor2@situ.test", "autor2", "3000000011");
+        var friend = await UserAsync(db, catalog, 30, "amigo@situ.test", "amigo", "3000000012");
+        await PlaceAsync(db, friend, 4.715, -74.072);
+        var friendship = Friendship.Request(author.Id, friend.Id, Now);
+        friendship.Accept(friend.Id, Now);
+        db.Friendships.Add(friendship);
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+
+        var note = Assert.Single(await db.Notifications.ToListAsync());
+        Assert.Equal(friend.Id, note.RecipientId);
+        Assert.Equal(NotificationType.FriendReport, note.Type);
+        Assert.Equal("Un amigo reportó: Accidente de tránsito", note.Body);
+        var sent = Assert.Single(push.Notes);
+        Assert.Equal(nameof(NotificationType.FriendReport), sent.Payload.Type);
+        Assert.Equal(report.Id.ToString(), sent.Payload.ReportId);
+        AssertOpaque(sent, author);
+    }
+
+    [Fact]
+    public async Task An_anonymous_report_notifies_city_and_proximity_but_never_a_friend_or_the_author()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("basura", "Basura");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor3@situ.test", "autor3", "3000000021");
+        var friend = await UserAsync(db, catalog, 30, "amigo3@situ.test", "amigo3", "3000000022");
+        var friendship = Friendship.Request(author.Id, friend.Id, Now);
+        friendship.Accept(friend.Id, Now);
+        db.Friendships.Add(friendship);
+        var report = await ReportAsync(db, author, category.Id, true, ContentVisibility.Public);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+
+        var note = Assert.Single(await db.Notifications.ToListAsync());
+        Assert.Equal(friend.Id, note.RecipientId);
+        Assert.Equal(NotificationType.NearbyReport, note.Type);
+        Assert.DoesNotContain("autor3", note.Body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(author.Id.ToString(), note.Body, StringComparison.OrdinalIgnoreCase);
+        AssertOpaque(Assert.Single(push.Notes), author);
+    }
+
+    [Fact]
+    public async Task Exclusions_drop_the_author_blocks_muted_adult_categories_and_closed_accounts()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("adulto", "Solo adultos", adult: true);
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor4@situ.test", "autor4", "3000000031");
+        var blocked = await UserAsync(db, catalog, 30, "bloqueo@situ.test", "bloqueo", "3000000032");
+        var anonBlocker = await UserAsync(db, catalog, 30, "anonb@situ.test", "anonb", "3000000033");
+        var muted = await UserAsync(db, catalog, 30, "silencio@situ.test", "silencio", "3000000034");
+        var minor = await UserAsync(db, catalog, 16, "menor@situ.test", "menor", "3000000035");
+        var off = await UserAsync(db, catalog, 30, "apagado@situ.test", "apagado", "3000000036");
+        var suspended = await UserAsync(db, catalog, 30, "suspendido@situ.test", "suspendido", "3000000037");
+        var named = await UserAsync(db, catalog, 30, "publico@situ.test", "publico", "3000000038");
+        db.UserBlocks.Add(UserBlock.CreateFull(blocked.Id, author.Id, Now));
+        db.UserBlocks.Add(UserBlock.HideAnonymousContent(anonBlocker.Id, author.Id, ContentTargetType.Report, Guid.NewGuid(), Now, Now));
+        db.UserCategoryInterests.Add(UserCategoryInterest.Create(muted.Id, category.Id, true));
+        var settings = NotificationSettings.CreateDefault(off.Id, "America/Bogota", Now);
+        settings.Update(true, true, 1000, false, true, true, true, null, null, "America/Bogota", Now);
+        db.NotificationSettings.Add(settings);
+        suspended.Suspend(Now.AddDays(1));
+        await db.SaveChangesAsync();
+        var report = await ReportAsync(db, author, category.Id, true, ContentVisibility.Public);
+
+        await DispatchAsync(db, clock, new RecordingPush(), NotificationJob.ReportCreated, report.Id);
+
+        var recipients = await db.Notifications.Select(item => item.RecipientId).ToListAsync();
+        Assert.DoesNotContain(author.Id, recipients);
+        Assert.DoesNotContain(blocked.Id, recipients);
+        Assert.DoesNotContain(anonBlocker.Id, recipients);
+        Assert.DoesNotContain(muted.Id, recipients);
+        Assert.DoesNotContain(minor.Id, recipients);
+        Assert.DoesNotContain(off.Id, recipients);
+        Assert.DoesNotContain(suspended.Id, recipients);
+        Assert.Contains(named.Id, recipients);
+    }
+
+    [Fact]
+    public async Task An_anonymous_block_still_allows_a_named_report()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("hurto2", "Hurto");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor5@situ.test", "autor5", "3000000041");
+        var blocker = await UserAsync(db, catalog, 30, "viewer@situ.test", "viewer", "3000000042");
+        db.UserBlocks.Add(UserBlock.HideAnonymousContent(blocker.Id, author.Id, ContentTargetType.Report, Guid.NewGuid(), Now, Now));
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+
+        await DispatchAsync(db, clock, new RecordingPush(), NotificationJob.ReportCreated, report.Id);
+
+        Assert.Contains(await db.Notifications.ToListAsync(), item => item.RecipientId == blocker.Id);
+    }
+
+    [Fact]
+    public async Task A_minor_without_location_consent_keeps_city_alerts_and_cannot_store_a_proximity_point()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("retencion", "Retén");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor6@situ.test", "autor6", "3000000051");
+        var minor = await UserAsync(db, catalog, 16, "menor6@situ.test", "menor6", "3000000052");
+        var device = UserDevice.Register(minor.Id, "phone", DevicePlatform.IOS, null, null, null, Now);
+        db.UserDevices.Add(device);
+        await db.SaveChangesAsync();
+        var denied = await new SetAlertLocationHandler(db, clock).Handle(
+            new SetAlertLocationRequest(minor.Id, device.Id, 4.71149, -74.07249, 12),
+            CancellationToken.None);
+        Assert.Equal("notification.proximity_not_allowed_minor", denied.Error!.Code);
+        Assert.Empty(db.DeviceAlertLocations);
+
+        var consent = GuardianConsent.Request(minor.Id, "tutor@situ.test", "hash", "v1", Now, Now);
+        consent.SubmitGuardianData("Carlos Pérez", GuardianDocumentType.Passport, "P123", "carlos@correo.com", Now);
+        consent.VerifyGuardianEmail(Now);
+        consent.Authorize("signature", false, true, null, null, Now);
+        db.GuardianConsents.Add(consent);
+        await db.SaveChangesAsync();
+        var allowed = await new SetAlertLocationHandler(db, clock).Handle(
+            new SetAlertLocationRequest(minor.Id, device.Id, 4.71149, -74.07249, 12),
+            CancellationToken.None);
+        Assert.True(allowed.IsSuccess);
+        var stored = Assert.Single(db.DeviceAlertLocations);
+        Assert.Equal(4.711, stored.Location.Latitude);
+        Assert.Equal(-74.072, stored.Location.Longitude);
+        Assert.DoesNotContain("4.71149", stored.Location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+        await DispatchAsync(db, clock, new RecordingPush(), NotificationJob.ReportCreated, report.Id);
+        Assert.Contains(await db.Notifications.ToListAsync(), item => item.RecipientId == minor.Id);
+    }
+
+    [Fact]
+    public async Task Quiet_hours_follow_the_user_zone_and_the_hourly_limit_collapses_into_one_summary()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("trafico", "Tráfico");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor7@situ.test", "autor7", "3000000061");
+        var quiet = await UserAsync(db, catalog, 30, "silencio7@situ.test", "silencio7", "3000000062");
+        var awake = await UserAsync(db, catalog, 30, "despierto@situ.test", "despierto", "3000000063", catalog.OtherCityId);
+        var quietSettings = NotificationSettings.CreateDefault(quiet.Id, "America/Bogota", Now);
+        quietSettings.Update(true, true, 1000, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/Bogota", Now);
+        var awakeSettings = NotificationSettings.CreateDefault(awake.Id, "America/New_York", Now);
+        awakeSettings.Update(true, true, 1000, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/New_York", Now);
+        db.UserInterestCities.Add(UserInterestCity.Create(awake.Id, catalog.CityId));
+        db.NotificationSettings.AddRange(quietSettings, awakeSettings);
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+
+        Assert.Contains(await db.NotificationDeliveries.ToListAsync(), item => item.Status == DeliveryStatus.Suppressed && item.Error == "quiet_hours");
+        var quietDevice = await db.UserDevices.SingleAsync(item => item.UserId == quiet.Id);
+        Assert.Contains(push.Notes, item => item.Title == "En tu ciudad");
+        Assert.DoesNotContain(push.Notes, item => item.DeviceId == quietDevice.Id);
+
+        for (var index = 0; index < 6; index++)
+        {
+            var filler = Notification.Create(awake.Id, NotificationType.NearbyReport, "En tu ciudad", "previo", ContentTargetType.Report, Guid.NewGuid(), Now);
+            db.Notifications.Add(filler);
+            var delivery = NotificationDelivery.Create(filler.Id, NotificationChannel.Push, null, Now);
+            delivery.MarkSent(Now);
+            db.NotificationDeliveries.Add(delivery);
+        }
+
+        await db.SaveChangesAsync();
+        var second = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public, 4.720, -74.072);
+        push.Notes.Clear();
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, second.Id);
+
+        Assert.Contains(await db.Notifications.ToListAsync(), item => item.RecipientId == awake.Id && item.GroupKey != null && item.Body.Contains("reportes nuevos", StringComparison.Ordinal));
+        Assert.Contains(await db.NotificationDeliveries.ToListAsync(), item => item.Error == "hourly_limit");
+        var summary = Assert.Single(push.Notes);
+        Assert.Equal("En tu zona", summary.Title);
+        Assert.Equal("Summary", summary.Payload.Type);
+        Assert.Null(summary.Payload.ReportId);
+        Assert.Null(summary.Payload.TargetId);
+        var unread = await db.Notifications.CountAsync(item => item.RecipientId == awake.Id && item.ReadAt == null);
+        Assert.Equal(unread, summary.Badge);
+        AssertOpaque(summary, author);
+    }
+
+    [Fact]
+    public async Task Alert_location_is_rounded_rate_limited_purged_and_removed_on_sign_out()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var user = await UserAsync(db, catalog, 30, "punto@situ.test", "punto", "3000000071");
+        var device = await db.UserDevices.SingleAsync(item => item.UserId == user.Id);
+        device.UpdatePushToken("ExponentPushToken[abc]");
+        db.RefreshTokens.Add(RefreshToken.Issue(user.Id, device.Id, "refresh-plain", Now, TimeSpan.FromDays(30)));
+        await db.SaveChangesAsync();
+        var handler = new SetAlertLocationHandler(db, clock);
+
+        var saved = await handler.Handle(new SetAlertLocationRequest(user.Id, device.Id, 4.7115, -74.0724, 20), CancellationToken.None);
+        Assert.True(saved.IsSuccess);
+        Assert.Null(saved.Error);
+        var point = Assert.Single(db.DeviceAlertLocations);
+        Assert.Equal(4.712, point.Location.Latitude);
+        Assert.Equal(-74.072, point.Location.Longitude);
+
+        var limited = await handler.Handle(new SetAlertLocationRequest(user.Id, device.Id, 4.720, -74.080, 20), CancellationToken.None);
+        Assert.Equal("notification.alert_location_limited", limited.Error!.Code);
+
+        clock.UtcNow = Now.AddMinutes(31);
+        var purged = await new PurgeAlertLocationsHandler(db, clock).Handle(new PurgeAlertLocationsRequest(), CancellationToken.None);
+        Assert.Equal(1, purged.Value!.Removed);
+        Assert.Empty(db.DeviceAlertLocations);
+
+        clock.UtcNow = Now.AddMinutes(40);
+        await handler.Handle(new SetAlertLocationRequest(user.Id, device.Id, 4.711, -74.072, 10), CancellationToken.None);
+        await new SignOutHandler(db, clock, new EchoTokens()).Handle(new SignOutRequest("refresh-plain"), CancellationToken.None);
+        Assert.Empty(db.DeviceAlertLocations);
+        Assert.Null((await db.UserDevices.SingleAsync()).PushToken);
+    }
+
+    [Fact]
+    public async Task Clearing_the_alert_location_is_idempotent_and_leaves_the_token_and_other_devices()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var user = await UserAsync(db, catalog, 30, "borrar@situ.test", "borrar", "3000000171");
+        var current = await db.UserDevices.SingleAsync(item => item.UserId == user.Id);
+        current.UpdatePushToken("ExponentPushToken[current]");
+        var other = UserDevice.Register(user.Id, "other-phone", DevicePlatform.Android, null, null, null, Now);
+        other.UpdatePushToken("ExponentPushToken[other]");
+        db.UserDevices.Add(other);
+        db.DeviceAlertLocations.Add(DeviceAlertLocation.Record(user.Id, current.Id, 4.711, -74.072, 20, Now, TimeSpan.FromMinutes(30)));
+        db.DeviceAlertLocations.Add(DeviceAlertLocation.Record(user.Id, other.Id, 4.720, -74.080, 20, Now, TimeSpan.FromMinutes(30)));
+        await db.SaveChangesAsync();
+        var handler = new ClearAlertLocationHandler(db);
+
+        var first = await handler.Handle(new ClearAlertLocationRequest(user.Id, current.Id), CancellationToken.None);
+        var second = await handler.Handle(new ClearAlertLocationRequest(user.Id, current.Id), CancellationToken.None);
+
+        Assert.True(first.IsSuccess);
+        Assert.True(second.IsSuccess);
+        var remaining = Assert.Single(db.DeviceAlertLocations);
+        Assert.Equal(other.Id, remaining.DeviceId);
+        Assert.Equal("ExponentPushToken[current]", (await db.UserDevices.SingleAsync(item => item.Id == current.Id)).PushToken);
+    }
+
+    [Fact]
+    public async Task An_unavailable_report_uses_a_stable_code_and_the_author_can_still_open_it()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var author = await UserAsync(db, catalog, 30, "dueno@situ.test", "dueno", "3000000181");
+        var viewer = await UserAsync(db, catalog, 30, "visita@situ.test", "visita", "3000000182");
+        var expired = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public);
+        var removed = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public, 4.72, -74.08);
+        var review = await ReportAsync(db, author, Guid.NewGuid(), true, ContentVisibility.Public, 4.73, -74.09);
+        var lapsed = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public, 4.74, -74.1);
+        expired.Expire(Now);
+        removed.Remove(Now);
+        review.SendToReview(Now);
+        await db.SaveChangesAsync();
+        var handler = new GetReportHandler(db, clock, new Signer());
+
+        await AssertUnavailable(handler, viewer.Id, expired.Id, "Expired");
+        await AssertUnavailable(handler, viewer.Id, removed.Id, "Removed");
+        await AssertUnavailable(handler, viewer.Id, review.Id, "UnderReview");
+        clock.UtcNow = lapsed.ExpiresAt.AddMinutes(1);
+        await AssertUnavailable(handler, viewer.Id, lapsed.Id, "Expired");
+
+        var asAuthor = await handler.Handle(new GetReportRequest(author.Id, expired.Id), CancellationToken.None);
+        Assert.True(asAuthor.IsSuccess);
+        var missing = await handler.Handle(new GetReportRequest(viewer.Id, Guid.NewGuid()), CancellationToken.None);
+        Assert.Equal("report.not_found", missing.Error!.Code);
+    }
+
+    [Fact]
+    public async Task A_rejected_push_token_is_cleared_and_a_retried_job_does_not_duplicate_the_inbox()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var category = Category("choque", "Choque");
+        db.ReportCategories.Add(category);
+        var author = await UserAsync(db, catalog, 30, "autor8@situ.test", "autor8", "3000000081");
+        var reader = await UserAsync(db, catalog, 30, "lector@situ.test", "lector", "3000000082");
+        var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
+        var push = new RecordingPush { Reject = true };
+
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+
+        Assert.Null((await db.UserDevices.SingleAsync(item => item.UserId == reader.Id)).PushToken);
+        Assert.Contains(await db.NotificationDeliveries.ToListAsync(), item => item.Status == DeliveryStatus.Failed && item.Error == "DeviceNotRegistered");
+
+        db.NotificationJobs.RemoveRange(await db.NotificationJobs.ToListAsync());
+        await db.SaveChangesAsync();
+        await DispatchAsync(db, clock, push, NotificationJob.ReportCreated, report.Id);
+        Assert.Single(await db.Notifications.Where(item => item.TargetId == report.Id).ToListAsync());
+    }
+
+    [Fact]
+    public async Task An_anonymous_comment_notifies_the_report_author_without_naming_anyone()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var author = await UserAsync(db, catalog, 30, "autor9@situ.test", "autor9", "3000000091");
+        var commenter = await UserAsync(db, catalog, 30, "comenta@situ.test", "comenta", "3000000092");
+        var report = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public);
+        var comment = Comment.Create(ContentTargetType.Report, report.Id, commenter.Id, "Vi lo mismo en la esquina", true, 1, null, author.Id, Now);
+        db.Comments.Add(comment);
+        await db.SaveChangesAsync();
+
+        var push = new RecordingPush();
+        await DispatchAsync(db, clock, push, NotificationJob.CommentAdded, comment.Id);
+
+        var note = Assert.Single(await db.Notifications.ToListAsync());
+        Assert.Equal(author.Id, note.RecipientId);
+        Assert.Equal("Alguien comentó tu reporte.", note.Body);
+        Assert.DoesNotContain("comenta", note.Body, StringComparison.OrdinalIgnoreCase);
+        var sent = Assert.Single(push.Notes);
+        Assert.Equal(nameof(NotificationType.Comment), sent.Payload.Type);
+        Assert.Equal("Comment", sent.Payload.TargetType);
+        Assert.Equal(comment.Id.ToString(), sent.Payload.TargetId);
+        Assert.Equal(report.Id.ToString(), sent.Payload.ReportId);
+        Assert.DoesNotContain("Vi lo mismo", sent.Body + JsonSerializer.Serialize(sent.Payload), StringComparison.Ordinal);
+        AssertOpaque(sent, commenter);
+        var listed = await new ListNotificationsHandler(db, clock).Handle(new ListNotificationsRequest(author.Id, null, 20), CancellationToken.None);
+        var item = Assert.Single(listed.Value!.Notifications);
+        Assert.Equal(report.Id, item.ReportId);
+        Assert.True(item.Available);
+        Assert.DoesNotContain("comenta", item.Body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task AssertUnavailable(GetReportHandler handler, Guid viewerId, Guid reportId, string reportStatus)
+    {
+        var result = await handler.Handle(new GetReportRequest(viewerId, reportId), CancellationToken.None);
+        Assert.Equal("report.not_available", result.Error!.Code);
+        Assert.Equal("Este reporte ya no está disponible.", result.Error.Message);
+        Assert.Equal(reportStatus, result.Error.Extensions["reportStatus"]);
+        Assert.DoesNotContain("moder", result.Error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("denuncia", result.Error.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AssertOpaque(PushNote note, User author)
+    {
+        var payload = JsonSerializer.Serialize(note.Payload, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var whole = payload + note.Title + note.Body;
+        Assert.DoesNotContain(author.Id.ToString(), whole, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(author.UserName.Value, whole, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Ana", whole, StringComparison.Ordinal);
+        Assert.DoesNotContain("Pérez", whole, StringComparison.Ordinal);
+        Assert.DoesNotContain("Descripción que no debe salir", whole, StringComparison.Ordinal);
+        Assert.DoesNotContain("4.711", whole, StringComparison.Ordinal);
+        Assert.DoesNotContain("-74.072", whole, StringComparison.Ordinal);
+        Assert.DoesNotContain("latitude", payload, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("longitude", payload, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("distance", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task DispatchAsync(IdentityTestDb db, FixedClock clock, RecordingPush push, string kind, Guid subjectId)
+    {
+        db.NotificationJobs.Add(NotificationJob.Enqueue(kind, subjectId, clock.UtcNow));
+        await db.SaveChangesAsync();
+        await new ProcessNotificationJobsHandler(db, clock, new MemoryProximity(db), push).Handle(new ProcessNotificationJobsRequest(), CancellationToken.None);
+    }
+
+    private static async Task PlaceAsync(IdentityTestDb db, User user, double latitude, double longitude)
+    {
+        var device = await db.UserDevices.SingleAsync(item => item.UserId == user.Id);
+        db.DeviceAlertLocations.Add(DeviceAlertLocation.Record(user.Id, device.Id, latitude, longitude, 20, Now, TimeSpan.FromMinutes(30)));
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task<Report> ReportAsync(
+        IdentityTestDb db,
+        User author,
+        Guid categoryId,
+        bool anonymous,
+        ContentVisibility visibility,
+        double latitude = 4.711,
+        double longitude = -74.072)
+    {
+        var report = Report.Create(author.Id, categoryId, author.CityId, new GeoPoint(latitude, longitude), "Descripción que no debe salir en la alerta.", anonymous, false, TimeSpan.FromHours(2), Now, visibility: visibility);
+        db.Reports.Add(report);
+        await db.SaveChangesAsync();
+        return report;
+    }
+
+    private static ReportCategory Category(string code, string name, bool adult = false) =>
+        ReportCategory.Create(code, name, "desc", "https://cdn/b.png", "https://cdn/m.png", "#112233", 1, 60, 1, isAdultOnly: adult);
+
+    private static async Task<User> UserAsync(IdentityTestDb db, Catalog catalog, int years, string email, string userName, string phone, Guid? cityId = null)
+    {
+        var user = User.Register(
+            Email.Create(email),
+            UserName.Create(userName),
+            PersonName.Create("Ana"),
+            PersonName.Create("Pérez"),
+            PhoneNumber.Create(phone),
+            "hash",
+            DateOnly.FromDateTime(Now.UtcDateTime).AddYears(-years),
+            catalog.CountryId,
+            catalog.RegionId,
+            cityId ?? catalog.CityId,
+            "es-CO",
+            14,
+            Now);
+        user.ConfirmEmail(Now);
+        if (user.IsMinor(Now))
+        {
+            user.GrantGuardianConsent(Now);
+        }
+
+        db.Users.Add(user);
+        var device = UserDevice.Register(user.Id, "phone-" + userName, DevicePlatform.IOS, null, null, null, Now);
+        device.UpdatePushToken("ExponentPushToken[" + userName + "]");
+        db.UserDevices.Add(device);
+        await db.SaveChangesAsync();
+        return user;
+    }
+
+    private static async Task<Catalog> CatalogAsync(IdentityTestDb db)
+    {
+        var country = Country.Create("CO", "Colombia", "Departamento", "es-CO", "COP", "America/Bogota", DistanceUnit.Kilometers, 14, true);
+        var region = Region.Create(country.Id, "Cundinamarca", "25");
+        var city = City.Create(region.Id, country.Id, "Bogotá", new GeoPoint(4.711, -74.072), "America/Bogota");
+        var other = City.Create(region.Id, country.Id, "Medellín", new GeoPoint(6.244, -75.581), "America/Bogota");
+        db.AddRange(country, region, city, other);
+        await db.SaveChangesAsync();
+        return new Catalog(country.Id, region.Id, city.Id, other.Id);
+    }
+
+    private sealed record Catalog(Guid CountryId, Guid RegionId, Guid CityId, Guid OtherCityId);
+
+    private sealed class MemoryProximity(IdentityTestDb db) : IAlertLocationQuery
+    {
+        public async Task<IReadOnlyList<ProximityMatch>> MatchAsync(GeoPoint origin, DateTimeOffset now, CancellationToken cancellationToken)
+        {
+            var rows = await db.DeviceAlertLocations.Where(item => item.ExpiresAt > now).ToListAsync(cancellationToken);
+            var settings = await db.NotificationSettings.ToListAsync(cancellationToken);
+            var matches = new List<ProximityMatch>();
+            foreach (var group in rows.GroupBy(item => item.UserId))
+            {
+                var preference = settings.FirstOrDefault(item => item.UserId == group.Key);
+                if (preference is { NotifyNearbyReports: false })
+                {
+                    continue;
+                }
+
+                var radius = preference?.NearbyRadiusMeters ?? NotificationSettings.DefaultRadiusMeters;
+                var nearest = group.Select(item => origin.DistanceInMetersTo(item.Location)).Min();
+                if (nearest <= radius)
+                {
+                    matches.Add(new ProximityMatch(group.Key, nearest));
+                }
+            }
+
+            return matches;
+        }
+    }
+
+    private sealed class RecordingPush : IPushSender
+    {
+        public List<PushNote> Notes { get; } = [];
+        public bool Reject { get; set; }
+
+        public Task<IReadOnlyList<PushResult>> SendAsync(IReadOnlyList<PushNote> notes, CancellationToken cancellationToken)
+        {
+            Notes.AddRange(notes);
+            IReadOnlyList<PushResult> results = notes
+                .Select(note => new PushResult(note.DeviceId, !Reject, Reject, Reject ? "DeviceNotRegistered" : null))
+                .ToList();
+            return Task.FromResult(results);
+        }
+    }
+
+    private sealed class Signer : IMediaUrlSigner
+    {
+        public (long ExpiresUnix, string Signature) Sign(Guid mediaId, DateTimeOffset expiresAt) => (expiresAt.ToUnixTimeSeconds(), "sig");
+
+        public bool IsValid(Guid mediaId, long expiresUnix, string signature, DateTimeOffset now) => signature == "sig";
+    }
+
+    private sealed class EchoTokens : ITokenService
+    {
+        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null, string? role = null, Guid? deviceId = null) => "access";
+        public string CreateRefreshToken() => "refresh";
+        public string Hash(string plainToken) => plainToken;
+    }
+}

@@ -84,7 +84,13 @@ public sealed class Complaint : AggregateRoot
         Resolution = Guard.NotEmpty(resolution, nameof(resolution), 1000);
         ResolvedAt = now;
         MarkUpdated(now);
+        Raise(new ComplaintResolvedEvent(Id, ReporterId, status));
     }
 }
+
+/// <summary>
+/// The reporter should get a generic notice. The log must not include who was reported.
+/// </summary>
+public sealed record ComplaintResolvedEvent(Guid ComplaintId, Guid ReporterId, ComplaintStatus Status) : DomainEvent;
 
 public sealed record ComplaintFiledEvent(Guid ComplaintId, ContentTargetType TargetType, Guid TargetId, ComplaintReason Reason, bool IsPriority) : DomainEvent;

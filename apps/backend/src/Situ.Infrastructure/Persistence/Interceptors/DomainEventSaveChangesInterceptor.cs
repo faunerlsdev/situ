@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Situ.Application.Common.Abstractions;
 using Situ.Domain.Common;
+using Situ.Domain.Notifications;
+using Situ.Domain.Reports;
 
 namespace Situ.Infrastructure.Persistence.Interceptors;
 
@@ -10,10 +15,74 @@ public interface IDomainEventDispatcher
 }
 
 /// <summary>In-process dispatch hook. Handlers are added when the application starts publishing events.</summary>
-public sealed class DomainEventDispatcher : IDomainEventDispatcher
+public sealed class DomainEventDispatcher(ILogger<DomainEventDispatcher> logger, IServiceScopeFactory scopes) : IDomainEventDispatcher
 {
-    public Task DispatchAsync(IReadOnlyCollection<IDomainEvent> domainEvents, CancellationToken cancellationToken) =>
-        Task.CompletedTask;
+    public async Task DispatchAsync(IReadOnlyCollection<IDomainEvent> domainEvents, CancellationToken cancellationToken)
+    {
+        foreach (var domainEvent in domainEvents)
+        {
+            if (domainEvent is ReportCreatedEvent created)
+            {
+                logger.LogInformation(
+                    "Report created {ReportId} in category {CategoryId}. Anonymous: {IsAnonymous}.",
+                    created.ReportId,
+                    created.CategoryId,
+                    created.IsAnonymous);
+            }
+
+            if (domainEvent is CommentAddedEvent comment)
+            {
+                logger.LogInformation(
+                    "Comment {CommentId} added on report {ReportId}. Anonymous: {IsAnonymous}. The report author is notified later without revealing who commented.",
+                    comment.CommentId,
+                    comment.ReportId,
+                    comment.IsAnonymous);
+            }
+
+            if (domainEvent is Situ.Domain.Moderation.ComplaintResolvedEvent resolved)
+            {
+                logger.LogInformation(
+                    "Complaint {ComplaintId} resolved as {Status}. A generic notice is due to the reporter.",
+                    resolved.ComplaintId,
+                    resolved.Status);
+            }
+        }
+
+        try
+        {
+            await using var scope = scopes.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+            var clock = scope.ServiceProvider.GetRequiredService<IClock>();
+            var now = clock.UtcNow;
+            foreach (var domainEvent in domainEvents)
+            {
+                var (kind, subjectId) = domainEvent switch
+                {
+                    ReportCreatedEvent created => (NotificationJob.ReportCreated, created.ReportId),
+                    CommentAddedEvent comment => (NotificationJob.CommentAdded, comment.CommentId),
+                    _ => ((string?)null, Guid.Empty),
+                };
+                if (kind is null)
+                {
+                    continue;
+                }
+
+                var queued = await db.NotificationJobs.AnyAsync(
+                    item => item.Kind == kind && item.SubjectId == subjectId,
+                    cancellationToken);
+                if (!queued)
+                {
+                    db.NotificationJobs.Add(NotificationJob.Enqueue(kind, subjectId, now));
+                }
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning("Notification outbox insert failed ({ExceptionType}).", exception.GetType().Name);
+        }
+    }
 }
 
 public sealed class DomainEventSaveChangesInterceptor(IDomainEventDispatcher dispatcher) : SaveChangesInterceptor

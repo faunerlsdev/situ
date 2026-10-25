@@ -12,6 +12,9 @@ using Situ.Api.Auth;
 using Situ.Api.Configuration;
 using Situ.Api.Endpoints;
 using Situ.Api.Guardianship;
+using Situ.Api.Notifications;
+using Situ.Api.Reports;
+using Situ.Api.Retention;
 using Situ.Api.Health;
 using Situ.Application;
 using Situ.Application.Common.Abstractions;
@@ -22,7 +25,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSituConfiguration(builder.Configuration);
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.EnvironmentName);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -56,16 +59,7 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy(AuthorizationPolicies.User, policy =>
-        policy.RequireAuthenticatedUser().RequireAssertion(context =>
-            context.User.FindFirst("scope")?.Value is not AuthorizationPolicies.GuardianConsentScope));
-    options.AddPolicy(AuthorizationPolicies.GuardianConsent, policy =>
-        policy.RequireAuthenticatedUser().RequireClaim("scope", AuthorizationPolicies.GuardianConsentScope));
-    options.AddPolicy(AuthorizationPolicies.Staff, policy =>
-        policy.RequireAuthenticatedUser().RequireRole(AuthorizationPolicies.Staff));
-});
+builder.Services.AddAuthorization(AuthorizationPolicies.Add);
 
 builder.Services.AddCors(options =>
 {
@@ -105,9 +99,69 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("catalog-read", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("interaction-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("notification-device", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("profile-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("username-lookup", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("reports-write", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
 });
 
 builder.Services.AddHostedService<GuardianConsentExpiryService>();
+builder.Services.AddHostedService<ExpireReportsService>();
+builder.Services.AddHostedService<PurgePendingReportMediaService>();
+builder.Services.AddHostedService<RetainReportsService>();
+builder.Services.AddHostedService<CompleteAccountDeletionsService>();
+builder.Services.AddHostedService<NotificationDispatchService>();
+builder.Services.AddHostedService<PurgeAlertLocationsService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database");
@@ -117,6 +171,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(CorsPolicies.Clients);
+app.UseStaticFiles();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

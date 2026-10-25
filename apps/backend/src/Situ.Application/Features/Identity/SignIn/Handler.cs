@@ -78,7 +78,8 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
 
         user.RegisterSuccessfulLogin(now);
         var device = deviceResult.Value!;
-        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now);
+        var role = await Features.Reports.StaffGate.RoleAsync(db, user.Id, cancellationToken);
+        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, role);
         db.RefreshTokens.Add(issued.Stored);
         var previous = await db.RefreshTokens
             .Where(token => token.UserDeviceId == device.Id && token.RevokedAt == null && token.Id != issued.Stored.Id)
@@ -170,7 +171,9 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
         var limit = await DeviceLimitAsync(user.Id, now, cancellationToken);
         if (countsAsNew && limit is { } max && activeCount >= max)
         {
-            return Result<UserDevice>.Failure(AuthErrors.DeviceLimit());
+            return Result<UserDevice>.Failure(AuthErrors.DeviceLimit(
+                tokens.CreateAccessToken(user.Id, now.AddMinutes(30), "device_management"),
+                now.AddMinutes(30)));
         }
 
         var ipAddress = Clip(request.IpAddress, 64);

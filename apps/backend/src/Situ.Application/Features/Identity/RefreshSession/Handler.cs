@@ -47,7 +47,8 @@ public sealed class RefreshSessionHandler(IApplicationDbContext db, IClock clock
         }
 
         device.Touch(now, request.IpAddress);
-        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now);
+        var role = await Features.Reports.StaffGate.RoleAsync(db, user.Id, cancellationToken);
+        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, role);
         current.RotateTo(issued.Stored.Id, now);
         db.RefreshTokens.Add(issued.Stored);
         await db.SaveChangesAsync(cancellationToken);

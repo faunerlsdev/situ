@@ -12,14 +12,7 @@ public class GuardianConsentScopeTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy(AuthorizationPolicies.User, policy =>
-                policy.RequireAuthenticatedUser().RequireAssertion(context =>
-                    context.User.FindFirst("scope")?.Value is not AuthorizationPolicies.GuardianConsentScope));
-            options.AddPolicy(AuthorizationPolicies.GuardianConsent, policy =>
-                policy.RequireAuthenticatedUser().RequireClaim("scope", AuthorizationPolicies.GuardianConsentScope));
-        });
+        services.AddAuthorization(AuthorizationPolicies.Add);
         await using var provider = services.BuildServiceProvider();
         var authorization = provider.GetRequiredService<IAuthorizationService>();
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
@@ -27,6 +20,23 @@ public class GuardianConsentScopeTests
             authenticationType: "Bearer"));
 
         Assert.False((await authorization.AuthorizeAsync(principal, AuthorizationPolicies.User)).Succeeded);
+        Assert.False((await authorization.AuthorizeAsync(principal, AuthorizationPolicies.DeviceSession)).Succeeded);
         Assert.True((await authorization.AuthorizeAsync(principal, AuthorizationPolicies.GuardianConsent)).Succeeded);
+    }
+
+    [Fact]
+    public async Task A_device_management_token_can_list_devices_and_cannot_use_the_rest_of_the_account()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddAuthorization(AuthorizationPolicies.Add);
+        await using var provider = services.BuildServiceProvider();
+        var authorization = provider.GetRequiredService<IAuthorizationService>();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("sub", Guid.NewGuid().ToString()), new Claim("scope", AuthorizationPolicies.DeviceManagementScope)],
+            authenticationType: "Bearer"));
+
+        Assert.False((await authorization.AuthorizeAsync(principal, AuthorizationPolicies.User)).Succeeded);
+        Assert.True((await authorization.AuthorizeAsync(principal, AuthorizationPolicies.DeviceSession)).Succeeded);
     }
 }

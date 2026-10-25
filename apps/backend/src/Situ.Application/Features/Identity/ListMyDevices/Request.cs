@@ -12,4 +12,5 @@ public sealed record DeviceItem(
     DevicePlatform Platform,
     string? DeviceName,
     DateTimeOffset LastSeenAt,
-    bool IsActive);
+    bool IsActive,
+    bool IsCurrent);

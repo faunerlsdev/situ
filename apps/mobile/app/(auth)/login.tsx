@@ -52,6 +52,12 @@ export default function LoginScreen() {
         return;
       }
 
+      if (cause instanceof ApiError && cause.apiCode === 'auth.device_limit' && cause.accessToken) {
+        setAccessToken(cause.accessToken, { deviceLimit: true });
+        router.replace('/limite-dispositivos');
+        return;
+      }
+
       if (cause instanceof ApiError && cause.apiCode === 'auth.email_unconfirmed') {
         const login = values.login.trim();
         router.replace({

@@ -24,6 +24,9 @@ public static class MinorProtectionPolicy
     /// <summary>Minors keep a private profile and never appear on the public map (RF-MIN-04).</summary>
     public static bool CanHavePublicProfile(int age) => age >= AdultAge;
 
+    /// <summary>A minor cannot upload their own photo as an avatar. Gallery icons stay available.</summary>
+    public static bool CanUploadProfilePhoto(int age) => age >= AdultAge;
+
     /// <summary>Minors can only stream to accepted friends (RF-MIN-09).</summary>
     public static bool CanStreamTo(int age, ContentVisibility visibility) =>
         age >= AdultAge || visibility == ContentVisibility.FriendsOnly;
@@ -33,6 +36,30 @@ public static class MinorProtectionPolicy
     /// <summary>Adult-only report categories are hidden from minors (RF-MIN-06).</summary>
     public static bool CanUseAdultOnlyCategories(int age) => age >= AdultAge;
 
+    /// <summary>
+    /// A minor may publish publicly only when the report is anonymous.
+    /// Otherwise the report has to be visible to accepted friends only.
+    /// Adults are not restricted. The caller rejects the request; visibility is not rewritten in silence.
+    /// </summary>
+    public static bool CanPublishReport(int age, ContentVisibility visibility, bool isAnonymous) =>
+        !IsMinor(age) || visibility == ContentVisibility.FriendsOnly || isAnonymous;
+
+    /// <summary>
+    /// A minor may comment with their name only on a friends-only report.
+    /// On a public report the comment has to be anonymous. Adults are not restricted.
+    /// The caller rejects the request; the comment is not rewritten in silence.
+    /// </summary>
+    public static bool CanComment(int age, ContentVisibility reportVisibility, bool isAnonymous) =>
+        CanPublishReport(age, reportVisibility, isAnonymous);
+
     /// <summary>No personalized ads or commercial profiling for minors (RF-MIN-06).</summary>
     public static bool CanReceivePersonalizedAds(int age) => age >= AdultAge;
+
+    /// <summary>
+    /// A minor may store an approximate location for proximity alerts only when the guardian
+    /// authorized location sharing. Adults are not restricted. Without it, the minor still
+    /// receives city-of-interest alerts.
+    /// </summary>
+    public static bool CanShareProximityLocation(int age, bool guardianAuthorizedLocation) =>
+        !IsMinor(age) || guardianAuthorizedLocation;
 }

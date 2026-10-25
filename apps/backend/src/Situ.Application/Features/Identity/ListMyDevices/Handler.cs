@@ -29,7 +29,8 @@ public sealed class ListMyDevicesHandler(IApplicationDbContext db, ICurrentUser 
                 device.Platform,
                 device.DeviceName,
                 device.LastSeenAt,
-                device.IsActive))
+                device.IsActive,
+                device.Id == currentUser.DeviceId))
             .ToArray();
 
         return Result<ListMyDevicesResponse>.Success(new ListMyDevicesResponse(devices));

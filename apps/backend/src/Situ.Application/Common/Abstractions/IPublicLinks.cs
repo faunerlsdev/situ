@@ -12,4 +12,7 @@ public interface IPublicLinks
     string GuardianReview(string plainToken);
 
     string GuardianManage(string plainToken);
+
+    /// <summary>Turns a relative API path into an absolute URL the phone can load.</summary>
+    string Absolute(string path);
 }

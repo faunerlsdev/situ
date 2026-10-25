@@ -10,6 +10,8 @@ public sealed class NotificationSettingsConfiguration : IEntityTypeConfiguration
 {
     public void Configure(EntityTypeBuilder<NotificationSettings> builder)
     {
+        builder.Property(e => e.NotifyNearbyReports).HasDefaultValue(true);
+        builder.Property(e => e.TimeZoneId).HasMaxLength(64).IsRequired().HasDefaultValue(NotificationSettings.DefaultTimeZoneId);
         builder.Required<NotificationSettings, User>(e => e.UserId);
         builder.HasIndex(e => e.UserId).IsUnique().AreNullsDistinct(false);
     }

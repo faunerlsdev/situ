@@ -1,4 +1,26 @@
 import type {
+  AddCommentBody,
+  AddCommentResult,
+  BlockListItem,
+  CommentPage,
+  ComplaintBody,
+  ReactionResult,
+} from '../../reports/interaction';
+import type {
+  AppConfig,
+  ConfirmReportBody,
+  ConfirmReportResponse,
+  CreateReportBody,
+  CreateReportResponse,
+  MapQuery,
+  MapResponse,
+  MyReportsResponse,
+  ReportCatalog,
+  ReportDetail,
+  SessionProfile,
+  UploadMediaResponse,
+} from '../../reports/types';
+import type {
   AuthorizeGuardianConsentRequest,
   AuthorizeGuardianConsentResponse,
   AuthSession,
@@ -60,6 +82,53 @@ export function createServices(http: HttpClient) {
       return http
         .request<unknown>({ method: 'POST', url: '/api/v1/auth/login', data: body, skipAuthRefresh: true })
         .then(readAuthSession);
+    },
+    listMyDevices() {
+      return http.request<{ devices: SessionDevice[] }>({ url: '/api/v1/me/devices', requiresAuth: true });
+    },
+    revokeDevice(deviceId: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/me/devices/${encodeURIComponent(deviceId)}`,
+        requiresAuth: true,
+      });
+    },
+    updateMyProfile(body: { userName?: string | null; displayName?: string | null; bio?: string | null; homeCityId?: string | null }) {
+      return http.request<void>({ method: 'PATCH', url: '/api/v1/me/profile', data: body, requiresAuth: true });
+    },
+    usernameAvailable(userName: string) {
+      return http.request<{ available: boolean }>({
+        url: `/api/v1/users/username-available?userName=${encodeURIComponent(userName)}`,
+        requiresAuth: true,
+      });
+    },
+    avatarGallery() {
+      return http.request<{ items: { id: string; name: string; imageUrl: string; sortOrder: number }[] }>({
+        url: '/api/v1/avatars/gallery',
+        requiresAuth: true,
+      });
+    },
+    setGalleryAvatar(galleryItemId: string) {
+      return http.request<void>({
+        method: 'PUT',
+        url: '/api/v1/me/avatar',
+        data: { galleryItemId },
+        requiresAuth: true,
+      });
+    },
+    removeAvatar() {
+      return http.request<void>({ method: 'DELETE', url: '/api/v1/me/avatar', requiresAuth: true });
+    },
+    uploadAvatarPhoto(data: FormData, onProgress: (percent: number) => void, signal?: AbortSignal) {
+      return http.request<void>({
+        method: 'POST',
+        url: '/api/v1/me/avatar/photo',
+        data,
+        timeoutMs: httpTimeouts.uploadMs,
+        onUploadProgress: onProgress,
+        signal,
+        requiresAuth: true,
+      });
     },
     register(body: RegisterRequest) {
       return http.request<RegisterResponse>({ method: 'POST', url: '/api/v1/auth/register', data: body });
@@ -163,10 +232,99 @@ export function createServices(http: HttpClient) {
         skipAuthRefresh: true,
       });
     },
+    notificationSettings() {
+      return http.request<NotificationSettings>({ url: '/api/v1/me/notification-settings', requiresAuth: true });
+    },
+    updateNotificationSettings(body: NotificationSettings) {
+      return http.request<NotificationSettings>({
+        method: 'PUT',
+        url: '/api/v1/me/notification-settings',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    interestCities() {
+      return http.request<InterestCities>({ url: '/api/v1/me/interest-cities', requiresAuth: true });
+    },
+    addInterestCity(cityId: string) {
+      return http.request<InterestCities>({
+        method: 'PUT',
+        url: `/api/v1/me/interest-cities/${encodeURIComponent(cityId)}`,
+        requiresAuth: true,
+      });
+    },
+    removeInterestCity(cityId: string) {
+      return http.request<InterestCities>({
+        method: 'DELETE',
+        url: `/api/v1/me/interest-cities/${encodeURIComponent(cityId)}`,
+        requiresAuth: true,
+      });
+    },
+    categoryInterests() {
+      return http.request<{ mutedCategoryIds: string[] }>({ url: '/api/v1/me/category-interests', requiresAuth: true });
+    },
+    updateCategoryInterests(mutedCategoryIds: string[]) {
+      return http.request<{ mutedCategoryIds: string[] }>({
+        method: 'PUT',
+        url: '/api/v1/me/category-interests',
+        data: { mutedCategoryIds },
+        requiresAuth: true,
+      });
+    },
+    setPushToken(token: string) {
+      return http.request<void>({
+        method: 'PUT',
+        url: '/api/v1/devices/current/push-token',
+        data: { token },
+        requiresAuth: true,
+      });
+    },
+    clearPushToken() {
+      return http.request<void>({
+        method: 'DELETE',
+        url: '/api/v1/devices/current/push-token',
+        requiresAuth: true,
+      });
+    },
+    setAlertLocation(body: { latitude: number; longitude: number; accuracyMeters: number | null }) {
+      return http.request<void>({
+        method: 'PUT',
+        url: '/api/v1/devices/current/alert-location',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    clearAlertLocation() {
+      return http.request<void>({
+        method: 'DELETE',
+        url: '/api/v1/devices/current/alert-location',
+        requiresAuth: true,
+      });
+    },
+    listNotifications(cursor?: string | null) {
+      const query = new URLSearchParams({ limit: '20' });
+      if (cursor) {
+        query.set('cursor', cursor);
+      }
+      return http.request<NotificationPage>({ url: `/api/v1/notifications?${query.toString()}`, requiresAuth: true });
+    },
+    unreadNotificationCount() {
+      return http.request<{ count: number }>({ url: '/api/v1/notifications/unread-count', requiresAuth: true });
+    },
+    markNotificationRead(id: string) {
+      return http.request<void>({
+        method: 'POST',
+        url: `/api/v1/notifications/${encodeURIComponent(id)}/read`,
+        requiresAuth: true,
+      });
+    },
+    markAllNotificationsRead() {
+      return http.request<void>({ method: 'POST', url: '/api/v1/notifications/read-all', requiresAuth: true });
+    },
     changePassword(body: ChangePasswordRequest) {
       return http.request<void>({
         method: 'POST',
-        url: '/api/v1/auth/password',
+        url: '/api/v1/me/password',
         data: body,
         requiresAuth: true,
       });
@@ -188,6 +346,234 @@ export function createServices(http: HttpClient) {
     },
     declineGuardianConsent(body: DeclineGuardianConsentRequest) {
       return http.request<void>({ method: 'POST', url: '/api/v1/guardianship/consent/decline', data: body });
+    },
+    sessionProfile() {
+      return http.request<SessionProfile>({ url: '/api/v1/me' });
+    },
+    appConfig(ifNoneMatch?: string) {
+      return http.requestResponse<AppConfig>({
+        url: '/api/v1/app-config',
+        headers: ifNoneMatch ? { 'If-None-Match': ifNoneMatch } : undefined,
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+      });
+    },
+    resendMyConfirmationEmail() {
+      return http.request<void>({ method: 'POST', url: '/api/v1/auth/confirm-email/resend-self' });
+    },
+    reportCategories(ifNoneMatch?: string) {
+      return http.requestResponse<ReportCatalog>({
+        url: '/api/v1/report-categories',
+        headers: {
+          'Accept-Language': 'es-CO',
+          ...(ifNoneMatch ? { 'If-None-Match': ifNoneMatch } : {}),
+        },
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+      });
+    },
+    mapReports(query: MapQuery, signal?: AbortSignal) {
+      const params = new URLSearchParams();
+      params.set('minLat', String(query.minLat));
+      params.set('minLon', String(query.minLon));
+      params.set('maxLat', String(query.maxLat));
+      params.set('maxLon', String(query.maxLon));
+      params.set('zoom', String(query.zoom));
+      if (query.categories.length > 0) {
+        params.set('categories', query.categories.join(','));
+      }
+      if (query.since) {
+        params.set('since', query.since);
+      }
+      if (query.friendsOnly) {
+        params.set('type', 'friends');
+      }
+      if (query.latitude !== null && query.longitude !== null) {
+        params.set('lat', String(query.latitude));
+        params.set('lon', String(query.longitude));
+      }
+      return http.request<MapResponse>({
+        url: `/api/v1/reports/map?${params.toString()}`,
+        requiresAuth: true,
+        signal,
+      });
+    },
+    report(id: string, signal?: AbortSignal) {
+      return http.request<ReportDetail>({
+        url: `/api/v1/reports/${encodeURIComponent(id)}`,
+        requiresAuth: true,
+        signal,
+      });
+    },
+    myReports(cursor?: string, limit = 20) {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (cursor) {
+        params.set('cursor', cursor);
+      }
+      return http.request<MyReportsResponse>({
+        url: `/api/v1/reports/mine?${params.toString()}`,
+        requiresAuth: true,
+      });
+    },
+    createReport(body: CreateReportBody) {
+      return http.request<CreateReportResponse>({
+        method: 'POST',
+        url: '/api/v1/reports',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    updateReport(id: string, description: string) {
+      return http.request<void>({
+        method: 'PATCH',
+        url: `/api/v1/reports/${encodeURIComponent(id)}`,
+        data: { description },
+        requiresAuth: true,
+      });
+    },
+    deleteReport(id: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/reports/${encodeURIComponent(id)}`,
+        requiresAuth: true,
+      });
+    },
+    confirmReport(id: string, body: ConfirmReportBody) {
+      return http.request<ConfirmReportResponse>({
+        method: 'PUT',
+        url: `/api/v1/reports/${encodeURIComponent(id)}/confirmation`,
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    uploadReportMedia(data: FormData, onProgress: (percent: number) => void, signal?: AbortSignal) {
+      return http.request<UploadMediaResponse>({
+        method: 'POST',
+        url: '/api/v1/reports/media',
+        data,
+        timeoutMs: httpTimeouts.uploadMs,
+        onUploadProgress: onProgress,
+        signal,
+        requiresAuth: true,
+      });
+    },
+    comments(reportId: string, cursor?: string) {
+      const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      return http.request<CommentPage>({
+        method: 'GET',
+        url: `/api/v1/reports/${encodeURIComponent(reportId)}/comments${query}`,
+        requiresAuth: true,
+      });
+    },
+    addComment(reportId: string, body: AddCommentBody) {
+      return http.request<AddCommentResult>({
+        method: 'POST',
+        url: `/api/v1/reports/${encodeURIComponent(reportId)}/comments`,
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    editComment(id: string, text: string) {
+      return http.request<{ id: string; text: string }>({
+        method: 'PATCH',
+        url: `/api/v1/comments/${encodeURIComponent(id)}`,
+        data: { text },
+        requiresAuth: true,
+      });
+    },
+    deleteComment(id: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/comments/${encodeURIComponent(id)}`,
+        requiresAuth: true,
+      });
+    },
+    setReportReaction(id: string, type: string) {
+      return http.request<ReactionResult>({
+        method: 'PUT',
+        url: `/api/v1/reports/${encodeURIComponent(id)}/reaction`,
+        data: { type },
+        requiresAuth: true,
+      });
+    },
+    clearReportReaction(id: string) {
+      return http.request<ReactionResult>({
+        method: 'DELETE',
+        url: `/api/v1/reports/${encodeURIComponent(id)}/reaction`,
+        requiresAuth: true,
+      });
+    },
+    setCommentReaction(id: string, type: string) {
+      return http.request<ReactionResult>({
+        method: 'PUT',
+        url: `/api/v1/comments/${encodeURIComponent(id)}/reaction`,
+        data: { type },
+        requiresAuth: true,
+      });
+    },
+    clearCommentReaction(id: string) {
+      return http.request<ReactionResult>({
+        method: 'DELETE',
+        url: `/api/v1/comments/${encodeURIComponent(id)}/reaction`,
+        requiresAuth: true,
+      });
+    },
+    submitComplaint(body: ComplaintBody) {
+      return http.request<{ id: string; status: string; isPriority: boolean }>({
+        method: 'POST',
+        url: '/api/v1/complaints',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    blocks() {
+      return http.request<{ blocks: BlockListItem[] }>({
+        method: 'GET',
+        url: '/api/v1/blocks',
+        requiresAuth: true,
+      });
+    },
+    blockUser(userId: string) {
+      return http.request<{ blocked: boolean }>({
+        method: 'POST',
+        url: '/api/v1/blocks',
+        data: { userId },
+        requiresAuth: true,
+      });
+    },
+    unblock(blockId: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/blocks/${encodeURIComponent(blockId)}`,
+        requiresAuth: true,
+      });
+    },
+    blockReportAuthor(id: string) {
+      return http.request<{ blocked: boolean }>({
+        method: 'POST',
+        url: `/api/v1/reports/${encodeURIComponent(id)}/block-author`,
+        requiresAuth: true,
+      });
+    },
+    blockCommentAuthor(id: string) {
+      return http.request<{ blocked: boolean }>({
+        method: 'POST',
+        url: `/api/v1/comments/${encodeURIComponent(id)}/block-author`,
+        requiresAuth: true,
+      });
+    },
+    requestAccountDeletion(password: string) {
+      return http.request<{ scheduledFor: string }>({
+        method: 'POST',
+        url: '/api/v1/me/deletion-request',
+        data: { password },
+        requiresAuth: true,
+      });
+    },
+    cancelAccountDeletion() {
+      return http.request<void>({
+        method: 'POST',
+        url: '/api/v1/me/deletion-request/cancel',
+        requiresAuth: true,
+      });
     },
     commentOnReport(reportId: string, body: CommentRequest) {
       return http.request<void>({
@@ -227,6 +613,51 @@ export function createApiClient(options: ApiClientOptions) {
   };
   return createServices(createHttpClient(httpOptions));
 }
+
+export type NotificationSettings = {
+  pushEnabled: boolean;
+  nearbyRadiusMeters: number;
+  notifyNearbyReports: boolean;
+  notifyFriendReports: boolean;
+  notifyFriendLives: boolean;
+  notifyImportantNews: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  timeZoneId: string;
+};
+
+export type InterestCities = {
+  cities: { cityId: string; name: string }[];
+  maximum: number;
+};
+
+export type InboxNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  targetType: string | null;
+  targetId: string | null;
+  reportId: string | null;
+  createdAt: string;
+  isRead: boolean;
+  available: boolean;
+};
+
+export type NotificationPage = {
+  notifications: InboxNotification[];
+  nextCursor: string | null;
+};
+
+export type SessionDevice = {
+  id: string;
+  deviceIdentifier: string;
+  platform: 'IOS' | 'Android' | 'Web';
+  deviceName: string | null;
+  lastSeenAt: string;
+  isActive: boolean;
+  isCurrent?: boolean;
+};
 
 function readAuthSession(value: unknown): AuthSession {
   if (typeof value !== 'object' || value === null) {

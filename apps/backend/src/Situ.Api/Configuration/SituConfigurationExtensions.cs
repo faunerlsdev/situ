@@ -52,6 +52,7 @@ public static class SituConfigurationExtensions
             .ValidateOnStart();
 
         services.AddSingleton(serviceProvider => serviceProvider.GetRequiredService<IOptions<GuardianConsentOptions>>().Value);
+        services.AddSingleton(PublicBaseUrlOptions.From(configuration));
 
         return services;
     }

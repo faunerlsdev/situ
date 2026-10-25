@@ -45,6 +45,9 @@ internal sealed class FakeLinks : IPublicLinks
 
     public string GuardianManage(string plainToken) =>
         $"https://situ.test/tutor/gestionar?token={Uri.EscapeDataString(plainToken)}";
+
+    public string Absolute(string path) =>
+        "https://situ.test" + (path.StartsWith('/') ? path : "/" + path);
 }
 
 internal sealed class FakePasswords : IPasswordHasher

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 using Situ.Infrastructure.Persistence.Configurations;
 
@@ -11,6 +12,8 @@ public sealed class ReportMediaConfiguration : IEntityTypeConfiguration<ReportMe
     {
         builder.Property(e => e.StorageKey).HasMaxLength(500);
         builder.Property(e => e.ThumbnailKey).HasMaxLength(500);
-        builder.Required<ReportMedia, Report>(e => e.ReportId);
+        builder.Optional<ReportMedia, Report>(e => e.ReportId);
+        builder.Required<ReportMedia, User>(e => e.OwnerUserId);
+        builder.HasIndex(e => e.ReportId);
     }
 }

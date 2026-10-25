@@ -1,4 +1,5 @@
 import { messageFromUnknown, notify } from '@situ/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -13,6 +14,7 @@ const logo = require('../assets/images/brand/situ-logo-vertical-naranja.png');
 export default function ConfirmEmailScreen() {
   const params = useLocalSearchParams<{ token?: string | string[]; email?: string | string[] }>();
   const token = searchParam(params.token);
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState(searchParam(params.email));
   const [pending, setPending] = useState(false);
 
@@ -20,6 +22,7 @@ export default function ConfirmEmailScreen() {
     setPending(true);
     try {
       await api.confirmEmail({ token });
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
       notify.success('Correo confirmado. Ya puedes ingresar.');
     } catch (cause) {
       notify.error(messageFromUnknown(cause));

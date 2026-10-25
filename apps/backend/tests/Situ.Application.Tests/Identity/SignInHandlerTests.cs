@@ -135,6 +135,8 @@ public class SignInHandlerTests
         var third = await handler.Handle(Request("ana@situ.test", "Clave123", "device-3"), CancellationToken.None);
         Assert.Equal("auth.device_limit", third.Error!.Code);
         Assert.Equal(ErrorType.Forbidden, third.Error.Type);
+        Assert.Equal("device_management", third.Error.Extensions["scope"]);
+        Assert.Contains("device_management", third.Error.Extensions["accessToken"]!.ToString(), StringComparison.Ordinal);
         Assert.Equal(2, await db.UserDevices.CountAsync());
 
         var again = await handler.Handle(Request("ana@situ.test", "Clave123", "device-1"), CancellationToken.None);
@@ -287,7 +289,7 @@ public class SignInHandlerTests
 
     private sealed class FakeTokens : ITokenService
     {
-        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null) =>
+        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null, string? role = null, Guid? deviceId = null) =>
             "access:" + userId.ToString("N") + ":" + expiresAt.UtcTicks + ":" + (scope ?? "session");
 
         public string CreateRefreshToken() => Guid.NewGuid().ToString("N");

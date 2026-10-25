@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Domain.Administration;
+using Situ.Domain.Anonymity;
 using Situ.Domain.Geography;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
@@ -23,6 +24,8 @@ namespace Situ.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IApplicationDbContext
 {
+    public DbSet<AnonymousParticipant> AnonymousParticipants => Set<AnonymousParticipant>();
+
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
@@ -88,6 +91,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<NewsItem> NewsItems => Set<NewsItem>();
 
     public DbSet<UserReputation> UserReputations => Set<UserReputation>();
+
+    public DbSet<DeviceAlertLocation> DeviceAlertLocations => Set<DeviceAlertLocation>();
+
+    public DbSet<NotificationJob> NotificationJobs => Set<NotificationJob>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
 

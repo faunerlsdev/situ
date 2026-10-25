@@ -47,6 +47,9 @@ public sealed class User : AggregateRoot
     public DateTimeOffset? LastLoginAt { get; private set; }
     public DateTimeOffset? LastPasswordChangeAt { get; private set; }
 
+    /// <summary>When the public handle last changed. Registration does not count. Null means it can change now.</summary>
+    public DateTimeOffset? UserNameChangedAt { get; private set; }
+
     public bool TwoFactorEnabled { get; private set; }
     public string? TwoFactorSecret { get; private set; }
 
@@ -236,6 +239,13 @@ public sealed class User : AggregateRoot
         TwoFactorEnabled = false;
     }
 
+    public void ChangeUserName(UserName userName, DateTimeOffset now)
+    {
+        UserName = userName;
+        UserNameChangedAt = now;
+        MarkUpdated(now);
+    }
+
     public void ChangeInterestLocation(Guid countryId, Guid regionId, Guid cityId)
     {
         CountryId = Guard.NotEmpty(countryId, nameof(countryId));
@@ -303,6 +313,26 @@ public sealed class User : AggregateRoot
     {
         Status = UserStatus.Deleted;
         DeletedAt = now;
+    }
+
+    /// <summary>
+    /// Replaces personal data and marks the account deleted. Call it only after the grace period,
+    /// and only when no legal hold applies. The row stays so audit references keep an id.
+    /// </summary>
+    public void CompleteDeletion(DateTimeOffset now)
+    {
+        Guard.That(Status == UserStatus.DeletionRequested, "user.not_deleting", "The account is not waiting to be deleted.");
+        var suffix = Id.ToString("N")[..12];
+        Email = global::Situ.Domain.Common.Email.Create($"e{suffix}@removed.invalid");
+        UserName = global::Situ.Domain.Common.UserName.Create($"gone{suffix}");
+        GivenNames = PersonName.Create("Eliminado");
+        Surnames = PersonName.Create("Eliminado");
+        Phone = global::Situ.Domain.Common.PhoneNumber.Create("3000000000");
+        PasswordHash = "erased";
+        DateOfBirth = new DateOnly(2000, 1, 1);
+        TwoFactorSecret = null;
+        TwoFactorEnabled = false;
+        MarkDeleted(now);
     }
 
     private void RecomputeActivation(DateTimeOffset now)

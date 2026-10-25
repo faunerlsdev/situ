@@ -36,6 +36,9 @@ public sealed class UserProfile : AggregateRoot
     }
 
     public Guid UserId { get; private set; }
+    public const int DisplayNameMaxLength = 60;
+    public const int BioMaxLength = 160;
+
     public string DisplayName { get; private set; }
     public string? Bio { get; private set; }
 
@@ -64,15 +67,15 @@ public sealed class UserProfile : AggregateRoot
     public static UserProfile CreateDefault(Guid userId, string displayName) => new()
     {
         UserId = Guard.NotEmpty(userId, nameof(userId)),
-        DisplayName = Guard.NotEmpty(displayName, nameof(displayName), 60),
+        DisplayName = Guard.NotEmpty(displayName, nameof(displayName), DisplayNameMaxLength),
         AvatarKind = AvatarKind.Default,
         Visibility = ProfileVisibility.Private,
     };
 
     public void UpdateDetails(string displayName, string? bio)
     {
-        DisplayName = Guard.NotEmpty(displayName, nameof(displayName), 60);
-        Bio = Guard.Optional(bio, nameof(bio), 280);
+        DisplayName = Guard.NotEmpty(displayName, nameof(displayName), DisplayNameMaxLength);
+        Bio = Guard.Optional(bio, nameof(bio), BioMaxLength);
     }
 
     public void UseDefaultAvatar()
@@ -126,6 +129,19 @@ public sealed class UserProfile : AggregateRoot
     {
         ShareLocationWithFriends = false;
         FriendLocationSharingEndsAt = null;
+    }
+
+    /// <summary>Removes the public face of an account that has been deleted. The row stays.</summary>
+    public void Erase(DateTimeOffset now)
+    {
+        DisplayName = "Cuenta eliminada";
+        Bio = null;
+        UseDefaultAvatar();
+        MakePrivate();
+        SetRealtimeLocationVisible(false);
+        DisableFriendLocationSharing();
+        ClearGhostMode();
+        MarkUpdated(now);
     }
 
     public void ActivateGhostMode(DateTimeOffset until, DateTimeOffset now)

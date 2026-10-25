@@ -12,6 +12,8 @@ public sealed class UserBlockConfiguration : IEntityTypeConfiguration<UserBlock>
     {
         builder.Required<UserBlock, User>(e => e.BlockerId);
         builder.Required<UserBlock, User>(e => e.BlockedUserId);
-        builder.HasIndex(e => new { e.BlockerId, e.BlockedUserId }).IsUnique().AreNullsDistinct(false);
+        builder.HasIndex(e => new { e.BlockerId, e.BlockedUserId, e.Scope }).IsUnique().AreNullsDistinct(false);
+        builder.HasIndex(e => new { e.BlockedUserId, e.Scope });
+        builder.HasIndex(e => new { e.BlockerId, e.Scope });
     }
 }

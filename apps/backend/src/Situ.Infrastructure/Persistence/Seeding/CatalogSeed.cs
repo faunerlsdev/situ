@@ -6,6 +6,7 @@ using Situ.Domain.Common;
 using Situ.Domain.Geography;
 using Situ.Domain.Legal;
 using Situ.Domain.Monetization;
+using Situ.Domain.Profiles;
 using Situ.Domain.Reports;
 
 namespace Situ.Infrastructure.Persistence.Seeding;
@@ -24,6 +25,7 @@ internal static class CatalogSeed
         SeedCategories(modelBuilder);
         SeedPlans(modelBuilder);
         SeedSettings(modelBuilder);
+        SeedAvatars(modelBuilder);
         SeedStaff(modelBuilder);
     }
 
@@ -113,8 +115,8 @@ internal static class CatalogSeed
             category.Code,
             category.Name,
             category.Description,
-            ButtonIconUrl = $"/icons/categories/{category.Code}-button.svg",
-            MapIconUrl = $"/icons/categories/{category.Code}-map.svg",
+            ButtonIconUrl = $"/assets/categories/{category.Code}.png",
+            MapIconUrl = $"/assets/categories/{category.Code}.png",
             category.ColorHex,
             category.SortOrder,
             IsActive = true,
@@ -128,6 +130,19 @@ internal static class CatalogSeed
         });
 
         modelBuilder.Entity<ReportCategory>().HasData(rows.Cast<object>().ToArray());
+
+        var translations = Categories.Select(category => new
+        {
+            Id = SeedId.For($"category-translation:{category.Code}:es-CO"),
+            CategoryId = SeedId.For($"category:{category.Code}"),
+            Locale = "es-CO",
+            category.Name,
+            category.Description,
+            CreatedAt = SeededAt,
+            UpdatedAt = (DateTimeOffset?)null,
+        });
+
+        modelBuilder.Entity<ReportCategoryTranslation>().HasData(translations.Cast<object>().ToArray());
     }
 
     private static void SeedPlans(ModelBuilder modelBuilder)
@@ -214,18 +229,86 @@ internal static class CatalogSeed
         [SystemSettingKeys.GuardianMaxSendsPerIpPerHour] = "Solicitudes de autorización que una misma IP puede iniciar en una hora.",
         [SystemSettingKeys.GuardianMaxCodeAttempts] = "Intentos fallidos antes de invalidar el código del representante.",
         [SystemSettingKeys.GuardianMaxCodeResendsPer15Minutes] = "Reenvíos del código del representante cada 15 minutos.",
+        [SystemSettingKeys.ReportCatalogVersion] = "Versión del catálogo de categorías. Sube en cada cambio del panel.",
+        [SystemSettingKeys.ReportMaxImageBytes] = "Tamaño máximo de una imagen de reporte, en bytes.",
+        [SystemSettingKeys.ReportMaxVideoBytes] = "Tamaño máximo de un video de reporte, en bytes.",
+        [SystemSettingKeys.ReportMaxVideoSeconds] = "Duración máxima de un video de reporte, en segundos.",
+        [SystemSettingKeys.ReportMaxImages] = "Imágenes máximas por reporte.",
+        [SystemSettingKeys.ReportMaxVideos] = "Videos máximos por reporte.",
+        [SystemSettingKeys.ReportConfirmationRadiusMeters] = "Distancia máxima, en metros, para confirmar un reporte.",
+        [SystemSettingKeys.ReportConfirmationExtensionPercent] = "Porcentaje del TTL que suma un voto de sigue ahí.",
+        [SystemSettingKeys.ReportConfirmationMinExtensionMinutes] = "Minutos mínimos que suma un voto de sigue ahí.",
+        [SystemSettingKeys.ReportPendingMediaHours] = "Horas antes de borrar un archivo que no se asoció a un reporte.",
+        [SystemSettingKeys.ReportDescriptionMaxLength] = "Máximo de caracteres de la descripción de un reporte. El dominio sigue rechazando más de 1000.",
+        [SystemSettingKeys.PanelBrowseCopy] = "Texto del panel inferior cuando se quiere mirar el mapa.",
+        [SystemSettingKeys.PanelReportCopy] = "Texto del panel inferior cuando se quiere publicar.",
+        [SystemSettingKeys.AppIosMinSupportedVersion] = "Versión mínima de la app iOS.",
+        [SystemSettingKeys.AppIosLatestVersion] = "Última versión publicada de la app iOS.",
+        [SystemSettingKeys.AppAndroidMinSupportedVersion] = "Versión mínima de la app Android.",
+        [SystemSettingKeys.AppAndroidLatestVersion] = "Última versión publicada de la app Android.",
+        [SystemSettingKeys.AppWebMinSupportedVersion] = "Versión mínima de la web.",
+        [SystemSettingKeys.AppWebLatestVersion] = "Última versión publicada de la web.",
+        [SystemSettingKeys.ComplaintAutoReviewThreshold] = "Denuncias distintas que mandan un reporte o comentario a revisión.",
+        [SystemSettingKeys.AnonymousCommentsPerDay] = "Comentarios anónimos que una persona puede publicar por día.",
+        [SystemSettingKeys.AccountDeletionGraceDays] = "Días de gracia antes de borrar una cuenta.",
+        [SystemSettingKeys.NotificationMaxPushesPerHour] = "Pushes que una persona puede recibir en una hora antes de agruparlos.",
+        [SystemSettingKeys.NotificationMaxInterestCities] = "Ciudades de interés adicionales permitidas. Hoy aplica a todos los planes.",
+        [SystemSettingKeys.NotificationAlertLocationMinutes] = "Minutos que vive la ubicación aproximada usada solo para alertas de proximidad.",
+        [SystemSettingKeys.NotificationDispatchBatchSize] = "Trabajos de notificación que se procesan en cada lote.",
+        [SystemSettingKeys.NotificationPushBatchSize] = "Mensajes máximos por lote hacia Expo Push.",
+        [SystemSettingKeys.ProfileUserNameChangeDays] = "Días mínimos entre cambios del nombre de usuario.",
+        [SystemSettingKeys.ProfileReservedUserNames] = "Nombres de usuario reservados, separados por coma. Se tratan igual que un nombre ya tomado.",
+        [SystemSettingKeys.ProfileBlockedTerms] = "Términos que no pueden aparecer en el nombre, el usuario o la bio.",
+        [SystemSettingKeys.ProfileAvatarMaxBytes] = "Tamaño máximo de una foto de perfil, en bytes.",
+        [SystemSettingKeys.LegalTermsUrl] = "URL de los términos de uso.",
+        [SystemSettingKeys.LegalPrivacyUrl] = "URL de la política de tratamiento de datos.",
+        [SystemSettingKeys.LegalSupportUrl] = "URL de soporte.",
     };
+
+    private static void SeedAvatars(ModelBuilder modelBuilder)
+    {
+        var names = new[]
+        {
+            "Isotipo",
+            "Pin",
+            "Megáfono",
+            "Mapa",
+            "En vivo",
+            "Mensajes",
+            "Noticias",
+            "Buscar",
+            "Isotipo oscuro",
+            "Genérico",
+            "Evento",
+            "Vía",
+        };
+        var rows = names.Select((name, index) => new
+        {
+            Id = SeedId.For($"avatar:{(index + 1):00}"),
+            Name = name,
+            ImageUrl = $"/assets/avatars/{(index + 1):00}.png",
+            SortOrder = index + 1,
+            IsActive = true,
+            CreatedAt = SeededAt,
+            UpdatedAt = (DateTimeOffset?)null,
+        });
+        modelBuilder.Entity<AvatarGalleryItem>().HasData(rows.Cast<object>().ToArray());
+    }
 
     private static readonly (string Code, string Name, string Description, string ColorHex, int SortOrder, int TtlMinutes, double ImportanceWeight, MediaRequirement MediaRequirement)[] Categories =
     [
-        ("traffic_accident", "Accidente de tránsito", "Choques, atropellos y vehículos varados.", "#E53935", 1, 180, 8, MediaRequirement.PhotoOrVideoRequired),
-        ("theft", "Hurto", "Hurtos que están ocurriendo ahora.", "#8E24AA", 2, 360, 7, MediaRequirement.PhotoOrVideoRequired),
-        ("checkpoint", "Retén", "Retenes, controles y puestos de vigilancia.", "#1E88E5", 3, 120, 5, MediaRequirement.None),
-        ("garbage", "Basuras", "Basura acumulada, escombros o vertimientos.", "#43A047", 4, 1440, 3, MediaRequirement.PhotoRequired),
-        ("road_closed", "Vía cerrada", "Cierres, derrumbes y tramos que no se pueden pasar.", "#FB8C00", 5, 240, 6, MediaRequirement.PhotoOrVideoRequired),
-        ("fire", "Incendio", "Incendios, humo o explosiones.", "#F4511E", 6, 180, 9, MediaRequirement.PhotoOrVideoRequired),
-        ("flood", "Inundación", "Calles anegadas, crecientes y desbordamientos.", "#039BE5", 7, 720, 8, MediaRequirement.PhotoOrVideoRequired),
-        ("other", "Otro", "Cualquier otra novedad en la calle.", "#757575", 8, 180, 2, MediaRequirement.None),
+        ("accidente_transito", "Accidente de tránsito", "Choques, atropellos y vehículos varados.", "#E53935", 1, 90, 8, MediaRequirement.None),
+        ("hurto", "Hurto", "Hurtos que están ocurriendo ahora.", "#8E24AA", 2, 240, 7, MediaRequirement.None),
+        ("puesto_control", "Puesto de control", "Retenes, controles y puestos de vigilancia.", "#1E88E5", 3, 120, 4, MediaRequirement.None),
+        ("basuras", "Basuras", "Basura acumulada, escombros o vertimientos.", "#43A047", 4, 1440, 2, MediaRequirement.None),
+        ("via_cerrada", "Vía cerrada", "Cierres y tramos que no se pueden pasar.", "#FB8C00", 5, 240, 6, MediaRequirement.None),
+        ("derrumbe", "Derrumbe", "Derrumbes y material sobre la vía.", "#6D4C41", 6, 480, 8, MediaRequirement.None),
+        ("inundacion", "Inundación", "Calles anegadas, crecientes y desbordamientos.", "#039BE5", 7, 360, 8, MediaRequirement.None),
+        ("manifestacion", "Manifestación", "Marchas, plantones y bloqueos.", "#8D6E63", 8, 180, 6, MediaRequirement.None),
+        ("incendio", "Incendio", "Incendios, humo o explosiones.", "#F4511E", 9, 180, 9, MediaRequirement.None),
+        ("obra_vial", "Obra vial", "Obras que cambian el paso por la vía.", "#FDD835", 10, 720, 3, MediaRequirement.None),
+        ("corte_servicio", "Corte de servicio", "Cortes de agua, luz o gas.", "#546E7A", 11, 360, 4, MediaRequirement.None),
+        ("evento", "Evento", "Eventos que ocupan el espacio público.", "#7CB342", 12, 240, 2, MediaRequirement.None),
     ];
 
     private static readonly (string Code, string Name, string Description, PlanTier Tier, int SortOrder, bool ShowsAds, int? MaxDevices, int? MaxLiveMinutesPerStream, int? MaxReportsPerDay, int? MaxAnonymousPostsPerDay, int? MaxSavedRecordings, bool CanSponsorPins)[] Plans =

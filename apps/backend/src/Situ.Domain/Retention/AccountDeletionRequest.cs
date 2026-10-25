@@ -24,13 +24,15 @@ public sealed class AccountDeletionRequest : AggregateRoot
     public DateTimeOffset ScheduledFor { get; private set; }
     public DateTimeOffset? CompletedAt { get; private set; }
 
-    public static AccountDeletionRequest Create(Guid userId, DateTimeOffset now)
+    public static AccountDeletionRequest Create(Guid userId, DateTimeOffset now, TimeSpan? gracePeriod = null)
     {
+        var grace = gracePeriod ?? GracePeriod;
+        Guard.That(grace > TimeSpan.Zero, "account_deletion.invalid_grace", "The grace period must be positive.");
         var request = new AccountDeletionRequest
         {
             UserId = Guard.NotEmpty(userId, nameof(userId)),
             Status = AccountDeletionStatus.Scheduled,
-            ScheduledFor = now.Add(GracePeriod),
+            ScheduledFor = now.Add(grace),
         };
 
         request.MarkCreated(now);

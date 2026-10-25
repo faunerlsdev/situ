@@ -22,6 +22,14 @@ public sealed class Report : AggregateRoot
     /// <summary>When true the public author is hidden (name, avatar, profile). The real author is still stored (RF-ANO-01).</summary>
     public bool IsAnonymous { get; private set; }
 
+    /// <summary>
+    /// Anonymous reports must not surface the author's avatar on the map, even when their profile is public (RF-UBI-11).
+    /// The map client reads this flag later; the API already omits the avatar.
+    /// </summary>
+    public bool HideAuthorOnMap => IsAnonymous;
+
+    public ContentVisibility Visibility { get; private set; }
+
     /// <summary>Author was under 18 when posting. Used to restrict visibility and moderation.</summary>
     public bool AuthorIsMinor { get; private set; }
 
@@ -49,7 +57,8 @@ public sealed class Report : AggregateRoot
         bool authorIsMinor,
         TimeSpan lifetime,
         DateTimeOffset now,
-        Guid? sourceLiveStreamId = null)
+        Guid? sourceLiveStreamId = null,
+        ContentVisibility visibility = ContentVisibility.Public)
     {
         Guard.That(lifetime > TimeSpan.Zero, "report.invalid_lifetime", "Lifetime must be positive.");
 
@@ -61,6 +70,7 @@ public sealed class Report : AggregateRoot
             Location = location,
             Description = Guard.NotEmpty(description, nameof(description), 1000),
             IsAnonymous = isAnonymous,
+            Visibility = visibility,
             AuthorIsMinor = authorIsMinor,
             Status = ReportStatus.Active,
             ExpiresAt = now.Add(lifetime),
@@ -95,6 +105,31 @@ public sealed class Report : AggregateRoot
         }
 
         MarkUpdated(now);
+    }
+
+    /// <summary>
+    /// Replaces a user's previous vote without counting it twice.
+    /// The same vote again does not change the counters or the lifetime.
+    /// </summary>
+    public void ReplaceConfirmation(ConfirmationType? previous, ConfirmationType next, TimeSpan extension, DateTimeOffset now)
+    {
+        if (previous == next)
+        {
+            EnsureActive();
+            return;
+        }
+
+        if (previous == ConfirmationType.StillThere && StillThereCount > 0)
+        {
+            StillThereCount--;
+        }
+
+        if (previous == ConfirmationType.GoneNow && GoneNowCount > 0)
+        {
+            GoneNowCount--;
+        }
+
+        RegisterConfirmation(next, extension, now);
     }
 
     /// <summary>Report is considered resolved when "gone" votes clearly outweigh "still there".</summary>

@@ -11,7 +11,7 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
     public void Configure(EntityTypeBuilder<UserProfile> builder)
     {
         builder.Property(e => e.DisplayName).HasMaxLength(60);
-        builder.Property(e => e.Bio).HasMaxLength(280);
+        builder.Property(e => e.Bio).HasMaxLength(UserProfile.BioMaxLength);
         builder.Property(e => e.AvatarUrl).HasMaxLength(500);
         builder.Required<UserProfile, User>(e => e.UserId);
         builder.Optional<UserProfile, AvatarGalleryItem>(e => e.AvatarGalleryItemId);

@@ -13,5 +13,14 @@ public sealed class HttpCurrentUser(IHttpContextAccessor httpContextAccessor) : 
         }
     }
 
+    public Guid? DeviceId
+    {
+        get
+        {
+            var value = httpContextAccessor.HttpContext?.User.FindFirst("did")?.Value;
+            return Guid.TryParse(value, out var deviceId) ? deviceId : null;
+        }
+    }
+
     public bool IsAuthenticated => httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true;
 }

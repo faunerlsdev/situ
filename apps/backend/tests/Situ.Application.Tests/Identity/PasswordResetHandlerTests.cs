@@ -234,7 +234,7 @@ public class ResetPasswordHandlerTests
 
     private sealed class FakeTokens : ITokenService
     {
-        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null) => "access";
+        public string CreateAccessToken(Guid userId, DateTimeOffset expiresAt, string? scope = null, string? role = null, Guid? deviceId = null) => "access";
 
         public string CreateRefreshToken() => Guid.NewGuid().ToString("N");
 
@@ -284,11 +284,13 @@ public class ChangePasswordHandlerTests
     }
 
     private static ChangePasswordHandler Change(IdentityTestDb db, FixedClock clock, Guid? userId) =>
-        new(db, clock, new FakePasswords(), new FakeUser(userId));
+        new(db, clock, new FakePasswords(), new FakeUser(userId), new FakeEmailSender());
 
     private sealed class FakeUser(Guid? userId) : ICurrentUser
     {
         public Guid? UserId { get; } = userId;
+
+        public Guid? DeviceId => null;
 
         public bool IsAuthenticated => UserId is not null;
     }

@@ -5,7 +5,7 @@ Las pantallas no llaman a `fetch`, `axios`, `alert()` ni `window.confirm`. El cl
 | Situación | Qué usar |
 | --- | --- |
 | Error de validación de un campo | Inline, bajo el input. En Login y Registro, píldora blanca con texto `#DE0506`. |
-| Lectura (`useQuery`) falla | Estado de error en la pantalla, con ilustración y "Reintentar". No toast. |
+| Lectura (`useQuery`) falla | Estado de error en la pantalla, con ilustración y "Reintentar". No toast. Excepción: si `GET /reports/map` falla, se conservan los marcadores anteriores y se muestra un toast con "Reintentar". |
 | Escritura correcta | `notify.success`. |
 | Escritura falla por red o servidor | `notify.error` con acción "Reintentar". |
 | Acción destructiva | `confirm({ type: 'danger' })`. El botón usa el verbo ("Eliminar") y "Cancelar". |

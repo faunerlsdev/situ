@@ -369,6 +369,7 @@ public class GuardianConsentFlowTests
     private sealed class FixedUser(Guid id) : ICurrentUser
     {
         public Guid? UserId => id;
+        public Guid? DeviceId => null;
         public bool IsAuthenticated => true;
     }
 

@@ -69,6 +69,19 @@ public sealed class Friendship : AggregateRoot
         RespondedAt = now;
     }
 
+    /// <summary>Ends an accepted or pending friendship because one side blocked the other. Does not restore it later.</summary>
+    public void Sever(DateTimeOffset now)
+    {
+        if (Status is FriendshipStatus.Declined or FriendshipStatus.Cancelled)
+        {
+            return;
+        }
+
+        Status = FriendshipStatus.Cancelled;
+        RespondedAt = now;
+        MarkUpdated(now);
+    }
+
     /// <summary>Only the requester can cancel a pending request.</summary>
     public void Cancel(Guid byUserId, DateTimeOffset now)
     {

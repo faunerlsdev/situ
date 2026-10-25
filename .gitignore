@@ -31,6 +31,13 @@ TestResults/
 !.env.example
 secrets.json
 
+# Credenciales de Firebase y push. Nunca versionar.
+google-services.json
+GoogleService-Info.plist
+*firebase-adminsdk*.json
+*service-account*.json
+*serviceAccount*.json
+
 # IDE / SO
 .idea/
 .vscode/*

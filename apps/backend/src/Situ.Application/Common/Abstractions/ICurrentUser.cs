@@ -4,5 +4,7 @@ public interface ICurrentUser
 {
     Guid? UserId { get; }
 
+    Guid? DeviceId { get; }
+
     bool IsAuthenticated { get; }
 }

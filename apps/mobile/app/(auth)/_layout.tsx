@@ -26,7 +26,8 @@ export default function AuthLayout() {
         <Stack.Screen name="login" options={{ title: 'Ingresar' }} />
         <Stack.Screen name="registro" options={{ title: 'Registro' }} />
         <Stack.Screen name="recuperar" options={{ title: 'Recuperar contraseña' }} />
-        <Stack.Screen name="esperando-tutor" options={{ title: 'Esperando autorización' }} />
+        <Stack.Screen name="esperando-tutor" options={{ title: 'Autorización de tu representante' }} />
+        <Stack.Screen name="limite-dispositivos" options={{ title: 'Llegaste al límite de dispositivos' }} />
       </Stack>
     </>
   );

@@ -1,11 +1,9 @@
-import { messageFromUnknown } from '@situ/shared';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { inputStyle } from '@/components/field';
 import { PrimaryButton } from '@/components/primary-button';
 import { StatusMessage } from '@/components/status-message';
-import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
 const examples = [
@@ -32,27 +30,15 @@ export function MapPlaceholder() {
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
   const current = examples.find((example) => example.id === selected);
 
-  async function onComment() {
+  function onComment() {
     if (!selected || comment.trim().length === 0) {
       return;
     }
 
     setError(null);
-    setNotice(null);
-    setPending(true);
-
-    try {
-      await api.commentOnReport(selected, { body: comment.trim() });
-      setNotice('Comentario enviado.');
-      setComment('');
-    } catch (cause) {
-      setError(messageFromUnknown(cause));
-    } finally {
-      setPending(false);
-    }
+    setNotice('Comentar queda para un bloque siguiente.');
   }
 
   return (
@@ -108,7 +94,7 @@ export function MapPlaceholder() {
       <TextInput keyboardAppearance="dark"
         value={comment}
         onChangeText={setComment}
-        editable={current !== undefined && !pending}
+        editable={current !== undefined}
         multiline
         accessibilityLabel="Comentario"
         style={[inputStyle, styles.comment]}
@@ -116,7 +102,7 @@ export function MapPlaceholder() {
       <PrimaryButton
         label="Comentar"
         pendingLabel="Enviando…"
-        pending={pending}
+        pending={false}
         disabled={current === undefined || comment.trim().length === 0}
         onPress={() => {
           void onComment();
