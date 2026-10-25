@@ -24,7 +24,8 @@ public sealed record GetAppConfigResponse(
     int ConfirmationMaxDistanceMeters,
     string AnonymityDisplayName,
     AppVersionsView Versions,
-    LegalLinksView Legal);
+    LegalLinksView Legal,
+    IReadOnlyList<PanelCopies.Item> PanelCopyByCountry);
 
 public sealed class GetAppConfigHandler(IApplicationDbContext db)
     : IHandler<GetAppConfigRequest, Result<GetAppConfigResponse>>
@@ -52,7 +53,8 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db)
             new LegalLinksView(
                 Text(settings, SystemSettingKeys.LegalTermsUrl, "https://somossitu.com/terminos"),
                 Text(settings, SystemSettingKeys.LegalPrivacyUrl, "https://somossitu.com/privacidad"),
-                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte"))));
+                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte")),
+            PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry))));
     }
 
     private static string Text(IReadOnlyDictionary<string, string> settings, string key, string fallback)

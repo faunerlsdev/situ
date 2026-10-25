@@ -263,6 +263,7 @@ internal static class CatalogSeed
         [SystemSettingKeys.LegalTermsUrl] = "URL de los términos de uso.",
         [SystemSettingKeys.LegalPrivacyUrl] = "URL de la política de tratamiento de datos.",
         [SystemSettingKeys.LegalSupportUrl] = "URL de soporte.",
+        [SystemSettingKeys.PanelCopyByCountry] = "Textos del panel inferior por país e idioma, en JSON.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)
@@ -322,37 +323,27 @@ internal static class CatalogSeed
     private static readonly (string Key, string Name, string Description, string[] Permissions)[] StaffRoles =
     [
         ("super-admin", "Super admin", "Acceso total al panel, incluida la gestión del equipo.",
+            StaffPermissionCodes.All),
+        ("moderator", "Moderador", "Resuelve denuncias, suspende cuentas, corta vivos y atiende retiros.",
         [
-            StaffPermissionCodes.CategoriesManage,
+            StaffPermissionCodes.ComplaintsResolve,
             StaffPermissionCodes.UsersView,
             StaffPermissionCodes.UsersSuspend,
-            StaffPermissionCodes.ComplaintsResolve,
             StaffPermissionCodes.LiveCut,
-            StaffPermissionCodes.AnonymityReveal,
-            StaffPermissionCodes.PlansManage,
-            StaffPermissionCodes.SettingsManage,
-            StaffPermissionCodes.StaffManage,
-            StaffPermissionCodes.AuditView,
-            StaffPermissionCodes.OrganizationsVerify,
             StaffPermissionCodes.TakedownsHandle,
         ]),
-        ("moderator", "Moderador", "Modera contenido, cortes de vivos, quejas y anonimato.",
+        ("support", "Soporte", "Consulta cuentas.",
+        [
+            StaffPermissionCodes.UsersView,
+        ]),
+        ("content-manager", "Gestor de contenido", "Administra categorías y consulta los planes.",
         [
             StaffPermissionCodes.CategoriesManage,
-            StaffPermissionCodes.UsersView,
-            StaffPermissionCodes.UsersSuspend,
-            StaffPermissionCodes.ComplaintsResolve,
-            StaffPermissionCodes.LiveCut,
-            StaffPermissionCodes.AnonymityReveal,
-            StaffPermissionCodes.OrganizationsVerify,
-            StaffPermissionCodes.TakedownsHandle,
-            StaffPermissionCodes.AuditView,
+            StaffPermissionCodes.PlansView,
         ]),
-        ("support", "Soporte", "Atiende cuentas, quejas y solicitudes de retiro.",
+        ("auditor", "Auditor", "Consulta la bitácora.",
         [
-            StaffPermissionCodes.UsersView,
-            StaffPermissionCodes.ComplaintsResolve,
-            StaffPermissionCodes.TakedownsHandle,
+            StaffPermissionCodes.AuditView,
         ]),
         ("finance", "Finanzas", "Administra planes y consulta la auditoría.",
         [

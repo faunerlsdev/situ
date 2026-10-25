@@ -12,6 +12,7 @@ public enum ModerationActionType
     SuspendUser,
     BanUser,
     ReinstateUser,
+    ForceLogout,
 }
 
 /// <summary>Immutable record of what staff did and why. Part of the audit trail.</summary>

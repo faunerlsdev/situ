@@ -15,5 +15,7 @@ public sealed class TakedownRequestConfiguration : IEntityTypeConfiguration<Take
         builder.Property(e => e.Description).HasMaxLength(2000);
         builder.Property(e => e.Resolution).HasMaxLength(2000);
         builder.Optional<TakedownRequest, User>(e => e.HandledByStaffId);
+        builder.HasIndex(e => e.RequesterEmail);
+        builder.HasIndex(e => new { e.Status, e.DueAt });
     }
 }

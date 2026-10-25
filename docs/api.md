@@ -451,6 +451,32 @@ En un comentario, `targetType` es `Comment` y `reportId` es el reporte para abri
 
 El detalle de disparadores, de la ubicación que se guarda y del plan de la consulta está en `docs/notifications.md`.
 
+## Panel de administración
+
+El detalle de roles, el comando del primer administrador y la sesión corta del personal está en `docs/admin.md`. Fuera de Development, OpenAPI no incluye las rutas `/api/v1/admin`.
+
+`GET /api/v1/admin/me` exige `role=Staff`. Responde el usuario, los roles y los permisos que hoy tiene en la base.
+
+```json
+{ "userId": "…", "userName": "ana", "roles": [{ "id": "…", "name": "Super admin" }], "permissions": ["audit.view", "metrics.view"] }
+```
+
+`GET /api/v1/admin/dashboard` (permiso `metrics.view`) devuelve solo conteos: usuarios, activos en 7 días, reportes activos, reportes por categoría en 7 días, denuncias abiertas y prioritarias, retiros vencidos y por vencer, y eliminaciones pendientes.
+
+`GET /api/v1/admin/complaints/{id}` (permiso `complaints.resolve`) trae el texto, los medios, el estado y los conteos. Si el contenido es anónimo, `authorHidden` es true y no vienen el autor ni sus sanciones. La cola sigue en `GET /api/v1/moderation/complaints`.
+
+`POST /api/v1/admin/users/{id}/suspend` con `{ "reason": "Reincidencia", "until": "2026-11-01T00:00:00Z" }`. Las otras sanciones son `warn`, `ban`, `reinstate` y `force-logout`, todas con `reason`. Usan `User.Suspend`, `Ban` y `Reinstate`, y dejan `ModerationAction`.
+
+`GET /api/v1/admin/users?query=ana` busca el usuario exacto o, si hay `@`, el correo exacto. Mínimo 3 caracteres. `GET /api/v1/admin/users/{id}?revealEmail=true` muestra el correo completo solo con `users.view_email` y lo anota en la bitácora. La ficha trae `isMinor` y no trae fecha de nacimiento, ubicaciones ni reportes anónimos.
+
+`POST /api/v1/takedown-requests` es público:
+
+```json
+{ "requesterName": "Ana Pérez", "requesterEmail": "ana@correo.com", "targetType": "Report", "targetId": "…", "description": "Aparezco en el reporte.", "website": "" }
+```
+
+Responde `202` con `{ "accepted": true, "trackingCode": "TD-A1B2C3D4" }`. En el panel, `GET /api/v1/admin/takedowns` trae `daysRemaining` y `overdue`. `start-review`, `accept` y `reject` exigen el permiso `takedowns.handle`. Aceptar y rechazar piden `resolution`.
+
 ## Códigos de error
 
 | HTTP | code | Cuándo |

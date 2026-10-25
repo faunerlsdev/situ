@@ -74,6 +74,7 @@ public static class DependencyInjection
         services.AddSingleton<IMediaUrlSigner, HmacMediaUrlSigner>();
         services.AddSingleton<IReportMediaProcessor, SkiaReportMediaProcessor>();
         services.AddSingleton<IAvatarImageProcessor, SkiaAvatarProcessor>();
+        services.AddSingleton<IAdminIconProcessor, SkiaAdminIconProcessor>();
         services.AddScoped<IReportMapReader, ReportMapReader>();
         services.AddScoped<IAlertLocationQuery, Notifications.PostGisAlertLocationQuery>();
         services.AddSingleton<IPushSender>(serviceProvider =>

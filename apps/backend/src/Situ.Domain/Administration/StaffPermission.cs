@@ -34,4 +34,30 @@ public static class StaffPermissionCodes
     public const string AuditView = "audit.view";
     public const string OrganizationsVerify = "organizations.verify";
     public const string TakedownsHandle = "takedowns.handle";
+    public const string AvatarsManage = "avatars.manage";
+    public const string LegalHoldsManage = "legalholds.manage";
+    public const string MetricsView = "metrics.view";
+    public const string UsersViewEmail = "users.view_email";
+    public const string PlansView = "plans.view";
+
+    public static readonly string[] All =
+    [
+        CategoriesManage,
+        UsersView,
+        UsersSuspend,
+        ComplaintsResolve,
+        LiveCut,
+        AnonymityReveal,
+        PlansManage,
+        PlansView,
+        SettingsManage,
+        StaffManage,
+        AuditView,
+        OrganizationsVerify,
+        TakedownsHandle,
+        AvatarsManage,
+        LegalHoldsManage,
+        MetricsView,
+        UsersViewEmail,
+    ];
 }

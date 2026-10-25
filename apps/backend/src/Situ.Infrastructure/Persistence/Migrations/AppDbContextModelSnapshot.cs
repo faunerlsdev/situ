@@ -67,8 +67,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_audit_logs");
 
-                    b.HasIndex("ActorUserId")
-                        .HasDatabaseName("ix_audit_logs_actor_user_id");
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("ix_audit_logs_occurred_at");
+
+                    b.HasIndex("Action", "EntityType")
+                        .HasDatabaseName("ix_audit_logs_action_entity_type");
+
+                    b.HasIndex("ActorUserId", "OccurredAt")
+                        .HasDatabaseName("ix_audit_logs_actor_user_id_occurred_at");
 
                     b.ToTable("audit_logs");
                 });
@@ -112,8 +118,8 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_staff_assignments_role_id");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_staff_assignments_user_id");
+                    b.HasIndex("UserId", "IsActive")
+                        .HasDatabaseName("ix_staff_assignments_user_id_is_active");
 
                     b.ToTable("staff_assignments");
                 });
@@ -205,6 +211,13 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
+                            Id = new Guid("4a8b4e56-510a-9e7b-2e0c-e5d4afe77f74"),
+                            Code = "plans.view",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("97fc5ccd-53a5-78f4-4699-624339d1c72e")
+                        },
+                        new
+                        {
                             Id = new Guid("966907c2-1088-f250-a38d-d4c20f282b09"),
                             Code = "settings.manage",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
@@ -240,8 +253,36 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            Id = new Guid("1dd1ecff-11fd-9fb0-a895-12b014fd631b"),
-                            Code = "categories.manage",
+                            Id = new Guid("23da6b39-685e-a211-8bf9-6c0c9e50dbb5"),
+                            Code = "avatars.manage",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("97fc5ccd-53a5-78f4-4699-624339d1c72e")
+                        },
+                        new
+                        {
+                            Id = new Guid("a5873112-5b19-60dc-fac4-e2bc9f96eb38"),
+                            Code = "legalholds.manage",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("97fc5ccd-53a5-78f4-4699-624339d1c72e")
+                        },
+                        new
+                        {
+                            Id = new Guid("ef088217-861f-2045-bbea-8e5421697644"),
+                            Code = "metrics.view",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("97fc5ccd-53a5-78f4-4699-624339d1c72e")
+                        },
+                        new
+                        {
+                            Id = new Guid("f655739b-071e-44b3-e2ad-17ee6db01580"),
+                            Code = "users.view_email",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("97fc5ccd-53a5-78f4-4699-624339d1c72e")
+                        },
+                        new
+                        {
+                            Id = new Guid("838fb134-c96a-fca7-1bb1-21117b8997b6"),
+                            Code = "complaints.resolve",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
                         },
@@ -261,29 +302,8 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            Id = new Guid("838fb134-c96a-fca7-1bb1-21117b8997b6"),
-                            Code = "complaints.resolve",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
-                        },
-                        new
-                        {
                             Id = new Guid("46164879-24e5-5285-7a2e-2b0f3c936228"),
                             Code = "live.cut",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
-                        },
-                        new
-                        {
-                            Id = new Guid("ae2eb5e3-c40f-bf8e-af63-c5ae9d127107"),
-                            Code = "anonymity.reveal",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
-                        },
-                        new
-                        {
-                            Id = new Guid("b3851540-18bd-1157-06ff-d21ae57bcce7"),
-                            Code = "organizations.verify",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
                         },
@@ -296,13 +316,6 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            Id = new Guid("2e7ee9eb-dbb6-57e6-7bd8-09a0a8774ae1"),
-                            Code = "audit.view",
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd")
-                        },
-                        new
-                        {
                             Id = new Guid("60437591-f054-dc4a-ed6a-55bf916c144f"),
                             Code = "users.view",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
@@ -310,17 +323,24 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         },
                         new
                         {
-                            Id = new Guid("f19d0beb-ec3e-a8c0-4104-648e2649f829"),
-                            Code = "complaints.resolve",
+                            Id = new Guid("c1bfe17e-42e4-e85f-1be2-b93f1ff4e11a"),
+                            Code = "categories.manage",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d4803507-bbd5-9420-5b83-d889ec205b0e")
+                            RoleId = new Guid("fc1139b4-81a8-cf3e-eb30-e04a23ed73aa")
                         },
                         new
                         {
-                            Id = new Guid("99024685-53d0-5a97-a1b0-5449db059959"),
-                            Code = "takedowns.handle",
+                            Id = new Guid("883bd998-1005-2bce-16ee-380766ac0123"),
+                            Code = "plans.view",
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            RoleId = new Guid("d4803507-bbd5-9420-5b83-d889ec205b0e")
+                            RoleId = new Guid("fc1139b4-81a8-cf3e-eb30-e04a23ed73aa")
+                        },
+                        new
+                        {
+                            Id = new Guid("1b8e09d7-6159-d681-8159-ca76470fa747"),
+                            Code = "audit.view",
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            RoleId = new Guid("7ac4f0db-56d1-57dc-8c56-9c53ac0754e7")
                         },
                         new
                         {
@@ -392,7 +412,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("d879da60-b0bc-10d2-8b05-2a4950bc41bd"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Modera contenido, cortes de vivos, quejas y anonimato.",
+                            Description = "Resuelve denuncias, suspende cuentas, corta vivos y atiende retiros.",
                             IsSystem = true,
                             Name = "Moderador"
                         },
@@ -400,9 +420,25 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("d4803507-bbd5-9420-5b83-d889ec205b0e"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Atiende cuentas, quejas y solicitudes de retiro.",
+                            Description = "Consulta cuentas.",
                             IsSystem = true,
                             Name = "Soporte"
+                        },
+                        new
+                        {
+                            Id = new Guid("fc1139b4-81a8-cf3e-eb30-e04a23ed73aa"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Administra categorías y consulta los planes.",
+                            IsSystem = true,
+                            Name = "Gestor de contenido"
+                        },
+                        new
+                        {
+                            Id = new Guid("7ac4f0db-56d1-57dc-8c56-9c53ac0754e7"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Consulta la bitácora.",
+                            IsSystem = true,
+                            Name = "Auditor"
                         },
                         new
                         {
@@ -856,6 +892,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "URL de soporte.",
                             Key = "legal.support_url",
                             Value = "https://somossitu.com/soporte"
+                        },
+                        new
+                        {
+                            Id = new Guid("68b26cde-9190-6c55-6379-30551fa0de80"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Textos del panel inferior por país e idioma, en JSON.",
+                            Key = "panel.copy_by_country",
+                            Value = "[]"
                         });
                 });
 
@@ -3161,6 +3205,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HandledByStaffId")
                         .HasDatabaseName("ix_takedown_requests_handled_by_staff_id");
+
+                    b.HasIndex("RequesterEmail")
+                        .HasDatabaseName("ix_takedown_requests_requester_email");
+
+                    b.HasIndex("Status", "DueAt")
+                        .HasDatabaseName("ix_takedown_requests_status_due_at");
 
                     b.ToTable("takedown_requests");
                 });

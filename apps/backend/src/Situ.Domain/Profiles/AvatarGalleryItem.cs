@@ -24,6 +24,22 @@ public sealed class AvatarGalleryItem : AuditableEntity
         IsActive = true,
     };
 
+    public static AvatarGalleryItem Create(string name, string imageUrl, int sortOrder, DateTimeOffset now)
+    {
+        var item = Create(name, imageUrl, sortOrder);
+        item.MarkCreated(now);
+        return item;
+    }
+
+    public void Update(string name, string imageUrl, int sortOrder, bool isActive, DateTimeOffset now)
+    {
+        Name = Guard.NotEmpty(name, nameof(name), 60);
+        ImageUrl = Guard.NotEmpty(imageUrl, nameof(imageUrl), 500);
+        SortOrder = sortOrder;
+        IsActive = isActive;
+        MarkUpdated(now);
+    }
+
     public void Activate() => IsActive = true;
 
     public void Deactivate() => IsActive = false;

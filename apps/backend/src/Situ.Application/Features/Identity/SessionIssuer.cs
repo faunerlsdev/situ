@@ -12,14 +12,14 @@ internal static class SessionIssuer
         DateTimeOffset now,
         string? role = null)
     {
-        var accessExpiresAt = now.Add(SessionPolicy.AccessTokenLifetime);
+        var accessExpiresAt = now.Add(SessionPolicy.AccessLifetimeFor(role));
         var plainRefresh = tokens.CreateRefreshToken();
         var stored = RefreshToken.Issue(
             userId,
             deviceId,
             tokens.Hash(plainRefresh),
             now,
-            SessionPolicy.RefreshTokenLifetime);
+            SessionPolicy.RefreshLifetimeFor(role));
 
         return (tokens.CreateAccessToken(userId, accessExpiresAt, role: role, deviceId: deviceId), accessExpiresAt, plainRefresh, stored);
     }

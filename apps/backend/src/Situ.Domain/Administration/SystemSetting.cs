@@ -88,6 +88,7 @@ public static class SystemSettingKeys
     public const string LegalTermsUrl = "legal.terms_url";
     public const string LegalPrivacyUrl = "legal.privacy_url";
     public const string LegalSupportUrl = "legal.support_url";
+    public const string PanelCopyByCountry = "panel.copy_by_country";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -141,5 +142,6 @@ public static class SystemSettingKeys
         [LegalTermsUrl] = "https://somossitu.com/terminos",
         [LegalPrivacyUrl] = "https://somossitu.com/privacidad",
         [LegalSupportUrl] = "https://somossitu.com/soporte",
+        [PanelCopyByCountry] = "[]",
     };
 }

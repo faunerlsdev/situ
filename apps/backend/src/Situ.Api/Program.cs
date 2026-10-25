@@ -8,8 +8,11 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using Microsoft.Extensions.FileProviders;
+using Situ.Api.Administration;
 using Situ.Api.Auth;
 using Situ.Api.Configuration;
+using Situ.Infrastructure.Reports;
 using Situ.Api.Endpoints;
 using Situ.Api.Guardianship;
 using Situ.Api.Notifications;
@@ -33,7 +36,21 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.AddDocumentTransformer((document, _, _) =>
+        {
+            foreach (var path in document.Paths.Keys.Where(key => key.Contains("/admin/", StringComparison.OrdinalIgnoreCase)).ToArray())
+            {
+                document.Paths.Remove(path);
+            }
+
+            return Task.CompletedTask;
+        });
+    }
+});
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -144,6 +161,33 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("admin", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("admin-user-lookup", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("takedown-public", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+            }));
     options.AddPolicy("reports-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
@@ -168,10 +212,22 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+if (AdminGrant.IsRequested(args))
+{
+    return await AdminGrant.ExecuteAsync(app.Services, args);
+}
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(CorsPolicies.Clients);
 app.UseStaticFiles();
+var uploads = Path.Combine(app.Services.GetRequiredService<FileStorageOptions>().Root, "public");
+Directory.CreateDirectory(uploads);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploads),
+    RequestPath = "/uploads",
+});
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -186,3 +242,4 @@ app.MapScalarApiReference();
 app.MapSituEndpoints();
 
 app.Run();
+return 0;

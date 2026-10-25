@@ -13,5 +13,6 @@ public sealed class StaffAssignmentConfiguration : IEntityTypeConfiguration<Staf
         builder.Required<StaffAssignment, User>(e => e.UserId);
         builder.Required<StaffAssignment, StaffRole>(e => e.RoleId);
         builder.Optional<StaffAssignment, User>(e => e.GrantedByUserId);
+        builder.HasIndex(e => new { e.UserId, e.IsActive });
     }
 }

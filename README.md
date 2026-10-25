@@ -100,6 +100,16 @@ pnpm dev:api
 
 La API no aplica migraciones al arrancar: hay que correr `dotnet ef database update`. La migración inicial está en `apps/backend/src/Situ.Infrastructure/Persistence/Migrations/`.
 
+## Primer administrador
+
+No hay una cuenta de personal por defecto. Con una cuenta ya registrada, y con la API detenida o en otra terminal:
+
+```bash
+dotnet run --project apps/backend/src/Situ.Api -- admin:grant --email tu@correo.com --role SuperAdmin
+```
+
+El comando asigna el rol, lo anota en la bitácora y no abre ningún endpoint público. Los roles y permisos están en [docs/admin.md](docs/admin.md).
+
 Las apps de JavaScript leen `NEXT_PUBLIC_API_URL` y `EXPO_PUBLIC_API_URL`. Copia `.env.example` a `.env` si quieres fijarlas; si no, el cliente usa `http://localhost:5080`.
 
 En otra terminal, el cliente que vayas a usar:

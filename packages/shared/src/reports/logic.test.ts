@@ -154,6 +154,7 @@ describe('app config', () => {
       privacyPolicyUrl: 'https://somossitu.com/privacidad',
       supportUrl: 'https://somossitu.com/soporte',
     },
+    panelCopyByCountry: [],
   } satisfies AppConfig;
 
   it('uses the response when the network answers and the cache when it does not', () => {
