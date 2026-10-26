@@ -41,7 +41,7 @@ export function ProfileScreen() {
       <Text style={styles.handle}>@{profile.userName}</Text>
       {profile.bio ? <Text style={styles.body}>{profile.bio}</Text> : null}
       <Text style={styles.meta}>{memberSinceLabel(profile.memberSinceYear, profile.memberSinceMonth)}</Text>
-      <Text style={styles.meta}>{profile.homeCity.name}</Text>
+      {profile.homeCity?.name ? <Text style={styles.meta}>{profile.homeCity.name}</Text> : null}
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.edit} onPress={() => router.push('/editar-perfil')} style={styles.button}>
         <Text style={styles.buttonLabel}>{profileMessages.edit}</Text>
       </Pressable>

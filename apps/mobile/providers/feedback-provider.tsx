@@ -8,12 +8,13 @@ import {
   sessionEvents,
 } from '@situ/shared';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Dimensions, Image, Keyboard, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FullWindowOverlay } from 'react-native-screens';
 
+import { useSession } from '@/providers/session-provider';
 import { theme } from '@/theme/theme';
 
 const isotipo = require('../assets/images/brand/situ-isotipo-naranja-claro.png');
@@ -37,6 +38,10 @@ const toastTitle = {
 
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { isSignedIn, signOut } = useSession();
+  const signedIn = useRef(isSignedIn);
+  const leaveToLogin = useRef(false);
+  signedIn.current = isSignedIn;
   const insets = useSafeAreaInsets();
   const queue = useMemo(() => createToastQueue(), []);
   const dialogs = useMemo(() => createDialogStore(), []);
@@ -62,18 +67,43 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
   useEffect(() => queue.subscribe(() => setToast(queue.current())), [queue]);
   useEffect(() => dialogs.subscribe(() => setDialog(dialogs.current())), [dialogs]);
   useEffect(() => sessionEvents.subscribe(() => {
-    void notify;
-    dialogs.alert({
+    if (!signedIn.current) {
+      sessionEvents.reset();
+      return;
+    }
+
+    void dialogs.alert({
       title: feedbackMessages.sessionExpiredTitle,
       message: feedbackMessages.sessionExpiredBody,
       type: 'warning',
       buttonText: feedbackMessages.understood,
       required: true,
     }).then(() => {
-      sessionEvents.reset();
-      router.replace('/login');
+      leaveToLogin.current = true;
+      void signOut();
     });
-  }), [dialogs, router]);
+  }), [dialogs, signOut]);
+
+  useEffect(() => {
+    if (!leaveToLogin.current || isSignedIn) {
+      return;
+    }
+
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      if (cancelled || !leaveToLogin.current) {
+        return;
+      }
+
+      leaveToLogin.current = false;
+      router.replace('/(auth)/login');
+      sessionEvents.reset();
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [isSignedIn, router]);
 
   useEffect(() => {
     let unsubscribe: () => void = () => undefined;

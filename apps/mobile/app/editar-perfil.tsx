@@ -40,8 +40,10 @@ export default function EditProfileScreen() {
     setUserName(profile.userName);
     setDisplayName(profile.displayName);
     setBio(profile.bio ?? '');
-    setCityId(profile.homeCity.id);
-    setCityName(profile.homeCity.name);
+    if (profile.homeCity) {
+      setCityId(profile.homeCity.id);
+      setCityName(profile.homeCity.name);
+    }
     setReady(true);
   }, [profile, ready]);
 

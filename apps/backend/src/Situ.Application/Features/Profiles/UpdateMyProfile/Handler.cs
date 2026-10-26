@@ -13,7 +13,8 @@ public sealed record UpdateMyProfileRequest(
     string? UserName,
     string? DisplayName,
     string? Bio,
-    Guid? HomeCityId);
+    Guid? HomeCityId,
+    bool? PreferAnonymousReports = null);
 
 public sealed class UpdateMyProfileValidator : AbstractValidator<UpdateMyProfileRequest>
 {
@@ -83,6 +84,13 @@ public sealed class UpdateMyProfileHandler(IApplicationDbContext db, IClock cloc
                 return Result.Failure(Error.Validation(exception.Code, "Revisa el nombre y la bio."));
             }
 
+            profile.MarkUpdated(now);
+        }
+
+        if (request.PreferAnonymousReports is { } preferAnonymous)
+        {
+            var profile = await ProfileAsync(user, cancellationToken);
+            profile.SetPreferAnonymousReports(preferAnonymous);
             profile.MarkUpdated(now);
         }
 

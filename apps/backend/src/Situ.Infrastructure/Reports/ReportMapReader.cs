@@ -39,15 +39,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
         command.CommandText = sql.Text;
         foreach (var parameter in sql.Parameters)
         {
-            var dbParameter = command.CreateParameter();
-            dbParameter.ParameterName = parameter.Name;
-            dbParameter.Value = parameter.Value ?? DBNull.Value;
-            if (dbParameter is NpgsqlParameter npgsql && parameter.Value is Guid[])
-            {
-                npgsql.NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Uuid;
-            }
-
-            command.Parameters.Add(dbParameter);
+            Bind(command, parameter);
         }
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -148,15 +140,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
         command.CommandText = sql.Text;
         foreach (var parameter in sql.Parameters)
         {
-            var dbParameter = command.CreateParameter();
-            dbParameter.ParameterName = parameter.Name;
-            dbParameter.Value = parameter.Value ?? DBNull.Value;
-            if (dbParameter is NpgsqlParameter npgsql && parameter.Value is Guid[])
-            {
-                npgsql.NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Uuid;
-            }
-
-            command.Parameters.Add(dbParameter);
+            Bind(command, parameter);
         }
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -197,7 +181,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
             WHERE r.status = 'Active' AND r.expires_at > @now
               AND ST_Intersects(r.location, ST_MakeEnvelope(@minLon, @minLat, @maxLon, @maxLat, 4326)::geography)
               AND (@categoryCount = 0 OR r.category_id = ANY(@categories))
-              AND (@since IS NULL OR r.created_at >= @since)
+              AND (CAST(@since AS timestamptz) IS NULL OR r.created_at >= CAST(@since AS timestamptz))
               AND (@friendsOnly = false OR r.visibility = 'FriendsOnly')
               AND (@minor = false OR c.is_adult_only = false)
               AND NOT (r.author_id = ANY(@blocked))
@@ -233,7 +217,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
             WHERE r.status = 'Active' AND r.expires_at > @now
               AND ST_Intersects(r.location, ST_MakeEnvelope(@minLon, @minLat, @maxLon, @maxLat, 4326)::geography)
               AND (@categoryCount = 0 OR r.category_id = ANY(@categories))
-              AND (@since IS NULL OR r.created_at >= @since)
+              AND (CAST(@since AS timestamptz) IS NULL OR r.created_at >= CAST(@since AS timestamptz))
               AND (@friendsOnly = false OR r.visibility = 'FriendsOnly')
               AND (@minor = false OR c.is_adult_only = false)
               AND NOT (r.author_id = ANY(@blocked))
@@ -270,6 +254,27 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
             new("@blocked", blocked),
             new("@anonymousBlocked", anonymousBlocked),
         ];
+    }
+
+    private static void Bind(System.Data.Common.DbCommand command, SqlParameter parameter)
+    {
+        var dbParameter = command.CreateParameter();
+        dbParameter.ParameterName = parameter.Name;
+        dbParameter.Value = parameter.Value ?? DBNull.Value;
+        if (dbParameter is NpgsqlParameter npgsql)
+        {
+            if (parameter.Value is Guid[] || parameter.Name is "@categories" or "@friends" or "@blocked" or "@anonymousBlocked")
+            {
+                npgsql.NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Uuid;
+            }
+            else if (parameter.Name == "@since" || parameter.Value is DateTimeOffset)
+            {
+                // A null @since has no CLR type, so Postgres rejects "could not determine data type".
+                npgsql.NpgsqlDbType = NpgsqlDbType.TimestampTz;
+            }
+        }
+
+        command.Parameters.Add(dbParameter);
     }
 
     internal static double CellDegrees(int zoom) =>

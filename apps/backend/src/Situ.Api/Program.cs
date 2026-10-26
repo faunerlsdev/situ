@@ -16,7 +16,9 @@ using Situ.Infrastructure.Reports;
 using Situ.Api.Endpoints;
 using Situ.Api.Guardianship;
 using Situ.Api.Notifications;
+using Situ.Api.Realtime;
 using Situ.Api.Reports;
+using Situ.Application.Features.MapRealtime;
 using Situ.Api.Retention;
 using Situ.Api.Health;
 using Situ.Application;
@@ -74,6 +76,19 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             NameClaimType = "sub",
             RoleClaimType = "role",
         };
+        bearer.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"].ToString();
+                if (MapHubAuth.ReadAccessTokenFromQuery(context.HttpContext.Request.Path, accessToken))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
     });
 
 builder.Services.AddAuthorization(AuthorizationPolicies.Add);
@@ -86,6 +101,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITokenService>(serviceProvider =>
     new JwtTokenService(serviceProvider.GetRequiredService<IOptions<JwtOptions>>().Value));
@@ -161,6 +178,24 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("admin-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("admin-mfa", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown") + "|" + (httpContext.User.FindFirst("sub")?.Value ?? "anon"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0,
+            }));
     options.AddPolicy("admin", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
@@ -199,6 +234,10 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<MapSubscriptionBook>();
+builder.Services.AddSingleton<IMapZonePublisher, SignalRMapZonePublisher>();
+builder.Services.AddHostedService<MapZoneDispatchService>();
 builder.Services.AddHostedService<GuardianConsentExpiryService>();
 builder.Services.AddHostedService<ExpireReportsService>();
 builder.Services.AddHostedService<PurgePendingReportMediaService>();
@@ -212,11 +251,12 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-if (AdminGrant.IsRequested(args))
+if (ConsoleCommands.IsRequested(args))
 {
-    return await AdminGrant.ExecuteAsync(app.Services, args);
+    return await ConsoleCommands.ExecuteAsync(app, args);
 }
 
+ForwardedClient.Use(app);
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors(CorsPolicies.Clients);
@@ -240,6 +280,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 app.MapOpenApi();
 app.MapScalarApiReference();
 app.MapSituEndpoints();
+app.MapHub<MapHub>(MapHubAuth.HubPath);
 
 app.Run();
 return 0;

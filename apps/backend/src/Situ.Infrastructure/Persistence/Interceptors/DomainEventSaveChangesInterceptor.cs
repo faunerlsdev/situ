@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Situ.Application.Common.Abstractions;
+using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Notifications;
 using Situ.Domain.Reports;
@@ -81,6 +82,69 @@ public sealed class DomainEventDispatcher(ILogger<DomainEventDispatcher> logger,
         catch (Exception exception)
         {
             logger.LogWarning("Notification outbox insert failed ({ExceptionType}).", exception.GetType().Name);
+        }
+
+        try
+        {
+            await EnqueueMapNoticesAsync(scopes, domainEvents, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning("Map zone outbox insert failed ({ExceptionType}).", exception.GetType().Name);
+        }
+    }
+
+    private static async Task EnqueueMapNoticesAsync(
+        IServiceScopeFactory scopes,
+        IReadOnlyCollection<IDomainEvent> domainEvents,
+        CancellationToken cancellationToken)
+    {
+        var relevant = new List<(Guid ReportId, string Type)>();
+        foreach (var domainEvent in domainEvents)
+        {
+            switch (domainEvent)
+            {
+                case ReportCreatedEvent created:
+                    relevant.Add((created.ReportId, MapZoneNotice.Created));
+                    break;
+                case ReportMapChanged changed when MapZoneNotice.IsKnown(changed.Kind):
+                    relevant.Add((changed.ReportId, changed.Kind));
+                    break;
+            }
+        }
+
+        if (relevant.Count == 0)
+        {
+            return;
+        }
+
+        await using var scope = scopes.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var clock = scope.ServiceProvider.GetRequiredService<IClock>();
+        var rawDegrees = await db.SystemSettings
+            .Where(setting => setting.Key == SystemSettingKeys.MapCellDegrees)
+            .Select(setting => setting.Value)
+            .FirstOrDefaultAsync(cancellationToken);
+        var degrees = MapRealtimeLimits.Degrees(rawDegrees);
+        var now = clock.UtcNow;
+        var reportIds = relevant.Select(item => item.ReportId).Distinct().ToArray();
+        var reports = await db.Reports.Where(report => reportIds.Contains(report.Id)).ToDictionaryAsync(report => report.Id, cancellationToken);
+        var queued = 0;
+        foreach (var (reportId, type) in relevant)
+        {
+            if (!reports.TryGetValue(reportId, out var report) || !MapZonePolicy.EmitsZoneEvent(report))
+            {
+                continue;
+            }
+
+            var cellId = MapCell.Id(report.Location.Latitude, report.Location.Longitude, degrees);
+            db.MapZoneNotices.Add(MapZoneNotice.Enqueue(type, report.Id, cellId, now));
+            queued++;
+        }
+
+        if (queued > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 }

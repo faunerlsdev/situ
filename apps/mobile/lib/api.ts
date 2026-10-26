@@ -37,3 +37,30 @@ export const http = createHttpClient({
 });
 
 export const api = createServices(http);
+
+export function apiOrigin(): string {
+  return readApiUrl(process.env.EXPO_PUBLIC_API_URL, defaultApiUrl).replace(/\/$/, '');
+}
+
+export async function freshAccessToken(): Promise<string | null> {
+  await prepareHandler?.();
+  return accessToken;
+}
+
+export async function currentAuthHeaders(): Promise<Record<string, string>> {
+  await prepareHandler?.();
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return headers;
+}
+
+export async function refreshAuthHeaders(): Promise<Record<string, string> | null> {
+  const next = await refreshHandler?.();
+  if (!next) {
+    sessionEvents.emitExpired();
+    return null;
+  }
+  return { Accept: 'application/json', Authorization: `Bearer ${next}` };
+}

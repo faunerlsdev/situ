@@ -1,12 +1,12 @@
 ---
 description: Convenciones Next.js de web, landing y support
-globs: apps/web/**,apps/landing/**,apps/support/**
+globs: apps/web/**,apps/landing/**,apps/support/**,apps/admin/**
 alwaysApply: false
 ---
 
 # Web (Next.js)
 
-Aplica a `apps/web`, `apps/landing` y `apps/support`.
+Aplica a `apps/web`, `apps/landing`, `apps/support` y `apps/admin`.
 
 - App Router y TypeScript estricto. Sin `any` para tapar tipos del API.
 - Estilos con Tailwind. Componentes y copys en español (Colombia).

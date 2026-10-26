@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Identity;
@@ -67,6 +68,12 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
         {
             await RecordAsync(user.Id, login, request, false, LoginFailureReason.EmailUnconfirmed, now, cancellationToken);
             return Result<SignInResponse>.Failure(AuthErrors.EmailUnconfirmed());
+        }
+
+        if (await StaffGate.RoleAsync(db, user.Id, cancellationToken) == "Staff")
+        {
+            await RecordAsync(user.Id, login, request, false, LoginFailureReason.StaffUsePanel, now, cancellationToken);
+            return Result<SignInResponse>.Failure(AuthErrors.StaffUsePanel());
         }
 
         var deviceResult = await AcceptDeviceAsync(user, request, now, cancellationToken);

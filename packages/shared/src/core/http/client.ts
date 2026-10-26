@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosAdapter, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 import { httpTimeouts } from '../config/env';
-import { AppError } from './errors';
+import { AppError, isAppError } from './errors';
 import { toAppError, shouldRetry } from './normalize';
 import { reportError } from './reportError';
 import { createRefreshGate } from './refreshGate';
@@ -89,7 +89,9 @@ async function execute<T>(instance: AxiosInstance, request: HttpRequest): Promis
     baseURL: request.baseURL,
     skipAuthRefresh: request.skipAuthRefresh,
     requiresAuth: request.requiresAuth,
-    validateStatus: request.validateStatus,
+    // Axios drops its default validator when the key is present with value undefined,
+    // and then treats 4xx/5xx as success. Only send the key when the caller set one.
+    ...(request.validateStatus ? { validateStatus: request.validateStatus } : {}),
     onUploadProgress: request.onUploadProgress
       ? (event) => {
           if (event.total && event.total > 0) {
@@ -127,7 +129,9 @@ function attachInterceptors(
       config.headers.set('Authorization', `Bearer ${token}`);
     }
 
-    if (config.data !== undefined && !(config.data instanceof FormData) && !config.headers.has('Content-Type')) {
+    if (isMultipart(config.data)) {
+      config.headers.delete('Content-Type');
+    } else if (config.data !== undefined && !config.headers.has('Content-Type')) {
       config.headers.set('Content-Type', 'application/json');
     }
 
@@ -213,12 +217,18 @@ async function retryAfterRefresh(
   return false;
 }
 
+function isMultipart(data: unknown): boolean {
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    return true;
+  }
+
+  return typeof data === 'object' && data !== null && Array.isArray((data as { _parts?: unknown })._parts);
+}
+
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-export function isAppError(error: unknown): error is AppError {
-  return error instanceof AppError;
-}
+export { isAppError };

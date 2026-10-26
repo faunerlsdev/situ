@@ -55,4 +55,5 @@ public enum LoginFailureReason
     TwoFactorRequired,
     TwoFactorInvalid,
     EmailUnconfirmed,
+    StaffUsePanel,
 }

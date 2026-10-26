@@ -97,7 +97,7 @@ public sealed class ConfirmReportHandler(IApplicationDbContext db, IClock clock)
         report.ReplaceConfirmation(previous, request.Type, extension, now);
         if (report.ShouldExpireByVotes())
         {
-            report.Expire(now);
+            report.Resolve(now);
         }
 
         if (reward)

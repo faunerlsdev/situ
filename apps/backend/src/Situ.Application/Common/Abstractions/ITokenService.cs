@@ -11,4 +11,9 @@ public interface ITokenService
     string CreateRefreshToken();
 
     string Hash(string plainToken);
+
+    /// <summary>Validates a previously issued access token. Returns null when the signature or lifetime fails.</summary>
+    AccessTokenTicket? ReadAccessToken(string token) => null;
 }
+
+public sealed record AccessTokenTicket(Guid UserId, string? Scope, string? Role, DateTimeOffset ExpiresAt);

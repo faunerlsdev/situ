@@ -74,6 +74,28 @@ public class ReportMapPostGisTests
         await command.ExecuteNonQueryAsync();
     }
 
+    [PostGisFact]
+    public async Task Map_zone_notices_table_exists_after_migrate()
+    {
+        var connectionString = TestConnection.Resolve()!;
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new AppDbContext(options);
+        if (!await db.Database.CanConnectAsync())
+        {
+            await CreateTestDatabaseAsync(connectionString);
+        }
+
+        await db.Database.MigrateAsync();
+        var connection = db.Database.GetDbConnection();
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT to_regclass('public.map_zone_notices')::text";
+        var table = await command.ExecuteScalarAsync();
+        Assert.Equal("map_zone_notices", table);
+    }
+
     private sealed class PostGisFactAttribute : FactAttribute
     {
         public PostGisFactAttribute()

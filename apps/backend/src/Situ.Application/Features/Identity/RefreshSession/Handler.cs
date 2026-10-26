@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Reports;
 using Situ.Domain.Identity;
 
 namespace Situ.Application.Features.Identity.RefreshSession;
@@ -46,9 +47,15 @@ public sealed class RefreshSessionHandler(IApplicationDbContext db, IClock clock
             return Result<RefreshSessionResponse>.Failure(AuthErrors.SessionInvalid());
         }
 
+        if (await StaffGate.RoleAsync(db, user.Id, cancellationToken) == "Staff")
+        {
+            current.Revoke(now);
+            await db.SaveChangesAsync(cancellationToken);
+            return Result<RefreshSessionResponse>.Failure(AuthErrors.StaffUsePanel());
+        }
+
         device.Touch(now, request.IpAddress);
-        var role = await Features.Reports.StaffGate.RoleAsync(db, user.Id, cancellationToken);
-        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, role);
+        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now);
         current.RotateTo(issued.Stored.Id, now);
         db.RefreshTokens.Add(issued.Stored);
         await db.SaveChangesAsync(cancellationToken);

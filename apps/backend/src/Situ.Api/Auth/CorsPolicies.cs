@@ -16,6 +16,6 @@ public static class CorsPolicies
             return false;
         }
 
-        return uri.Port is 3000 or 3001 or 3002 or 8081 or 19000 or 19006;
+        return uri.Port is 3000 or 3001 or 3002 or 3003 or 8081 or 19000 or 19006;
     }
 }

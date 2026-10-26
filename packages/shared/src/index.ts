@@ -71,6 +71,17 @@ export type {
 } from './api/types';
 export { appColors, brandColors, brandFonts, brandRadius, defaultApiUrl, sites } from './brand/tokens';
 export {
+  boundsFromRegion,
+  cellId,
+  cellIndex,
+  cellsCovering,
+  defaultCellDegrees,
+  defaultMaxCells,
+  diffCells,
+  mapRealtimeOf,
+} from './map/cells';
+export type { CellBounds } from './map/cells';
+export {
   absoluteMediaUrl,
   categoriesUnder,
   asNumber,

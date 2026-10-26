@@ -1,5 +1,6 @@
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.MapRealtime.GetMapRealtimeConfig;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 
@@ -25,7 +26,8 @@ public sealed record GetAppConfigResponse(
     string AnonymityDisplayName,
     AppVersionsView Versions,
     LegalLinksView Legal,
-    IReadOnlyList<PanelCopies.Item> PanelCopyByCountry);
+    IReadOnlyList<PanelCopies.Item> PanelCopyByCountry,
+    MapRealtimeView MapRealtime);
 
 public sealed class GetAppConfigHandler(IApplicationDbContext db)
     : IHandler<GetAppConfigRequest, Result<GetAppConfigResponse>>
@@ -54,7 +56,8 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db)
                 Text(settings, SystemSettingKeys.LegalTermsUrl, "https://somossitu.com/terminos"),
                 Text(settings, SystemSettingKeys.LegalPrivacyUrl, "https://somossitu.com/privacidad"),
                 Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte")),
-            PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry))));
+            PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry)),
+            GetMapRealtimeConfigHandler.Read(settings)));
     }
 
     private static string Text(IReadOnlyDictionary<string, string> settings, string key, string fallback)

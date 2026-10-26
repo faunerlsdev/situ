@@ -60,6 +60,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
 
+    public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes => Set<TwoFactorRecoveryCode>();
+
     public DbSet<ConsentRecord> ConsentRecords => Set<ConsentRecord>();
 
     public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
@@ -139,6 +141,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<ReportConfirmation> ReportConfirmations => Set<ReportConfirmation>();
 
     public DbSet<ReportMedia> ReportMedias => Set<ReportMedia>();
+
+    public DbSet<MapZoneNotice> MapZoneNotices => Set<MapZoneNotice>();
 
     public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
 

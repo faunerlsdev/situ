@@ -10,7 +10,8 @@ internal static class SessionIssuer
         Guid userId,
         Guid deviceId,
         DateTimeOffset now,
-        string? role = null)
+        string? role = null,
+        string? scope = null)
     {
         var accessExpiresAt = now.Add(SessionPolicy.AccessLifetimeFor(role));
         var plainRefresh = tokens.CreateRefreshToken();
@@ -21,6 +22,6 @@ internal static class SessionIssuer
             now,
             SessionPolicy.RefreshLifetimeFor(role));
 
-        return (tokens.CreateAccessToken(userId, accessExpiresAt, role: role, deviceId: deviceId), accessExpiresAt, plainRefresh, stored);
+        return (tokens.CreateAccessToken(userId, accessExpiresAt, scope: scope, role: role, deviceId: deviceId), accessExpiresAt, plainRefresh, stored);
     }
 }

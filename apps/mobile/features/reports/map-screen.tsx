@@ -9,6 +9,7 @@ import {
   defaultApiUrl,
   feedbackMessages,
   formatDistance,
+  mapRealtimeOf,
   notify,
   panelCopyOf,
   publishBlock,
@@ -22,12 +23,15 @@ import {
 import type { AuthorPresentation, ReportCategory } from '@situ/shared';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
+  Animated,
   Image,
   Linking,
   Platform,
@@ -51,9 +55,16 @@ import { setMapFocus, useMapFocus } from './focus';
 import { MapErrorBoundary, MapUnavailable } from './map-unavailable';
 import { useMapProvider } from './map-provider';
 import { setMapPlace, useMapPlace } from './place';
+import { useMapRealtime } from './realtime/use-map-realtime';
 import { useAppConfig } from './use-app-config';
 import { useMe } from './use-me';
 import { useReportCatalog } from './use-catalog';
+
+const closeIcon = { ios: 'xmark', android: 'close', web: 'close' } as const;
+const commentIcon = { ios: 'bubble.left', android: 'chat', web: 'chat' } as const;
+const shareIcon = { ios: 'square.and.arrow.up', android: 'share', web: 'share' } as const;
+const flagIcon = { ios: 'flag', android: 'flag', web: 'flag' } as const;
+const blockIcon = { ios: 'nosign', android: 'block', web: 'block' } as const;
 
 const pin = require('../../assets/images/icons/situ-pin-mapa-dark.png');
 const isotipo = require('../../assets/images/brand/situ-isotipo-negro.png');
@@ -71,10 +82,11 @@ export function MapScreen() {
   const appConfig = useAppConfig();
   const copy = panelCopyOf(appConfig.data);
   const homeRef = useRef(bogota);
-  if (me.data) {
+  const homeCity = me.data?.homeCity;
+  if (homeCity) {
     homeRef.current = {
-      latitude: asNumber(me.data.homeCity.latitude),
-      longitude: asNumber(me.data.homeCity.longitude),
+      latitude: asNumber(homeCity.latitude),
+      longitude: asNumber(homeCity.longitude),
     };
   }
   const filters = useMapFilters();
@@ -198,6 +210,20 @@ export function MapScreen() {
     },
   });
   const showBar = useDelayed(mapQuery.isFetching, 300);
+  const focused = useIsFocused();
+  const grid = mapRealtimeOf(appConfig.data);
+  const realtime = useMapRealtime({
+    mapVisible: focused && gate === 'ready',
+    region: settled,
+    cellDegrees: grid.cellDegrees,
+    maxCells: grid.maxCells,
+    onResync: () => {
+      void mapQuery.refetch();
+    },
+    onRemove: (ids) => {
+      setSelectedId((current) => (current && ids.includes(current) ? null : current));
+    },
+  });
 
   useEffect(() => {
     if (!mapQuery.isError || mapQuery.isFetching) {
@@ -389,6 +415,16 @@ export function MapScreen() {
   return (
     <View style={styles.fill}>
       {showBar ? <View style={styles.bar} /> : null}
+      {realtime.mode === 'live' || realtime.mode === 'down' ? (
+        <View
+          accessibilityRole="text"
+          accessibilityLabel={realtime.mode === 'live' ? 'Mapa en tiempo real' : 'Sin conexión en tiempo real'}
+          style={styles.live}
+        >
+          <View style={[styles.liveDot, realtime.mode === 'down' && styles.liveDotDown]} />
+          {realtime.mode === 'down' ? <Text style={styles.liveText}>Sin conexión en tiempo real</Text> : null}
+        </View>
+      ) : null}
       <FilterBar categories={categories} />
       {Platform.OS === 'web' ? (
         <View style={styles.gate}><Text style={styles.gateBody}>El mapa nativo está en la app de iOS y Android.</Text></View>
@@ -411,6 +447,7 @@ export function MapScreen() {
             <Marker
               key={item.kind === 'cluster' ? item.key : item.id}
               coordinate={{ latitude: item.latitude, longitude: item.longitude }}
+              tracksViewChanges={item.kind === 'point' && realtime.freshIds.has(item.id)}
               accessibilityLabel={item.kind === 'cluster' ? `${item.count} reportes` : item.categoryCode ?? 'Reporte'}
               onPress={() => {
                 if (item.kind === 'cluster') {
@@ -429,10 +466,10 @@ export function MapScreen() {
               {item.kind === 'cluster' ? (
                 <View style={styles.cluster}><Text style={styles.clusterText}>{item.count}</Text></View>
               ) : (
-                <View>
+                <PointPin fresh={realtime.freshIds.has(item.id)} reduceMotion={reduceMotion}>
                   <CategoryPin code={item.categoryCode} categories={categories} />
                   {item.isMine ? <Text style={styles.mine}>Tuyo</Text> : null}
-                </View>
+                </PointPin>
               )}
             </Marker>
           ))}
@@ -441,12 +478,17 @@ export function MapScreen() {
       )}
       {selectedPoint && sheetIndex === 0 ? (
         <View style={styles.card}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Ver detalle del reporte" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })}>
-            <Text style={styles.cardTitle}>{categoryName(categories, selectedPoint.categoryCode)}</Text>
-            <Text style={styles.cardMeta}>{relativeTime(selectedPoint.createdAt ?? '')}{formatDistance(selectedPoint.distanceMeters) ? ` · ${formatDistance(selectedPoint.distanceMeters)}` : ''}</Text>
-            <AuthorLine author={selectedPoint.author} />
-            {selectedPoint.previewUrl ? <Image source={{ uri: absoluteMediaUrl(apiBase, selectedPoint.previewUrl) ?? undefined }} style={styles.preview} /> : null}
-          </Pressable>
+          <View style={styles.cardHead}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Ver detalle del reporte" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.cardBody}>
+              <Text style={styles.cardTitle}>{categoryName(categories, selectedPoint.categoryCode)}</Text>
+              <Text style={styles.cardMeta}>{relativeTime(selectedPoint.createdAt ?? '')}{formatDistance(selectedPoint.distanceMeters) ? ` · ${formatDistance(selectedPoint.distanceMeters)}` : ''}</Text>
+              <AuthorLine author={selectedPoint.author} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setSelectedId(null)} style={styles.close}>
+              <SymbolView name={closeIcon} tintColor={theme.colors.warning} size={18} />
+            </Pressable>
+          </View>
+          <MediaThumbs media={detail.data?.media ?? []} fallbackUrl={selectedPoint.previewUrl} />
           <View style={styles.actions}>
             <VoteButton label="Sigue ahí" selected={detail.data?.myConfirmation === 'StillThere'} onPress={() => void vote('StillThere')} />
             <VoteButton label="Ya no está" selected={detail.data?.myConfirmation === 'GoneNow'} onPress={() => void vote('GoneNow')} />
@@ -458,16 +500,18 @@ export function MapScreen() {
               onToggle={(type) => void reactToReport(selectedPoint.id, type)}
             />
           ) : null}
-          <View style={styles.actions}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Comentar" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.vote}>
-              <Text style={styles.voteLabel}>Comentar</Text>
+          <View style={styles.iconActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Comentar" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.iconAction}>
+              <SymbolView name={commentIcon} tintColor={theme.colors.textPrimary} size={22} />
             </Pressable>
-            <Soon label="Compartir" />
-            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaintId(selectedPoint.id); }} style={styles.vote}>
-              <Text style={styles.voteLabel}>Denunciar</Text>
+            <View accessibilityLabel="Compartir, próximamente" style={[styles.iconAction, styles.iconSoon]}>
+              <SymbolView name={shareIcon} tintColor={theme.colors.textSecondary} size={22} />
+            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaintId(selectedPoint.id); }} style={styles.iconAction}>
+              <SymbolView name={flagIcon} tintColor={theme.colors.textPrimary} size={22} />
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => void blockContent(queryClient, { anonymous: selectedPoint.isAnonymous, reportId: selectedPoint.id, userId: detail.data?.report.author.userId })} style={styles.vote}>
-              <Text style={styles.danger}>Bloquear</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => void blockContent(queryClient, { anonymous: selectedPoint.isAnonymous, reportId: selectedPoint.id, userId: detail.data?.report.author.userId })} style={styles.iconAction}>
+              <SymbolView name={blockIcon} tintColor={theme.colors.danger} size={22} />
             </Pressable>
           </View>
         </View>
@@ -568,6 +612,18 @@ function FilterBar({ categories }: { categories: ReportCategory[] }) {
   );
 }
 
+function PointPin({ fresh, reduceMotion, children }: { fresh: boolean; reduceMotion: boolean; children: ReactNode }) {
+  const opacity = useRef(new Animated.Value(fresh && !reduceMotion ? 0 : 1)).current;
+  useEffect(() => {
+    if (!fresh || reduceMotion) {
+      opacity.setValue(1);
+      return;
+    }
+    Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+  }, [fresh, opacity, reduceMotion]);
+  return <Animated.View style={{ opacity }}>{children}</Animated.View>;
+}
+
 function CategoryPin({ code, categories }: { code: string | null; categories: ReportCategory[] }) {
   const category = categories.find((item) => item.code === code);
   const [failed, setFailed] = useState(false);
@@ -591,15 +647,6 @@ function VoteButton({ label, selected, onPress }: { label: string; selected: boo
     <Pressable accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={label} onPress={onPress} style={[styles.vote, selected && styles.voteOn]}>
       <Text style={styles.voteLabel}>{label}</Text>
     </Pressable>
-  );
-}
-
-function Soon({ label }: { label: string }) {
-  return (
-    <View accessibilityLabel={`${label}, próximamente`} style={styles.soon}>
-      <Text style={styles.soonLabel}>{label}</Text>
-      <Text style={styles.soonHint}>Próximamente</Text>
-    </View>
   );
 }
 
@@ -646,6 +693,27 @@ function useDelayed(active: boolean, delay: number): boolean {
   return visible;
 }
 
+function MediaThumbs({ media, fallbackUrl }: { media: { id: string; type: string; url: string; thumbnailUrl: string | null }[]; fallbackUrl: string | null }) {
+  if (media.length === 0) {
+    const preview = absoluteMediaUrl(apiBase, fallbackUrl);
+    return preview ? <Image source={{ uri: preview }} style={styles.preview} /> : null;
+  }
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
+      {media.map((item) => {
+        const uri = absoluteMediaUrl(apiBase, item.thumbnailUrl ?? (item.type === 'Video' ? null : item.url));
+        return (
+          <View key={item.id} style={styles.thumb}>
+            {uri ? <Image source={{ uri }} style={styles.thumbImage} /> : null}
+            {item.type === 'Video' ? <Text style={styles.thumbLabel}>Video</Text> : null}
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 function AuthorLine({ author }: { author: AuthorPresentation }) {
   return (
     <View style={styles.authorRow}>
@@ -661,6 +729,10 @@ function AuthorLine({ author }: { author: AuthorPresentation }) {
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: theme.colors.mapWater },
   bar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: theme.colors.primary, zIndex: 5 },
+  live: { position: 'absolute', top: 64, left: 12, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: theme.colors.surfaceElevated },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.success },
+  liveDotDown: { backgroundColor: theme.colors.warning },
+  liveText: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },
   gate: { flex: 1, justifyContent: 'center', gap: 16, padding: 24, backgroundColor: theme.colors.bg },
   gateTitle: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.display, fontSize: 28 },
   gateBody: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 16, lineHeight: 24 },
@@ -676,20 +748,26 @@ const styles = StyleSheet.create({
   cluster: { width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
   clusterText: { color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
   card: { position: 'absolute', left: 16, right: 88, bottom: 168, gap: 8, padding: 12, borderRadius: 20, backgroundColor: theme.colors.surfaceElevated, zIndex: 3 },
+  cardHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  cardBody: { flex: 1, gap: 4 },
+  close: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
   cardMeta: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13 },
   cardAuthor: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sans, fontSize: 14 },
   authorRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatar: { width: 28, height: 28 },
   preview: { height: 92, borderRadius: 12, backgroundColor: theme.colors.skeleton },
+  thumbs: { gap: 8 },
+  thumb: { width: 72, height: 72, borderRadius: 12, overflow: 'hidden', backgroundColor: theme.colors.skeleton, alignItems: 'center', justifyContent: 'center' },
+  thumbImage: { width: 72, height: 72 },
+  thumbLabel: { position: 'absolute', color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 11 },
   actions: { flexDirection: 'row', gap: 8 },
   vote: { flex: 1, minHeight: 44, borderRadius: theme.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface },
   voteOn: { backgroundColor: theme.colors.primary },
   voteLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 13 },
-  danger: { color: theme.colors.danger, fontFamily: theme.fontFamily.sansBold, fontSize: 13 },
-  soon: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', opacity: 0.45 },
-  soonLabel: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },
-  soonHint: { color: theme.colors.textPlaceholder, fontFamily: theme.fontFamily.sans, fontSize: 10 },
+  iconActions: { flexDirection: 'row', gap: 8 },
+  iconAction: { flex: 1, minHeight: 44, borderRadius: theme.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface },
+  iconSoon: { opacity: 0.45 },
   locate: { position: 'absolute', left: 16, bottom: 108, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceElevated, zIndex: 3 },
   locateDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: theme.colors.primary },
   fab: { position: 'absolute', right: 16, bottom: 100, width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceElevated, borderWidth: 2, borderColor: theme.colors.primary, zIndex: 3 },

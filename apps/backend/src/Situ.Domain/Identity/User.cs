@@ -51,7 +51,15 @@ public sealed class User : AggregateRoot
     public DateTimeOffset? UserNameChangedAt { get; private set; }
 
     public bool TwoFactorEnabled { get; private set; }
+
+    /// <summary>Protected secret. The plaintext is never stored.</summary>
     public string? TwoFactorSecret { get; private set; }
+
+    public long? TwoFactorLastStep { get; private set; }
+
+    public int MfaFailedAttempts { get; private set; }
+
+    public DateTimeOffset? MfaLockoutEndAt { get; private set; }
 
     public DateTimeOffset? SuspendedUntil { get; private set; }
     public DateTimeOffset? DeletionRequestedAt { get; private set; }
@@ -237,6 +245,58 @@ public sealed class User : AggregateRoot
     {
         TwoFactorSecret = null;
         TwoFactorEnabled = false;
+    }
+
+    /// <summary>Stores a protected secret without activating it. Returns false when 2FA is already on.</summary>
+    public bool StorePendingTwoFactorSecret(string protectedSecret)
+    {
+        if (TwoFactorEnabled)
+        {
+            return false;
+        }
+
+        TwoFactorSecret = Guard.NotEmpty(protectedSecret, nameof(protectedSecret));
+        return true;
+    }
+
+    public void ConfirmTwoFactor(long step)
+    {
+        Guard.That(!string.IsNullOrEmpty(TwoFactorSecret), "mfa.not_pending", "There is no pending authenticator secret.");
+        TwoFactorEnabled = true;
+        TwoFactorLastStep = step;
+        MfaFailedAttempts = 0;
+        MfaLockoutEndAt = null;
+    }
+
+    public void AcceptTotpStep(long step)
+    {
+        TwoFactorLastStep = step;
+        MfaFailedAttempts = 0;
+        MfaLockoutEndAt = null;
+    }
+
+    public bool IsMfaLocked(DateTimeOffset now) => MfaLockoutEndAt is { } end && end > now;
+
+    public void RegisterMfaFailure(DateTimeOffset now)
+    {
+        if (IsMfaLocked(now))
+        {
+            return;
+        }
+
+        MfaFailedAttempts++;
+        if (MfaFailedAttempts >= Totp.MaxFailedAttempts)
+        {
+            MfaLockoutEndAt = now.Add(Totp.LockoutDuration);
+        }
+    }
+
+    public void ResetTwoFactor()
+    {
+        DisableTwoFactor();
+        TwoFactorLastStep = null;
+        MfaFailedAttempts = 0;
+        MfaLockoutEndAt = null;
     }
 
     public void ChangeUserName(UserName userName, DateTimeOffset now)

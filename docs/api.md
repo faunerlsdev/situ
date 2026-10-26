@@ -142,6 +142,8 @@ Con `zoom` menor a 15 la respuesta agrupa con una cuadrícula (`ST_SnapToGrid` e
 
 Cada elemento trae `isMine`. Es true solo para quien consulta, también en sus reportes anónimos, y no revela el autor a nadie más. La respuesta lleva `Cache-Control: private, no-store`.
 
+`GET /api/v1/reports/batch?ids=` devuelve los mismos puntos (`MapItemView`) para hasta 50 ids separados por coma. Omite los que esta cuenta no puede ver: bloqueo, solo amigos, categoría de adultos si quien consulta es menor, o un reporte que ya no está activo. No revela autores anónimos. `Cache-Control: private, no-store`. El mapa en tiempo real lo usa después de un aviso del hub. El contrato del hub está en [realtime.md](realtime.md).
+
 Índice espacial: `ix_reports_location` (GIST sobre `reports.location`). En la base local, `EXPLAIN` de un recorte de Bogotá con `status = 'Active'` y `expires_at > now()` usó `Index Scan using ix_reports_location`. El filtro de estado y de vencimiento queda como Filter encima de ese índice. La prueba automática corre contra `situ_test` si existe `ConnectionStrings__Test` o el user-secret `ConnectionStrings:Test`. Sin esa conexión se omite y no falla.
 
 Los íconos viven en `wwwroot/assets/categories/<codigo>.png`, con `default.png` de respaldo. Son placeholders (el pin de marca). El catálogo guarda la ruta relativa y la respuesta la vuelve absoluta con `PublicBaseUrl` (si no está, usa `Email:ApiPublicBaseUrl`). El panel de administración ya puede cambiar `buttonIconUrl` y `mapIconUrl`; estos archivos no se reemplazan solos y más adelante el panel sustituirá estos placeholders.
@@ -455,7 +457,9 @@ El detalle de disparadores, de la ubicación que se guarda y del plan de la cons
 
 El detalle de roles, el comando del primer administrador y la sesión corta del personal está en `docs/admin.md`. Fuera de Development, OpenAPI no incluye las rutas `/api/v1/admin`.
 
-`GET /api/v1/admin/me` exige `role=Staff`. Responde el usuario, los roles y los permisos que hoy tiene en la base.
+`POST /api/v1/admin/auth/login` es el ingreso del personal. Responde `{ "mfaEnrollmentRequired": true, "enrollmentToken": "…", "enrollmentTokenExpiresAt": "…" }` o `{ "mfaRequired": true, "mfaToken": "…", "mfaTokenExpiresAt": "…" }`. `POST /api/v1/admin/auth/mfa` con `{ "mfaToken": "…", "code": "123456" }` emite `accessToken`, `refreshToken` y `accessTokenExpiresAt`. El login de la app rechaza a esas cuentas con 403 `auth.staff_use_panel`. El detalle del alta, los códigos de recuperación y el panel web está en `docs/admin.md`.
+
+`GET /api/v1/admin/me` exige `role=Staff`. Responde el usuario, los roles y los permisos que hoy tiene en la base. El resto de `/api/v1/admin` exige además `scope=mfa`.
 
 ```json
 { "userId": "…", "userName": "ana", "roles": [{ "id": "…", "name": "Super admin" }], "permissions": ["audit.view", "metrics.view"] }

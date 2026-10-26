@@ -12,6 +12,7 @@ import type {
   ConfirmReportResponse,
   CreateReportBody,
   CreateReportResponse,
+  MapItem,
   MapQuery,
   MapResponse,
   MyReportsResponse,
@@ -47,6 +48,7 @@ import type {
 import { AppError } from '../http/errors';
 import { messageFor } from '../http/errorMessages';
 import { createHttpClient } from './client';
+import { toAppError } from './normalize';
 import type { HttpClient, HttpClientOptions } from './client';
 import { httpTimeouts } from '../config/env';
 
@@ -93,7 +95,7 @@ export function createServices(http: HttpClient) {
         requiresAuth: true,
       });
     },
-    updateMyProfile(body: { userName?: string | null; displayName?: string | null; bio?: string | null; homeCityId?: string | null }) {
+    updateMyProfile(body: { userName?: string | null; displayName?: string | null; bio?: string | null; homeCityId?: string | null; preferAnonymousReports?: boolean | null }) {
       return http.request<void>({ method: 'PATCH', url: '/api/v1/me/profile', data: body, requiresAuth: true });
     },
     usernameAvailable(userName: string) {
@@ -396,6 +398,15 @@ export function createServices(http: HttpClient) {
         signal,
       });
     },
+    batchReports(ids: string[], signal?: AbortSignal) {
+      const params = new URLSearchParams();
+      params.set('ids', ids.join(','));
+      return http.request<{ items: MapItem[] }>({
+        url: `/api/v1/reports/batch?${params.toString()}`,
+        requiresAuth: true,
+        signal,
+      });
+    },
     report(id: string, signal?: AbortSignal) {
       return http.request<ReportDetail>({
         url: `/api/v1/reports/${encodeURIComponent(id)}`,
@@ -668,6 +679,10 @@ function readAuthSession(value: unknown): AuthSession {
   const accessToken = record.accessToken;
   const refreshToken = record.refreshToken;
   if (typeof accessToken !== 'string' || accessToken.length === 0 || typeof refreshToken !== 'string' || refreshToken.length === 0) {
+    if (typeof record.detail === 'string' || typeof record.code === 'string') {
+      throw toAppError({ status: typeof record.status === 'number' ? record.status : 400, data: value });
+    }
+
     throw new AppError({ code: 'UNKNOWN', userMessage: messageFor('UNKNOWN') });
   }
 

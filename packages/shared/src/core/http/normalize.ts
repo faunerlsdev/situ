@@ -45,7 +45,7 @@ export function toAppError(input: ErrorInput): AppError {
     accessToken: body.accessToken,
     accessTokenExpiresAt: body.accessTokenExpiresAt,
     fieldErrors: body.fieldErrors,
-    userMessage: messageFor(code, body.apiCode),
+    userMessage: messageFor(code, body.apiCode, body.detail),
     cause: input.cause,
   });
 }
@@ -84,24 +84,42 @@ function category(status: number): AppErrorCode {
 
 function readBody(data: unknown): {
   apiCode?: string;
+  detail?: string;
   retryAfter?: string;
   accessToken?: string;
   accessTokenExpiresAt?: string;
   fieldErrors?: Record<string, string>;
 } {
-  if (typeof data !== 'object' || data === null) {
+  const record = asRecord(data) ?? asRecord(parseJson(data));
+  if (!record) {
     return {};
   }
 
-  const record = data as Record<string, unknown>;
   const apiCode = typeof record.code === 'string' && record.code.length > 0 ? record.code : undefined;
+  const detail = typeof record.detail === 'string' && record.detail.trim().length > 0 ? record.detail : undefined;
   const retryAfter = typeof record.retryAfter === 'string' && record.retryAfter.length > 0 ? record.retryAfter : undefined;
   const accessToken = typeof record.accessToken === 'string' && record.accessToken.length > 0 ? record.accessToken : undefined;
   const accessTokenExpiresAt =
     typeof record.accessTokenExpiresAt === 'string' && record.accessTokenExpiresAt.length > 0
       ? record.accessTokenExpiresAt
       : undefined;
-  return { apiCode, retryAfter, accessToken, accessTokenExpiresAt, fieldErrors: readFieldErrors(record.errors) };
+  return { apiCode, detail, retryAfter, accessToken, accessTokenExpiresAt, fieldErrors: readFieldErrors(record.errors) };
+}
+
+function asRecord(data: unknown): Record<string, unknown> | undefined {
+  return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : undefined;
+}
+
+function parseJson(data: unknown): unknown {
+  if (typeof data !== 'string') {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(data) as unknown;
+  } catch {
+    return undefined;
+  }
 }
 
 function readFieldErrors(value: unknown): Record<string, string> | undefined {

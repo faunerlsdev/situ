@@ -274,7 +274,7 @@ public class AdminPanelFlowTests
         Assert.Equal(TimeSpan.FromMinutes(5), SessionPolicy.AccessLifetimeFor("Staff"));
         Assert.Equal(TimeSpan.FromMinutes(30), SessionPolicy.RefreshLifetimeFor("Staff"));
         Assert.Equal(TimeSpan.FromMinutes(15), SessionPolicy.AccessLifetimeFor(null));
-        Assert.Equal(TimeSpan.FromDays(30), SessionPolicy.RefreshLifetimeFor(null));
+        Assert.Equal(TimeSpan.FromDays(180), SessionPolicy.RefreshLifetimeFor(null));
         Assert.True(SessionPolicy.AccessLifetimeFor("Staff") < SessionPolicy.AccessLifetimeFor(null));
     }
 

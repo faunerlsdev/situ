@@ -54,4 +54,10 @@ internal static class AuthErrors
 
     public static Error Unauthenticated() =>
         Error.Unauthorized("auth.unauthenticated", "Inicia sesión para continuar.");
+
+    public const string StaffUsePanelCode = "auth.staff_use_panel";
+
+    public const string StaffUsePanelMessage = "Las cuentas del equipo ingresan por el panel de administración.";
+
+    public static Error StaffUsePanel() => Error.Forbidden(StaffUsePanelCode, StaffUsePanelMessage);
 }

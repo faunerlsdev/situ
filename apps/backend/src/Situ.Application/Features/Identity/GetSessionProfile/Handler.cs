@@ -31,7 +31,7 @@ public sealed record SessionPlanLimitsView(
 
 public sealed record SessionPlanView(string Code, string Tier, SessionPlanLimitsView Limits);
 
-public sealed record SessionProfileView(string Visibility, bool ShareLocationWithFriends);
+public sealed record SessionProfileView(string Visibility, bool ShareLocationWithFriends, bool PreferAnonymousReports);
 
 public sealed record SessionGuardianPermissionsView(bool LiveStreaming, bool ShareLocationWithFriends);
 
@@ -149,7 +149,8 @@ public sealed class GetSessionProfileHandler(
                 new SessionPlanLimitsView(plan.MaxReportsPerDay, plan.MaxAnonymousPostsPerDay, plan.MaxDevices, plan.ShowsAds)),
             new SessionProfileView(
                 (profile?.Visibility ?? ProfileVisibility.Private).ToString(),
-                profile?.IsFriendSharingActive(now) ?? false),
+                profile?.IsFriendSharingActive(now) ?? false,
+                profile?.PreferAnonymousReports ?? true),
             guardian,
             deletionScheduledFor));
     }

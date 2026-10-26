@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { loginErrorMessages } from '../feedback/messages';
 import { createHttpClient } from './client';
 import { errorMessages, messageFor } from './errorMessages';
+import { createServices } from './services';
 
 const generic = errorMessages.UNKNOWN;
 
@@ -55,4 +56,39 @@ describe('restricted sign-in responses', () => {
       expect(expired).toBe(0);
     },
   );
+
+  it('rejects a problem+json login and keeps the API sentence', async () => {
+    const detail = 'Las cuentas del equipo ingresan por el panel de administración.';
+    const http = createHttpClient({
+      baseUrl: 'http://api.test',
+      adapter: (config) => {
+        const response = {
+          data: { title: 'Forbidden', status: 403, detail, code: 'auth.staff_use_panel' },
+          status: 403,
+          statusText: 'Forbidden',
+          headers: {},
+          config,
+        };
+        const validateStatus = config.validateStatus;
+        if (typeof validateStatus !== 'function' || validateStatus(403)) {
+          return Promise.resolve(response);
+        }
+
+        return Promise.reject(new axios.AxiosError('Forbidden', 'ERR_BAD_REQUEST', config, undefined, response));
+      },
+    });
+
+    await expect(
+      createServices(http).login({
+        login: 'equipo',
+        password: 'secret-pass-1',
+        deviceIdentifier: 'device',
+        platform: 'IOS',
+      }),
+    ).rejects.toMatchObject({
+      status: 403,
+      apiCode: 'auth.staff_use_panel',
+      userMessage: detail,
+    });
+  });
 });

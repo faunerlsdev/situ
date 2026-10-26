@@ -20,8 +20,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
 import { api } from '@/lib/api';
@@ -32,7 +32,7 @@ import { useMapProvider } from './map-provider';
 import { useAppConfig } from './use-app-config';
 import { useMe } from './use-me';
 import { useReportCatalog } from './use-catalog';
-import { prepareImage, useUploads } from './use-uploads';
+import { localFileUri, prepareImage, useUploads } from './use-uploads';
 
 const draftFile = new File(Paths.document, 'report-draft.json');
 
@@ -59,7 +59,8 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
   const [chosenId, setChosenId] = useState(categoryId);
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<ReportVisibility>('Public');
-  const [anonymous, setAnonymous] = useState(false);
+  const [anonymous, setAnonymous] = useState(true);
+  const identityLocked = useRef(false);
   const [point, setPoint] = useState({ latitude: 4.711, longitude: -74.072 });
   const [picking, setPicking] = useState(false);
   const [errors, setErrors] = useState<{ description?: string; media?: string }>({});
@@ -71,16 +72,31 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
     void Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
       .then((position) => setPoint({ latitude: position.coords.latitude, longitude: position.coords.longitude }))
       .catch(() => undefined);
+  }, [categoryId]);
+
+  useEffect(() => {
+    let cancelled = false;
     void readDraft().then((draft) => {
-      if (!draft || draft.categoryId !== categoryId) {
+      if (cancelled || identityLocked.current) {
         return;
       }
-      setDescription(draft.description);
-      setVisibility(draft.visibility);
-      setAnonymous(draft.isAnonymous);
-      setPoint({ latitude: draft.latitude, longitude: draft.longitude });
+      if (draft && draft.categoryId === categoryId) {
+        identityLocked.current = true;
+        setDescription(draft.description);
+        setVisibility(draft.visibility);
+        setAnonymous(draft.isAnonymous);
+        setPoint({ latitude: draft.latitude, longitude: draft.longitude });
+        return;
+      }
+      if (me.data) {
+        identityLocked.current = true;
+        setAnonymous(me.data.profile.preferAnonymousReports !== false);
+      }
     });
-  }, [categoryId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [categoryId, me.data]);
 
   useEffect(() => {
     if (rule.explain) {
@@ -141,71 +157,68 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
     }
   }
 
-  async function addImage() {
-    const reason = rejectedMediaReason({ kind: 'image', mime: 'image/jpeg', name: 'foto.jpg', imageCount, videoCount, limits });
-    if (reason && imageCount >= limits.maxImages) {
-      notify.warning(reason);
+  async function addImage(source: 'library' | 'camera') {
+    if (imageCount >= limits.maxImages) {
+      notify.warning(rejectedMediaReason({ kind: 'image', mime: 'image/jpeg', name: 'foto.jpg', imageCount, videoCount, limits }) ?? 'Puedes subir hasta 5 fotos.');
       return;
     }
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      await alertModal({ title: feedbackMessages.cameraDeniedTitle, message: feedbackMessages.cameraDeniedBody, type: 'warning', buttonText: feedbackMessages.openSettings });
+    if (source === 'camera' && !(await allowCamera())) {
       return;
     }
     setPicking(true);
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
-    setPicking(false);
-    const asset = picked.assets?.[0];
-    if (picked.canceled || !asset) {
-      return;
+    try {
+      const picked = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
+        : await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.8,
+            preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+          });
+      const asset = picked.assets?.[0];
+      if (picked.canceled || !asset) {
+        return;
+      }
+      const uri = await prepareImage(asset.uri, asset.width);
+      uploads.enqueue({ id: `${Date.now()}`, kind: 'image', status: 'queued', progress: 0, uri, name: 'foto.jpg', mime: 'image/jpeg' });
+    } catch {
+      notify.warning(feedbackMessages.photoPrepareFailed);
+    } finally {
+      setPicking(false);
     }
-    const blocked = rejectedMediaReason({ kind: 'image', mime: asset.mimeType ?? 'image/jpeg', name: asset.fileName ?? 'foto.jpg', imageCount, videoCount, limits });
-    if (blocked) {
-      notify.warning(blocked);
-      return;
-    }
-    const uri = await prepareImage(asset.uri, asset.width);
-    uploads.enqueue({ id: `${Date.now()}`, kind: 'image', status: 'queued', progress: 0, uri, name: 'foto.jpg', mime: 'image/jpeg' });
   }
 
-  async function addVideo() {
+  async function addVideo(source: 'library' | 'camera') {
     if (videoCount >= limits.maxVideos) {
       notify.warning(limits.maxVideos === 1 ? 'Puedes subir un solo video.' : `Puedes subir hasta ${limits.maxVideos} videos.`);
       return;
     }
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      await alertModal({ title: feedbackMessages.cameraDeniedTitle, message: feedbackMessages.cameraDeniedBody, type: 'warning', buttonText: feedbackMessages.openSettings });
+    if (source === 'camera' && !(await allowCamera())) {
       return;
     }
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], videoMaxDuration: limits.maxVideoSeconds });
-    const asset = picked.assets?.[0];
-    if (picked.canceled || !asset) {
-      return;
+    setPicking(true);
+    try {
+      const picked = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['videos'], videoMaxDuration: limits.maxVideoSeconds })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], videoMaxDuration: limits.maxVideoSeconds });
+      const asset = picked.assets?.[0];
+      if (picked.canceled || !asset) {
+        return;
+      }
+      const duration = asset.duration ? asset.duration / 1000 : null;
+      const mime = asset.mimeType ?? 'video/mp4';
+      const name = asset.fileName ?? 'video.mp4';
+      const blocked = rejectedMediaReason({ kind: 'video', mime, name, durationSeconds: duration, imageCount, videoCount, limits });
+      if (blocked) {
+        notify.warning(blocked);
+        return;
+      }
+      const uri = await localFileUri(asset.uri, 'mp4');
+      uploads.enqueue({ id: `${Date.now()}`, kind: 'video', status: 'queued', progress: 0, uri, name: name.endsWith('.mp4') || name.endsWith('.mov') ? name : 'video.mp4', mime });
+    } catch {
+      notify.warning(feedbackMessages.videoPrepareFailed);
+    } finally {
+      setPicking(false);
     }
-    const duration = asset.duration ? asset.duration / 1000 : null;
-    const blocked = rejectedMediaReason({
-      kind: 'video',
-      mime: asset.mimeType ?? 'video/mp4',
-      name: asset.fileName ?? 'video.mp4',
-      durationSeconds: duration,
-      imageCount,
-      videoCount,
-      limits,
-    });
-    if (blocked) {
-      notify.warning(blocked);
-      return;
-    }
-    uploads.enqueue({
-      id: `${Date.now()}`,
-      kind: 'video',
-      status: 'queued',
-      progress: 0,
-      uri: asset.uri,
-      name: asset.fileName ?? 'video.mp4',
-      mime: asset.mimeType ?? 'video/mp4',
-    });
   }
 
   async function close() {
@@ -263,11 +276,16 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       {needsMedia ? <Text style={styles.hint}>Esta categoría pide foto o video para poder enviarse.</Text> : null}
       <Text style={styles.hint}>Si aparece un menor de edad, su imagen es un dato personal protegido.</Text>
       <View style={styles.row}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Agregar foto" disabled={picking} onPress={() => void addImage()} style={styles.secondary}><Text style={styles.secondaryLabel}>Foto</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Agregar video" onPress={() => void addVideo()} style={styles.secondary}><Text style={styles.secondaryLabel}>Video</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tomar foto" disabled={picking} onPress={() => void addImage('camera')} style={styles.secondary}><Text style={styles.secondaryLabel}>Tomar foto</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Elegir foto" disabled={picking} onPress={() => void addImage('library')} style={styles.secondary}><Text style={styles.secondaryLabel}>Elegir foto</Text></Pressable>
+      </View>
+      <View style={styles.row}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Grabar video" disabled={picking} onPress={() => void addVideo('camera')} style={styles.secondary}><Text style={styles.secondaryLabel}>Grabar video</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Elegir video" disabled={picking} onPress={() => void addVideo('library')} style={styles.secondary}><Text style={styles.secondaryLabel}>Elegir video</Text></Pressable>
       </View>
       {uploads.tasks.map((task) => (
         <View key={task.id} style={styles.upload}>
+          {task.kind === 'image' ? <Image source={{ uri: task.uri }} style={styles.thumb} /> : null}
           <Text style={styles.hint}>{task.kind === 'image' ? 'Foto' : 'Video'} · {task.status === 'ready' ? 'Lista' : `${task.progress}%`}</Text>
           <View style={styles.track}><View style={[styles.trackFill, { width: `${task.progress}%` }]} /></View>
           {task.status === 'failed' || task.status === 'cancelled' ? (
@@ -300,6 +318,7 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
           if (rule.explain) {
             return;
           }
+          identityLocked.current = true;
           setAnonymous((value) => !value);
         }}
         style={styles.switchRow}
@@ -313,6 +332,15 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       </Pressable>
     </ScrollView>
   );
+}
+
+async function allowCamera(): Promise<boolean> {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (permission.granted) {
+    return true;
+  }
+  await alertModal({ title: feedbackMessages.cameraDeniedTitle, message: feedbackMessages.cameraDeniedBody, type: 'warning', buttonText: feedbackMessages.openSettings });
+  return false;
 }
 
 async function explainPublishBlock(
@@ -424,6 +452,7 @@ const styles = StyleSheet.create({
   secondary: { flex: 1, minHeight: 44, borderRadius: theme.radius.button, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
   secondaryLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold },
   upload: { gap: 4 },
+  thumb: { width: 72, height: 72, borderRadius: 12, backgroundColor: theme.colors.skeleton },
   track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.skeleton },
   trackFill: { height: 4, borderRadius: 2, backgroundColor: theme.colors.primary },
   map: { height: 180, borderRadius: 16 },

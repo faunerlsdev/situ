@@ -59,6 +59,8 @@ public interface IApplicationDbContext
 
     DbSet<UserDevice> UserDevices { get; }
 
+    DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes { get; }
+
     DbSet<ConsentRecord> ConsentRecords { get; }
 
     DbSet<LegalDocument> LegalDocuments { get; }
@@ -138,6 +140,8 @@ public interface IApplicationDbContext
     DbSet<ReportConfirmation> ReportConfirmations { get; }
 
     DbSet<ReportMedia> ReportMedias { get; }
+
+    DbSet<MapZoneNotice> MapZoneNotices { get; }
 
     DbSet<AccountDeletionRequest> AccountDeletionRequests { get; }
 

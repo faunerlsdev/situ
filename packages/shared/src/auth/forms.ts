@@ -45,19 +45,30 @@ export const registerSchema = z
       context.addIssue({ code: z.ZodIssueCode.custom, path: ['passwordConfirmation'], message: 'Las contraseñas no coinciden.' });
     }
 
-    if (value.guardianEmail.length > 0) {
-      if (!z.string().email().safeParse(value.guardianEmail).success) {
-        context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'El correo no es válido.' });
-      } else if (value.guardianEmail.toLowerCase() === value.email.trim().toLowerCase()) {
-        context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'Debe ser un correo distinto al tuyo.' });
-      }
-      if (!value.minorNoticeAccepted) {
-        context.addIssue({ code: z.ZodIssueCode.custom, path: ['minorNoticeAccepted'], message: 'Antes de enviarlo, marca Entendido.' });
-      }
+    const birth = composeDateOfBirth(value.year, value.month, value.day);
+    if (!birth) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['day'], message: 'La fecha de nacimiento no es válida.' });
+      return;
     }
 
-    if (!composeDateOfBirth(value.year, value.month, value.day)) {
-      context.addIssue({ code: z.ZodIssueCode.custom, path: ['day'], message: 'La fecha de nacimiento no es válida.' });
+    const age = ageInYears(birth);
+    if (age === null || age >= adultAge) {
+      if (value.guardianEmail.length > 0 && !z.string().email().safeParse(value.guardianEmail).success) {
+        context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'El correo no es válido.' });
+      }
+      return;
+    }
+
+    if (value.guardianEmail.length === 0) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'Escribe el correo de tu representante legal.' });
+    } else if (!z.string().email().safeParse(value.guardianEmail).success) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'El correo no es válido.' });
+    } else if (value.guardianEmail.toLowerCase() === value.email.trim().toLowerCase()) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'Debe ser un correo distinto al tuyo.' });
+    }
+
+    if (!value.minorNoticeAccepted) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['minorNoticeAccepted'], message: 'Marca Entendido para continuar.' });
     }
   });
 

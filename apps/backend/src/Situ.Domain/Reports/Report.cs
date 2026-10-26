@@ -87,6 +87,7 @@ public sealed class Report : AggregateRoot
         EnsureActive();
         Description = Guard.NotEmpty(description, nameof(description), 1000);
         MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Updated));
     }
 
     /// <summary>A confirmation that the thing is still there extends the life of the report.</summary>
@@ -105,6 +106,7 @@ public sealed class Report : AggregateRoot
         }
 
         MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Updated));
     }
 
     /// <summary>
@@ -169,6 +171,23 @@ public sealed class Report : AggregateRoot
 
         Status = ReportStatus.Expired;
         MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Expired));
+    }
+
+    /// <summary>
+    /// Same stored status as <see cref="Expire"/> (the report leaves the map) when "ya no está" wins.
+    /// The zone event is resolved, so a client can tell a vote outcome from a TTL expiry.
+    /// </summary>
+    public void Resolve(DateTimeOffset now)
+    {
+        if (Status != ReportStatus.Active)
+        {
+            return;
+        }
+
+        Status = ReportStatus.Expired;
+        MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Resolved));
     }
 
     public void SendToReview(DateTimeOffset now)
@@ -177,6 +196,7 @@ public sealed class Report : AggregateRoot
         {
             Status = ReportStatus.UnderReview;
             MarkUpdated(now);
+            Raise(new ReportMapChanged(Id, ReportMapChanged.Updated));
         }
     }
 
@@ -185,12 +205,14 @@ public sealed class Report : AggregateRoot
         Guard.That(Status == ReportStatus.UnderReview, "report.not_under_review", "Only reports under review can be restored.");
         Status = ReportStatus.Active;
         MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Updated));
     }
 
     public void Remove(DateTimeOffset now)
     {
         Status = ReportStatus.Removed;
         MarkUpdated(now);
+        Raise(new ReportMapChanged(Id, ReportMapChanged.Removed));
     }
 
     private void EnsureActive() =>
@@ -200,3 +222,15 @@ public sealed class Report : AggregateRoot
 public sealed record ReportCreatedEvent(Guid ReportId, Guid CategoryId, Guid? CityId, GeoPoint Location, bool IsAnonymous) : DomainEvent;
 
 public sealed record ReportBecameImportantEvent(Guid ReportId, Guid CategoryId, Guid? CityId, GeoPoint Location) : DomainEvent;
+
+/// <summary>
+/// A map-relevant change. Carries the report id and the kind only.
+/// The zone publisher never reads the description or the author from this event.
+/// </summary>
+public sealed record ReportMapChanged(Guid ReportId, string Kind) : DomainEvent
+{
+    public const string Updated = "ReportUpdated";
+    public const string Resolved = "ReportResolved";
+    public const string Expired = "ReportExpired";
+    public const string Removed = "ReportRemoved";
+}

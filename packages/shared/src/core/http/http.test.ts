@@ -31,6 +31,36 @@ describe('toAppError', () => {
     expect(error.userMessage).not.toContain('stack');
   });
 
+  it('shows the ProblemDetails sentence when the API wrote one', () => {
+    const detail = 'Las cuentas del equipo ingresan por el panel de administración.';
+    const error = toAppError({
+      status: 403,
+      data: JSON.stringify({
+        title: 'Forbidden',
+        status: 403,
+        detail,
+        code: 'auth.staff_use_panel',
+      }),
+    });
+    expect(error.apiCode).toBe('auth.staff_use_panel');
+    expect(error.userMessage).toBe(detail);
+  });
+
+  it('shows an unknown API sentence instead of the generic fallback', () => {
+    const detail = 'No puedes quitar este contenido porque ya está cerrado.';
+    const error = toAppError({ status: 409, data: { code: 'moderation.not_mapped', detail } });
+    expect(error.userMessage).toBe(detail);
+  });
+
+  it('hides an exception detail and keeps the status message', () => {
+    const error = toAppError({
+      status: 500,
+      data: { detail: 'System.NullReferenceException: Object reference not set' },
+    });
+    expect(error.userMessage).toBe('Tuvimos un problema. Inténtalo de nuevo en un momento.');
+    expect(error.userMessage).not.toContain('NullReference');
+  });
+
   it('reads field errors and retryAfter', () => {
     const error = toAppError({
       status: 400,

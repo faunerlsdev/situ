@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ApiError, loginSchema, notify } from '@situ/shared';
+import { ApiError, loginSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { LoginValues } from '@situ/shared';
 import { Link, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -21,6 +21,7 @@ export default function LoginScreen() {
   const [remember, setRemember] = useState(false);
   const [biometric, setBiometric] = useState(false);
   const [retryAfter, setRetryAfter] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const lockout = useLockoutLabel(retryAfter);
   const locked = retryAfter !== null && Date.parse(retryAfter) > Date.now();
   const form = useForm<LoginValues>({
@@ -30,6 +31,7 @@ export default function LoginScreen() {
 
   async function onSubmit(values: LoginValues) {
     setRetryAfter(null);
+    setSubmitError(null);
 
     try {
       const session = await api.login({
@@ -69,6 +71,11 @@ export default function LoginScreen() {
 
       if (cause instanceof ApiError && cause.apiCode === 'auth.locked' && cause.retryAfter) {
         setRetryAfter(cause.retryAfter);
+      }
+
+      const message = messageFromUnknown(cause);
+      if (message) {
+        setSubmitError(message);
       }
 
       notify.error(cause, { placement: 'bottom' });
@@ -161,6 +168,7 @@ export default function LoginScreen() {
           Soy nuevo y deseo registrarme
         </Link>
         {lockout ? <Text style={styles.lockout}>{lockout}</Text> : null}
+        {submitError ? <Text style={styles.fieldError}>{submitError}</Text> : null}
         <LogoAction
           label="Ingresar"
           pendingLabel="Ingresando…"

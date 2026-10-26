@@ -30,6 +30,7 @@
         <PackageVersion Include="Scalar.AspNetCore" Version="2.*" />
 
         <!-- Pruebas -->
+        <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.*" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.*" />
         <PackageVersion Include="xunit" Version="2.9.*" />
         <PackageVersion Include="xunit.runner.visualstudio" Version="3.*" />

@@ -15,7 +15,7 @@ export const errorMessages: Record<AppErrorCode, string> = {
   UNKNOWN: 'No pudimos completar la solicitud.',
 };
 
-/** Curated product copy. Unknown server text is never shown. */
+/** Curated product copy. A ProblemDetails detail is shown when it is a sentence for the user. */
 export const apiMessages: Record<string, string> = {
   ...loginErrorMessages,
   'guardian_consent.email_rejected': 'Escribe el correo de tu representante. Debe ser distinto al tuyo.',
@@ -104,7 +104,12 @@ export const apiMessages: Record<string, string> = {
   'account_deletion.not_scheduled': 'No hay una eliminación que cancelar.',
 };
 
-export function messageFor(code: AppErrorCode, apiCode?: string): string {
+export function messageFor(code: AppErrorCode, apiCode?: string, detail?: string): string {
+  const spoken = spokenDetail(detail);
+  if (spoken) {
+    return spoken;
+  }
+
   if (apiCode && apiMessages[apiCode]) {
     return apiMessages[apiCode];
   }
@@ -114,4 +119,21 @@ export function messageFor(code: AppErrorCode, apiCode?: string): string {
   }
 
   return errorMessages[code];
+}
+
+function spokenDetail(detail: string | undefined): string | undefined {
+  if (!detail) {
+    return undefined;
+  }
+
+  const text = detail.trim().replace(/\s+/g, ' ');
+  if (text.length < 12 || text.length > 280) {
+    return undefined;
+  }
+
+  if (/[\r\n<>{}]/.test(detail) || /exception|stack|trace|sqlstate|object reference|system\.|microsoft\.|npgsql/i.test(text)) {
+    return undefined;
+  }
+
+  return text;
 }

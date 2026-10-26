@@ -2,6 +2,7 @@ using Situ.Api.Auth;
 using Situ.Api.Http;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Administration.Auth;
 using Situ.Application.Features.Administration.Audit;
 using Situ.Application.Features.Administration.Catalog;
 using Situ.Application.Features.Administration.Complaints;
@@ -19,13 +20,21 @@ public sealed class AdminEndpoints : IEndpoint
 {
     public static void Map(RouteGroupBuilder group)
     {
-        var admin = group.MapGroup("/admin")
+        group.MapGet("/admin/me", Me)
+            .WithName("GetAdminMe")
+            .WithSummary("Rol y permisos efectivos del personal, leídos de la base.")
+            .Produces<GetAdminMeResponse>()
+            .WithTags("Admin")
             .RequireAuthorization(AuthorizationPolicies.Staff)
+            .RequireRateLimiting("admin");
+
+        var admin = group.MapGroup("/admin")
+            .RequireAuthorization(AuthorizationPolicies.StaffMfa)
             .RequireRateLimiting("admin")
             .WithTags("Admin");
 
-        admin.MapGet("/me", Me).WithName("GetAdminMe").WithSummary("Rol y permisos efectivos del personal, leídos de la base.");
-        admin.MapGet("/dashboard", Dashboard).WithName("GetAdminDashboard").WithSummary("Agregados del panel. Sin datos personales.");
+        admin.MapPost("/2fa/reset", ResetTwoFactor).WithName("ResetStaffTwoFactor").WithSummary("Un superadministrador restablece el segundo factor de otra cuenta.");
+        admin.MapGet("/dashboard", Dashboard).WithName("GetAdminDashboard").Produces<GetAdminDashboardResponse>().WithSummary("Agregados del panel. Sin datos personales.");
         admin.MapGet("/complaints/{id:guid}", Complaint).WithName("GetAdminComplaint").WithSummary("Contexto para resolver una denuncia. El autor anónimo no se revela.");
         admin.MapGet("/users", Users).WithName("SearchAdminUsers").RequireRateLimiting("admin-user-lookup").WithSummary("Busca una cuenta por usuario o por correo exacto.");
         admin.MapGet("/users/{id:guid}", User).WithName("GetAdminUser").WithSummary("Ficha de una cuenta. El correo va enmascarado salvo users.view_email.");
@@ -82,6 +91,9 @@ public sealed class AdminEndpoints : IEndpoint
 
     private static async Task<IResult> Me(ICurrentUser current, IHandler<GetAdminMeRequest, Result<GetAdminMeResponse>> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(new GetAdminMeRequest(current.UserId ?? Guid.Empty), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> ResetTwoFactor(ResetBody body, HttpContext http, ICurrentUser current, IHandler<ResetStaffTwoFactorRequest, Result> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new ResetStaffTwoFactorRequest(current.UserId ?? Guid.Empty, Ip(http), body.UserId, body.Reason), cancellationToken)).ToHttpResult();
 
     private static async Task<IResult> Dashboard(ICurrentUser current, IHandler<GetAdminDashboardRequest, Result<GetAdminDashboardResponse>> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(new GetAdminDashboardRequest(current.UserId ?? Guid.Empty), cancellationToken)).ToHttpResult();
@@ -225,6 +237,52 @@ public sealed record ResolutionBody(string? Resolution);
 public sealed record RetentionBody(int RetainDays);
 
 public sealed record AssignBody(string Email, string Role);
+
+public sealed record ResetBody(Guid UserId, string Reason);
+
+public sealed class AdminAuthEndpoints : IEndpoint
+{
+    public static void Map(RouteGroupBuilder group)
+    {
+        var auth = group.MapGroup("/admin/auth").AllowAnonymous().WithTags("Admin");
+        auth.MapPost("/login", Login).WithName("AdminLogin").Produces<AdminLoginResponse>().RequireRateLimiting("admin-login");
+        auth.MapPost("/mfa", Mfa).WithName("VerifyStaffMfa").Produces<StaffSessionResponse>().RequireRateLimiting("admin-mfa");
+        auth.MapPost("/refresh", Refresh).WithName("RefreshStaffSession").Produces<StaffSessionResponse>().RequireRateLimiting("admin-login");
+        auth.MapPost("/logout", Logout).WithName("LogoutStaffSession").Produces(StatusCodes.Status204NoContent).RequireRateLimiting("admin-login");
+
+        var enroll = group.MapGroup("/admin/2fa")
+            .RequireAuthorization(AuthorizationPolicies.MfaEnrollment)
+            .RequireRateLimiting("admin-mfa")
+            .WithTags("Admin");
+        enroll.MapPost("/setup", Setup).WithName("SetupStaffTwoFactor").Produces<SetupStaffTwoFactorResponse>();
+        enroll.MapPost("/enable", Enable).WithName("EnableStaffTwoFactor").Produces<EnableStaffTwoFactorResponse>();
+    }
+
+    private static async Task<IResult> Login(LoginBody body, HttpContext http, IHandler<AdminLoginRequest, Result<AdminLoginResponse>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new AdminLoginRequest(body.Email, body.Password, Ip(http), http.Request.Headers.UserAgent.ToString()), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Mfa(MfaBody body, HttpContext http, IHandler<VerifyStaffMfaRequest, Result<StaffSessionResponse>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new VerifyStaffMfaRequest(body.MfaToken, body.Code, body.RecoveryCode, Ip(http), http.Request.Headers.UserAgent.ToString()), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Refresh(RefreshBody body, HttpContext http, IHandler<RefreshStaffSessionRequest, Result<StaffSessionResponse>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new RefreshStaffSessionRequest(body.RefreshToken, Ip(http)), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Logout(RefreshBody body, HttpContext http, IHandler<LogoutStaffSessionRequest, Result> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new LogoutStaffSessionRequest(body.RefreshToken, Ip(http)), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Setup(HttpContext http, ICurrentUser current, IHandler<SetupStaffTwoFactorRequest, Result<SetupStaffTwoFactorResponse>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new SetupStaffTwoFactorRequest(current.UserId ?? Guid.Empty, Ip(http)), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Enable(EnableBody body, HttpContext http, ICurrentUser current, IHandler<EnableStaffTwoFactorRequest, Result<EnableStaffTwoFactorResponse>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new EnableStaffTwoFactorRequest(current.UserId ?? Guid.Empty, body.Code, Ip(http), http.Request.Headers.UserAgent.ToString()), cancellationToken)).ToHttpResult();
+
+    private static string? Ip(HttpContext httpContext) => httpContext.Connection.RemoteIpAddress?.ToString();
+
+    private sealed record LoginBody(string Email, string Password);
+    private sealed record MfaBody(string MfaToken, string? Code, string? RecoveryCode);
+    private sealed record RefreshBody(string RefreshToken);
+    private sealed record EnableBody(string Code);
+}
 
 public sealed class TakedownEndpoints : IEndpoint
 {

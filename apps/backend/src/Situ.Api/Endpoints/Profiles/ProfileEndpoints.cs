@@ -68,7 +68,7 @@ public sealed class ProfileEndpoints : IEndpoint
         }
 
         var result = await handler.Handle(
-            new UpdateMyProfileRequest(userId, body.UserName, body.DisplayName, body.Bio, body.HomeCityId),
+            new UpdateMyProfileRequest(userId, body.UserName, body.DisplayName, body.Bio, body.HomeCityId, body.PreferAnonymousReports),
             cancellationToken);
         return result.ToHttpResult();
     }
@@ -170,6 +170,6 @@ public sealed class ProfileEndpoints : IEndpoint
     }
 }
 
-public sealed record UpdateProfileBody(string? UserName, string? DisplayName, string? Bio, Guid? HomeCityId);
+public sealed record UpdateProfileBody(string? UserName, string? DisplayName, string? Bio, Guid? HomeCityId, bool? PreferAnonymousReports = null);
 
 public sealed record GalleryAvatarBody(Guid GalleryItemId);

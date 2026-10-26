@@ -72,6 +72,7 @@ public class GuardianConsentSigningKeyTests
             ["Jwt:Issuer"] = "situ-api",
             ["Jwt:Audience"] = "situ-clients",
             ["Jwt:Secret"] = new string('j', 32),
+            ["Network:KnownProxies:0"] = "10.0.0.8",
         };
         if (signingKey is not null)
         {

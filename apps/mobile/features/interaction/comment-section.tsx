@@ -46,7 +46,8 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
     getNextPageParam: (page) => page.nextCursor ?? undefined,
   });
   const [text, setText] = useState('');
-  const [chosenAnonymous, setChosenAnonymous] = useState(false);
+  const [chosenAnonymous, setChosenAnonymous] = useState(true);
+  const identityLocked = useRef(false);
   const [replyTo, setReplyTo] = useState<CommentItem | null>(null);
   const [editing, setEditing] = useState<CommentItem | null>(null);
   const [inlineError, setInlineError] = useState<string | null>(null);
@@ -71,6 +72,14 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
   const comments = query.data?.pages.flatMap((page) => page.comments) ?? [];
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const commentsY = useRef(0);
+
+  useEffect(() => {
+    if (identityLocked.current || !me.data) {
+      return;
+    }
+    identityLocked.current = true;
+    setChosenAnonymous(me.data.profile.preferAnonymousReports !== false);
+  }, [me.data]);
 
   useEffect(() => {
     if (!focusComments) {
@@ -260,7 +269,10 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
         onChangeText={(value) => { setText(value); setInlineError(null); }}
         anonymous={anonymity.anonymous}
         anonymousLocked={anonymity.locked}
-        onAnonymousChange={setChosenAnonymous}
+        onAnonymousChange={(value) => {
+          identityLocked.current = true;
+          setChosenAnonymous(value);
+        }}
         disabled={false}
         pending={pending}
         notice={notice}

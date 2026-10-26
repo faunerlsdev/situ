@@ -264,6 +264,10 @@ internal static class CatalogSeed
         [SystemSettingKeys.LegalPrivacyUrl] = "URL de la política de tratamiento de datos.",
         [SystemSettingKeys.LegalSupportUrl] = "URL de soporte.",
         [SystemSettingKeys.PanelCopyByCountry] = "Textos del panel inferior por país e idioma, en JSON.",
+        [SystemSettingKeys.MapCellDegrees] = "Lado de una celda del mapa en tiempo real, en grados.",
+        [SystemSettingKeys.MapMaxCells] = "Celdas máximas que una conexión puede seguir a la vez.",
+        [SystemSettingKeys.MapSubscribeCallsPerMinute] = "Cambios de suscripción permitidos por conexión en un minuto.",
+        [SystemSettingKeys.MapCoalesceIntervalMilliseconds] = "Milisegundos entre tandas de avisos del mapa en tiempo real.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)

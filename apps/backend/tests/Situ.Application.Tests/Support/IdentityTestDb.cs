@@ -44,6 +44,7 @@ internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbCont
     public DbSet<SecurityToken> SecurityTokens => Set<SecurityToken>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
+    public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes => Set<TwoFactorRecoveryCode>();
     public DbSet<ConsentRecord> ConsentRecords => Set<ConsentRecord>();
     public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
     public DbSet<LiveStream> LiveStreams => Set<LiveStream>();
@@ -84,6 +85,7 @@ internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbCont
     public DbSet<ReportCategoryTranslation> ReportCategoryTranslations => Set<ReportCategoryTranslation>();
     public DbSet<ReportConfirmation> ReportConfirmations => Set<ReportConfirmation>();
     public DbSet<ReportMedia> ReportMedias => Set<ReportMedia>();
+    public DbSet<MapZoneNotice> MapZoneNotices => Set<MapZoneNotice>();
     public DbSet<AccountDeletionRequest> AccountDeletionRequests => Set<AccountDeletionRequest>();
     public DbSet<DataExportRequest> DataExportRequests => Set<DataExportRequest>();
     public DbSet<LegalHold> LegalHolds => Set<LegalHold>();

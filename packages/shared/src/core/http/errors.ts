@@ -44,3 +44,16 @@ export class AppError extends Error {
     this.accessTokenExpiresAt = input.accessTokenExpiresAt;
   }
 }
+
+export function isAppError(error: unknown): error is AppError {
+  if (error instanceof AppError) {
+    return true;
+  }
+
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const record = error as { name?: unknown; code?: unknown; userMessage?: unknown };
+  return record.name === 'AppError' && typeof record.code === 'string' && typeof record.userMessage === 'string';
+}

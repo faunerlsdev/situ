@@ -12,7 +12,8 @@ La lógica de negocio vive en el backend. Los clientes la consumen.
 | --- | --- |
 | `apps/backend` | API .NET 10 (`Situ.Api`, `Situ.Application`, `Situ.Domain`, `Situ.Infrastructure`) |
 | `apps/web` | App web, puerto 3000 |
-| `apps/landing` | Sitio de producto, puerto 3001 |
+| `apps/admin` | Panel de administración, puerto 3001 |
+| `apps/landing` | Sitio de producto, puerto 3003 |
 | `apps/support` | Centro de ayuda, puerto 3002 |
 | `apps/mobile` | App Expo (SDK 58) con Expo Router |
 | `packages/shared` | Tokens de marca, tipos y cliente HTTP |
@@ -108,7 +109,7 @@ No hay una cuenta de personal por defecto. Con una cuenta ya registrada, y con l
 dotnet run --project apps/backend/src/Situ.Api -- admin:grant --email tu@correo.com --role SuperAdmin
 ```
 
-El comando asigna el rol, lo anota en la bitácora y no abre ningún endpoint público. Los roles y permisos están en [docs/admin.md](docs/admin.md).
+El comando asigna el rol, lo anota en la bitácora y no abre ningún endpoint público. Con el mismo acceso al servidor, `admin:reset-2fa` restablece el segundo factor de una cuenta del equipo. `dev:seed` crea datos de ejemplo y solo corre en Development. Los roles, la IP real y el detalle están en [docs/admin.md](docs/admin.md).
 
 Las apps de JavaScript leen `NEXT_PUBLIC_API_URL` y `EXPO_PUBLIC_API_URL`. Copia `.env.example` a `.env` si quieres fijarlas; si no, el cliente usa `http://localhost:5080`.
 
@@ -218,7 +219,8 @@ El canal de Android es `zone-alerts` en la app y en el campo `channelId` del pus
 | --- | --- |
 | `pnpm dev:api` | `dotnet watch` de `Situ.Api` en http://localhost:5080 |
 | `pnpm dev:web` | Next.js en http://localhost:3000 |
-| `pnpm dev:landing` | Next.js en http://localhost:3001 |
+| `pnpm dev:admin` | Panel en http://localhost:3001 |
+| `pnpm dev:landing` | Next.js en http://localhost:3003 |
 | `pnpm dev:support` | Next.js en http://localhost:3002 |
 | `pnpm dev:mobile` | Metro de Expo (http://localhost:8081) |
 | `pnpm api:test` | Pruebas de dominio y de arquitectura |

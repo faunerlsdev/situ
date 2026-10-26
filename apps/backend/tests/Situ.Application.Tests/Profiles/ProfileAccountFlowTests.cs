@@ -105,6 +105,13 @@ public class ProfileAccountFlowTests
         Assert.DoesNotContain("dateOfBirth", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("\"age\"", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ana@correo.com", json, StringComparison.Ordinal);
+        Assert.True(profile.Value.Profile.PreferAnonymousReports);
+
+        var published = await Update(db, clock, ana.Id, new UpdateMyProfileRequest(ana.Id, null, null, null, null, false));
+        Assert.True(published.IsSuccess);
+        var named = await new GetSessionProfileHandler(db, clock, new Signer(), new FakeLinks())
+            .Handle(new GetSessionProfileRequest(ana.Id), CancellationToken.None);
+        Assert.False(named.Value!.Profile.PreferAnonymousReports);
     }
 
     [Fact]

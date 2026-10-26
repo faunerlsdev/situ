@@ -155,6 +155,7 @@ describe('app config', () => {
       supportUrl: 'https://somossitu.com/soporte',
     },
     panelCopyByCountry: [],
+    mapRealtime: { cellDegrees: 0.05, maxCells: 16, coalesceIntervalMilliseconds: 1000, subscribeCallsPerMinute: 20 },
   } satisfies AppConfig;
 
   it('uses the response when the network answers and the cache when it does not', () => {

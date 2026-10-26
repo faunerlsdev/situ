@@ -9,6 +9,7 @@ using Situ.Application.Features.Reports.CreateReport;
 using Situ.Application.Features.Reports.DeleteReport;
 using Situ.Application.Features.Reports.GetReport;
 using Situ.Application.Features.Reports.GetReportCatalog;
+using Situ.Application.Features.Reports.GetReportBatch;
 using Situ.Application.Features.Reports.GetReportMap;
 using Situ.Application.Features.Reports.ListMyReports;
 using Situ.Application.Features.Reports.OpenReportMedia;
@@ -51,6 +52,14 @@ public sealed class ReportEndpoints : IEndpoint
             .Produces<CreateReportResponse>()
             .RequireAuthorization(AuthorizationPolicies.User)
             .RequireRateLimiting("reports-write");
+
+        group.MapGet("/reports/batch", Batch)
+            .WithName("GetReportBatch")
+            .WithTags("Reports")
+            .WithSummary("Contenido de reportes por id, con la visibilidad de quien consulta.")
+            .WithDescription("El mapa en tiempo real pide aquí el contenido. Máximo 50 ids. Los que esta cuenta no puede ver no vienen en la respuesta.")
+            .Produces<GetReportBatchResponse>()
+            .RequireAuthorization(AuthorizationPolicies.User);
 
         group.MapGet("/reports/map", MapReports)
             .WithName("GetReportMap")
@@ -247,6 +256,47 @@ public sealed class ReportEndpoints : IEndpoint
         var result = await handler.Handle(
             new GetReportMapRequest(userId, minLat, minLon, maxLat, maxLon, zoom, list, since, type, lat, lon),
             cancellationToken);
+        if (result.IsFailure)
+        {
+            return result.ToHttpResult();
+        }
+
+        httpContext.Response.Headers.CacheControl = "private, no-store";
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> Batch(
+        string? ids,
+        double? lat,
+        double? lon,
+        HttpContext httpContext,
+        ICurrentUser currentUser,
+        IHandler<GetReportBatchRequest, Result<GetReportBatchResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        var parsed = new List<Guid>();
+        if (!string.IsNullOrWhiteSpace(ids))
+        {
+            foreach (var part in ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!Guid.TryParse(part, out var id))
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["ids"] = ["Cada id tiene que ser un identificador de reporte."],
+                    });
+                }
+
+                parsed.Add(id);
+            }
+        }
+
+        var result = await handler.Handle(new GetReportBatchRequest(userId, parsed, lat, lon), cancellationToken);
         if (result.IsFailure)
         {
             return result.ToHttpResult();

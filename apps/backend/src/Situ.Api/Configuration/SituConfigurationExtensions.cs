@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Situ.Infrastructure.Guardianship;
 
@@ -50,6 +51,13 @@ public static class SituConfigurationExtensions
                         && Encoding.UTF8.GetByteCount(options.SigningKey) >= 32),
                 GuardianConsentOptions.MissingSigningKeyMessage)
             .ValidateOnStart();
+
+        services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
+        services.AddOptions<NetworkOptions>()
+            .Bind(configuration.GetSection(NetworkOptions.SectionName))
+            .ValidateOnStart();
+        services.AddOptions<ForwardedHeadersOptions>()
+            .Configure<IOptions<NetworkOptions>>((forwarded, network) => ForwardedClient.Apply(forwarded, network.Value.KnownProxies));
 
         services.AddSingleton(serviceProvider => serviceProvider.GetRequiredService<IOptions<GuardianConsentOptions>>().Value);
         services.AddSingleton(PublicBaseUrlOptions.From(configuration));

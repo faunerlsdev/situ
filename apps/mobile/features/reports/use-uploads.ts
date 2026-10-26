@@ -1,9 +1,10 @@
-import { AppError, messageFor, nextQueued, reduceUploads, reportMediaFallbacks } from '@situ/shared';
-import type { UploadTask } from '@situ/shared';
+import { AppError, messageFor, nextQueued, reduceUploads, reportMediaFallbacks, toAppError } from '@situ/shared';
+import type { UploadMediaResponse, UploadTask } from '@situ/shared';
+import { File, Paths } from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useCallback, useRef, useState } from 'react';
 
-import { api } from '@/lib/api';
+import { uploadMultipart } from '@/lib/native-upload';
 
 export type LocalUpload = UploadTask & {
   uri: string;
@@ -43,13 +44,16 @@ export function useUploads() {
     update(reduceUploads(tasksRef.current, { type: 'start', id: local.id }) as LocalUpload[]);
 
     try {
-      const body = new FormData();
-      body.append('file', { uri: local.uri, name: local.name, type: local.mime } as unknown as Blob);
-      const uploaded = await api.uploadReportMedia(
-        body,
-        (progress) => update(reduceUploads(tasksRef.current, { type: 'progress', id: local.id, progress }) as LocalUpload[]),
-        controller.signal,
-      );
+      const uploaded = await uploadMultipart<UploadMediaResponse>({
+        uri: local.uri,
+        path: '/api/v1/reports/media',
+        mime: local.mime,
+        signal: controller.signal,
+        onProgress: (progress) => update(reduceUploads(tasksRef.current, { type: 'progress', id: local.id, progress }) as LocalUpload[]),
+      });
+      if (!uploaded?.mediaId) {
+        throw toAppError({ status: 502, data: uploaded });
+      }
       update(reduceUploads(tasksRef.current, { type: 'ready', id: local.id, mediaId: uploaded.mediaId }) as LocalUpload[]);
     } catch (error) {
       const cancelled = error instanceof AppError && error.code === 'CANCELLED';
@@ -84,7 +88,26 @@ export function useUploads() {
 }
 
 export async function prepareImage(uri: string, width: number | undefined): Promise<string> {
+  const local = await materialize(uri);
   const actions = width && width > reportMediaFallbacks.imageMaxEdge ? [{ resize: { width: reportMediaFallbacks.imageMaxEdge } }] : [];
-  const result = await manipulateAsync(uri, actions, { compress: reportMediaFallbacks.imageQuality, format: SaveFormat.JPEG });
+  const result = await manipulateAsync(local, actions, { compress: reportMediaFallbacks.imageQuality, format: SaveFormat.JPEG });
   return result.uri;
+}
+
+async function materialize(uri: string): Promise<string> {
+  return localFileUri(uri, 'jpg');
+}
+
+export async function localFileUri(uri: string, extension: string): Promise<string> {
+  if (uri.startsWith('file://')) {
+    return uri;
+  }
+
+  try {
+    const destination = new File(Paths.cache, `report-media-${Date.now()}.${extension}`);
+    await new File(uri).copy(destination);
+    return destination.uri;
+  } catch {
+    return uri;
+  }
 }

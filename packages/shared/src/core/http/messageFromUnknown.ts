@@ -1,8 +1,8 @@
-import { AppError } from './errors';
+import { isAppError } from './errors';
 import { errorMessages } from './errorMessages';
 
 export function messageFromUnknown(error: unknown): string {
-  if (error instanceof AppError) {
+  if (isAppError(error)) {
     return error.code === 'CANCELLED' ? '' : error.userMessage;
   }
 

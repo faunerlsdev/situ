@@ -11,6 +11,7 @@
     "dev:api": "dotnet watch --project apps/backend/src/Situ.Api",
     "dev:web": "pnpm --filter @situ/web dev",
     "dev:landing": "pnpm --filter @situ/landing dev",
+    "dev:admin": "pnpm --filter @situ/admin dev",
     "dev:support": "pnpm --filter @situ/support dev",
     "dev:mobile": "pnpm --filter @situ/mobile start",
     "api:build": "dotnet build apps/backend/Situ.slnx",

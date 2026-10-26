@@ -89,6 +89,10 @@ public static class SystemSettingKeys
     public const string LegalPrivacyUrl = "legal.privacy_url";
     public const string LegalSupportUrl = "legal.support_url";
     public const string PanelCopyByCountry = "panel.copy_by_country";
+    public const string MapCellDegrees = "map.cell_degrees";
+    public const string MapMaxCells = "map.max_cells";
+    public const string MapSubscribeCallsPerMinute = "map.subscribe_calls_per_minute";
+    public const string MapCoalesceIntervalMilliseconds = "map.coalesce_interval_milliseconds";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -143,5 +147,9 @@ public static class SystemSettingKeys
         [LegalPrivacyUrl] = "https://somossitu.com/privacidad",
         [LegalSupportUrl] = "https://somossitu.com/soporte",
         [PanelCopyByCountry] = "[]",
+        [MapCellDegrees] = "0.05",
+        [MapMaxCells] = "16",
+        [MapSubscribeCallsPerMinute] = "20",
+        [MapCoalesceIntervalMilliseconds] = "1000",
     };
 }

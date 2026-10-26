@@ -51,6 +51,9 @@ public sealed class UserProfile : AggregateRoot
 
     public bool ShowRealtimeLocation { get; private set; } = true;
 
+    /// <summary>New reports and comments start anonymous. The person can switch a single post, or this default, to public.</summary>
+    public bool PreferAnonymousReports { get; private set; } = true;
+
     public bool ShareLocationWithFriends { get; private set; }
     public LocationSharingMode FriendLocationSharingMode { get; private set; }
     public DateTimeOffset? FriendLocationSharingEndsAt { get; private set; }
@@ -70,6 +73,7 @@ public sealed class UserProfile : AggregateRoot
         DisplayName = Guard.NotEmpty(displayName, nameof(displayName), DisplayNameMaxLength),
         AvatarKind = AvatarKind.Default,
         Visibility = ProfileVisibility.Private,
+        PreferAnonymousReports = true,
     };
 
     public void UpdateDetails(string displayName, string? bio)
@@ -113,6 +117,8 @@ public sealed class UserProfile : AggregateRoot
     }
 
     public void MakePrivate() => Visibility = ProfileVisibility.Private;
+
+    public void SetPreferAnonymousReports(bool preferAnonymous) => PreferAnonymousReports = preferAnonymous;
 
     public void SetRealtimeLocationVisible(bool visible) => ShowRealtimeLocation = visible;
 

@@ -159,6 +159,8 @@ export default function RegisterScreen() {
 
   async function onSubmit(values: RegisterValues) {
     const dateOfBirth = composeDateOfBirth(values.year, values.month, values.day);
+    const years = dateOfBirth ? ageInYears(dateOfBirth) : null;
+    const needsGuardian = years !== null && years < adultAge;
     if (!dateOfBirth || documents.length === 0) {
       notify.warning('Completa el lugar y acepta los documentos legales.');
       return;
@@ -179,8 +181,8 @@ export default function RegisterScreen() {
         regionId: values.regionId,
         cityId: values.cityId,
         acceptedDocumentIds: documents.map((document) => document.id),
-        guardianEmail: values.guardianEmail.trim() || undefined,
-        minorNoticeAccepted: values.minorNoticeAccepted,
+        guardianEmail: needsGuardian ? values.guardianEmail.trim() : undefined,
+        minorNoticeAccepted: needsGuardian ? values.minorNoticeAccepted : false,
       });
       if (result.status === 'PendingGuardianConsent') {
         form.reset();
@@ -325,28 +327,32 @@ export default function RegisterScreen() {
           <Text style={styles.legal}>{accepted ? '☑' : '☐'} Acepto los documentos legales vigentes.</Text>
         </Pressable>
         {form.formState.errors.accepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.accepted.message}</Text> : null}
-        <Controller
-          control={form.control}
-          name="guardianEmail"
-          render={({ field }) => (
-            <WideField
-              value={field.value}
-              onChangeText={field.onChange}
-              placeholder="Correo de tu representante (opcional)"
-              accessibilityLabel="Correo de tu representante legal"
-              keyboardType="email-address"
-              inputMode="email"
-              autoCapitalize="none"
-              autoCorrect={false}
-              textContentType="emailAddress"
+        {minor ? (
+          <>
+            <Controller
+              control={form.control}
+              name="guardianEmail"
+              render={({ field }) => (
+                <WideField
+                  value={field.value}
+                  onChangeText={field.onChange}
+                  placeholder="Correo de tu representante legal"
+                  accessibilityLabel="Correo de tu representante legal"
+                  keyboardType="email-address"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="emailAddress"
+                />
+              )}
             />
-          )}
-        />
-        {form.formState.errors.guardianEmail?.message ? <Text style={styles.fieldError}>{form.formState.errors.guardianEmail.message}</Text> : null}
-        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: form.watch('minorNoticeAccepted') }} onPress={() => form.setValue('minorNoticeAccepted', !form.watch('minorNoticeAccepted'), { shouldValidate: true })}>
-          <Text style={styles.legal}>{form.watch('minorNoticeAccepted') ? '☑' : '☐'} Entendido: un adulto debe autorizar mi cuenta.</Text>
-        </Pressable>
-        {form.formState.errors.minorNoticeAccepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.minorNoticeAccepted.message}</Text> : null}
+            {form.formState.errors.guardianEmail?.message ? <Text style={styles.fieldError}>{form.formState.errors.guardianEmail.message}</Text> : null}
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: form.watch('minorNoticeAccepted') }} onPress={() => form.setValue('minorNoticeAccepted', !form.watch('minorNoticeAccepted'), { shouldValidate: true })}>
+              <Text style={styles.legal}>{form.watch('minorNoticeAccepted') ? '☑' : '☐'} Entendido: un adulto debe autorizar mi cuenta.</Text>
+            </Pressable>
+            {form.formState.errors.minorNoticeAccepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.minorNoticeAccepted.message}</Text> : null}
+          </>
+        ) : null}
         <LogoAction
           label="Registrar Me"
           pendingLabel="Creando cuenta…"

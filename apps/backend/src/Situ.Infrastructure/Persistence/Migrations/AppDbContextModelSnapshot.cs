@@ -18,7 +18,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
@@ -900,6 +900,38 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Textos del panel inferior por país e idioma, en JSON.",
                             Key = "panel.copy_by_country",
                             Value = "[]"
+                        },
+                        new
+                        {
+                            Id = new Guid("0b4154cc-3ca4-7311-d446-159617a80473"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Lado de una celda del mapa en tiempo real, en grados.",
+                            Key = "map.cell_degrees",
+                            Value = "0.05"
+                        },
+                        new
+                        {
+                            Id = new Guid("32f83b44-fb7a-219b-1904-a8df39d07618"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Celdas máximas que una conexión puede seguir a la vez.",
+                            Key = "map.max_cells",
+                            Value = "16"
+                        },
+                        new
+                        {
+                            Id = new Guid("40f9d4ff-e1aa-e9a9-ff33-349cd6086019"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Cambios de suscripción permitidos por conexión en un minuto.",
+                            Key = "map.subscribe_calls_per_minute",
+                            Value = "20"
+                        },
+                        new
+                        {
+                            Id = new Guid("68f89159-fa14-70ec-a536-91fd563d26b4"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Milisegundos entre tandas de avisos del mapa en tiempo real.",
+                            Key = "map.coalesce_interval_milliseconds",
+                            Value = "1000"
                         });
                 });
 
@@ -2409,6 +2441,43 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.ToTable("security_tokens");
                 });
 
+            modelBuilder.Entity("Situ.Domain.Identity.TwoFactorRecoveryCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("code_hash");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_two_factor_recovery_codes");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_two_factor_recovery_codes_user_id");
+
+                    b.ToTable("two_factor_recovery_codes");
+                });
+
             modelBuilder.Entity("Situ.Domain.Identity.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2481,6 +2550,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end_at");
 
+                    b.Property<int>("MfaFailedAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("mfa_failed_attempts");
+
+                    b.Property<DateTimeOffset?>("MfaLockoutEndAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("mfa_lockout_end_at");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text")
@@ -2515,6 +2592,10 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("two_factor_enabled");
+
+                    b.Property<long?>("TwoFactorLastStep")
+                        .HasColumnType("bigint")
+                        .HasColumnName("two_factor_last_step");
 
                     b.Property<string>("TwoFactorSecret")
                         .HasColumnType("text")
@@ -4802,6 +4883,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("geography(point, 4326)")
                         .HasColumnName("last_report_location");
 
+                    b.Property<bool>("PreferAnonymousReports")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("prefer_anonymous_reports");
+
                     b.Property<DateTimeOffset?>("PublicProfileConsentedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("public_profile_consented_at");
@@ -4913,6 +5000,55 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_comments_target_type_target_id_created_at");
 
                     b.ToTable("comments");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Reports.MapZoneNotice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CellId")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("cell_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<Guid>("ReportId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("report_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_map_zone_notices");
+
+                    b.HasIndex("Status", "OccurredAt")
+                        .HasDatabaseName("ix_map_zone_notices_status_occurred_at");
+
+                    b.ToTable("map_zone_notices");
                 });
 
             modelBuilder.Entity("Situ.Domain.Reports.Reaction", b =>
@@ -6196,6 +6332,16 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_security_tokens_user_id");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Identity.TwoFactorRecoveryCode", b =>
+                {
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_two_factor_recovery_codes_user_id");
                 });
 
             modelBuilder.Entity("Situ.Domain.Identity.User", b =>

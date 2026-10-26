@@ -51,4 +51,42 @@ public sealed class JwtTokenService(JwtOptions options) : ITokenService
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(plainToken));
         return Convert.ToHexString(hash);
     }
+
+    public AccessTokenTicket? ReadAccessToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+            var principal = handler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Secret)),
+                ValidIssuer = options.Issuer,
+                ValidAudience = options.Audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromSeconds(30),
+                NameClaimType = "sub",
+                RoleClaimType = "role",
+            }, out var validated);
+            var subject = principal.FindFirst("sub")?.Value ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            if (!Guid.TryParse(subject, out var userId))
+            {
+                return null;
+            }
+
+            var expires = validated.ValidTo.Kind == DateTimeKind.Utc
+                ? new DateTimeOffset(validated.ValidTo)
+                : new DateTimeOffset(DateTime.SpecifyKind(validated.ValidTo, DateTimeKind.Utc));
+            return new AccessTokenTicket(userId, principal.FindFirst("scope")?.Value, principal.FindFirst("role")?.Value, expires);
+        }
+        catch (SecurityTokenException)
+        {
+            return null;
+        }
+    }
 }

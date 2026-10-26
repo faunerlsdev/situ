@@ -1,4 +1,4 @@
-import { AppError } from '../http/errors';
+import { isAppError } from '../http/errors';
 import { messageFor } from '../http/errorMessages';
 import type { ToastAction, ToastPlacement } from './toastQueue';
 
@@ -37,7 +37,7 @@ export function bindNotify(next: Bridge | null) {
 }
 
 function userText(messageOrError: unknown): string | null {
-  if (messageOrError instanceof AppError) {
+  if (isAppError(messageOrError)) {
     if (messageOrError.code === 'CANCELLED') {
       return null;
     }
@@ -104,7 +104,7 @@ export function confirm(input: {
 }
 
 export function presentError(error: unknown, inline: (message: string) => void, retry?: () => void) {
-  if (!(error instanceof AppError) || error.code === 'CANCELLED') {
+  if (!isAppError(error) || error.code === 'CANCELLED') {
     return;
   }
 

@@ -51,6 +51,7 @@ public class SessionProfileTests
         Assert.Equal("Bogotá", adultProfile.HomeCity.Name);
         Assert.Equal(4.711, adultProfile.HomeCity.Latitude);
         Assert.Equal("Private", adultProfile.Profile.Visibility);
+        Assert.True(adultProfile.Profile.PreferAnonymousReports);
 
         var waiting = await Profile(db, clock, pending.Id);
         Assert.False(waiting.CanPublish);

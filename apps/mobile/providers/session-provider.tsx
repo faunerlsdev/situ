@@ -107,17 +107,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     biometricLocked = false;
     pauseAlertLocation();
-    await api.clearPushToken().catch(() => undefined);
     const refreshToken = await SecureStore.getItemAsync(refreshKey);
-    if (refreshToken) {
-      await api.signOut(refreshToken).catch(() => undefined);
-    }
-
     await clearStoredSession();
     await SecureStore.deleteItemAsync(pushTokenKey).catch(() => undefined);
     await SecureStore.deleteItemAsync(biometricKey);
     setCanUnlock(false);
     setSignedIn(false);
+    if (refreshToken) {
+      await api.signOut(refreshToken).catch(() => undefined);
+    }
   }, []);
 
   const applyRefreshFailure = useCallback(async () => {
