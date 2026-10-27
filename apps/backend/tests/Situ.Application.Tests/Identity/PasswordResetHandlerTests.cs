@@ -113,7 +113,7 @@ public class ForgotPasswordHandlerTests
             UserName.Create("ana"),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3001234567"),
+            PhoneNumber.Create("+573001234567"),
             "hashed:Clave123",
             DateOnly.FromDateTime(RegistrationCatalog.Now.UtcDateTime).AddYears(-30),
             Guid.NewGuid(),

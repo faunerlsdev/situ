@@ -26,6 +26,9 @@ public sealed class UserDevice : AuditableEntity
     public string? LastIpAddress { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
 
+    /// <summary>Web only. When true, the refresh window uses the longer configured duration.</summary>
+    public bool RememberWebSession { get; private set; }
+
     public bool IsActive => RevokedAt is null;
 
     public static UserDevice Register(
@@ -50,6 +53,8 @@ public sealed class UserDevice : AuditableEntity
         device.MarkCreated(now);
         return device;
     }
+
+    public void SetWebRemember(bool remember) => RememberWebSession = Platform == DevicePlatform.Web && remember;
 
     public void Touch(DateTimeOffset now, string? ipAddress)
     {

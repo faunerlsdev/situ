@@ -41,7 +41,7 @@ public sealed class IssueRealtimeTicketHandler(IApplicationDbContext db, IClock 
 
 public sealed record ConsumeRealtimeTicketRequest(string Ticket, Guid? ExpectedUserId);
 
-public sealed record ConsumeRealtimeTicketResponse(Guid UserId, Guid DeviceId);
+public sealed record ConsumeRealtimeTicketResponse(Guid UserId, Guid DeviceId, string AccessToken);
 
 public sealed class ConsumeRealtimeTicketHandler(IApplicationDbContext db, IClock clock, ITokenService tokens)
     : IHandler<ConsumeRealtimeTicketRequest, Result<ConsumeRealtimeTicketResponse>>
@@ -74,7 +74,8 @@ public sealed class ConsumeRealtimeTicketHandler(IApplicationDbContext db, ICloc
 
         ticket.Consume(now);
         await db.SaveChangesAsync(cancellationToken);
-        return Result<ConsumeRealtimeTicketResponse>.Success(new ConsumeRealtimeTicketResponse(ticket.UserId, ticket.DeviceId));
+        var accessToken = tokens.CreateAccessToken(ticket.UserId, now.Add(SessionPolicy.AccessTokenLifetime), deviceId: ticket.DeviceId);
+        return Result<ConsumeRealtimeTicketResponse>.Success(new ConsumeRealtimeTicketResponse(ticket.UserId, ticket.DeviceId, accessToken));
     }
 
     private static Result<ConsumeRealtimeTicketResponse> Reject(string code) =>

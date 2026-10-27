@@ -1,18 +1,19 @@
+import { refreshCookieMaxAge } from '@situ/shared';
 import { cookies } from 'next/headers';
 import { accessCookie, csrfCookie, deviceCookie, guardianCookie, issuedCookie, refreshCookie } from '@/lib/cookies';
 import { sessionCookieOptions, sessionDecision } from '@/lib/guard';
 
 const accessMaxAge = 60 * 15;
-const refreshMaxAge = 60 * 60 * 24 * 180;
 const deviceMaxAge = 60 * 60 * 24 * 400;
 
 function secure() {
   return process.env.NODE_ENV === 'production';
 }
 
-export async function writeSession(accessToken: string, refreshToken: string) {
+export async function writeSession(accessToken: string, refreshToken: string, refreshExpiresAt?: string) {
   const jar = await cookies();
   const base = sessionCookieOptions(secure());
+  const refreshMaxAge = refreshCookieMaxAge(refreshExpiresAt, Date.now());
   jar.set(accessCookie, accessToken, { ...base, maxAge: accessMaxAge });
   jar.set(refreshCookie, refreshToken, { ...base, path: '/api', maxAge: refreshMaxAge });
   jar.set(issuedCookie, Date.now().toString(), { ...base, maxAge: refreshMaxAge });

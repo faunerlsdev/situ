@@ -86,7 +86,8 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
         user.RegisterSuccessfulLogin(now);
         var device = deviceResult.Value!;
         var role = await Features.Reports.StaffGate.RoleAsync(db, user.Id, cancellationToken);
-        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, role);
+        var refreshFor = await WebSessionDuration.ForDeviceAsync(db, device, cancellationToken);
+        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, role, refreshLifetime: refreshFor);
         db.RefreshTokens.Add(issued.Stored);
         var previous = await db.RefreshTokens
             .Where(token => token.UserDeviceId == device.Id && token.RevokedAt == null && token.Id != issued.Stored.Id)
@@ -101,7 +102,8 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
             issued.AccessToken,
             issued.RefreshToken,
             issued.AccessTokenExpiresAt,
-            device.Id));
+            device.Id,
+            issued.Stored.ExpiresAt));
     }
 
     private async Task<User?> FindUserAsync(string login, CancellationToken cancellationToken)
@@ -207,6 +209,7 @@ public sealed class SignInHandler(IApplicationDbContext db, IClock clock, IPassw
         }
 
         current.UpdatePushToken(Clip(request.PushToken, 512));
+        current.SetWebRemember(request.RememberMe);
         return Result<UserDevice>.Success(current);
     }
 

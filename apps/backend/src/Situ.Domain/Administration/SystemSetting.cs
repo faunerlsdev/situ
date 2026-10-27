@@ -93,6 +93,10 @@ public static class SystemSettingKeys
     public const string MapMaxCells = "map.max_cells";
     public const string MapSubscribeCallsPerMinute = "map.subscribe_calls_per_minute";
     public const string MapCoalesceIntervalMilliseconds = "map.coalesce_interval_milliseconds";
+    public const string PhoneRequiredForMinors = "registration.phone_required_for_minors";
+    public const string SocialTabsEnabled = "features.social_tabs";
+    public const string WebSessionRefreshDays = "web.session_refresh_days";
+    public const string WebSessionRememberDays = "web.session_remember_days";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -151,5 +155,9 @@ public static class SystemSettingKeys
         [MapMaxCells] = "16",
         [MapSubscribeCallsPerMinute] = "20",
         [MapCoalesceIntervalMilliseconds] = "1000",
+        [PhoneRequiredForMinors] = "true",
+        [SocialTabsEnabled] = "false",
+        [WebSessionRefreshDays] = "30",
+        [WebSessionRememberDays] = "90",
     };
 }

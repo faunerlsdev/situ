@@ -15,7 +15,7 @@ internal static class TestData
             UserName.Create($"user{years}"),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3001234567"),
+            PhoneNumber.Create("+573001234567"),
             "hash",
             birthDate,
             Guid.CreateVersion7(),

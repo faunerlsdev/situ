@@ -1,5 +1,7 @@
 import {
   alertModal,
+  anonymityNotice,
+  anonymityNoticeAccepted,
   AppError,
   classifyWriteError,
   commentValidation,
@@ -266,6 +268,15 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
         </Pressable>
       ) : null}
       </ScrollView>
+      {!anonymityNoticeAccepted(me.data) ? (
+        <View>
+          <Text style={styles.emptyTitle}>{anonymityNotice.title}</Text>
+          <Text style={styles.emptyTitle}>{anonymityNotice.body}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entendido" onPress={() => void api.acknowledgeAnonymityNotice().then(() => queryClient.invalidateQueries({ queryKey: ['me'] }))}>
+            <Text style={styles.link}>Entendido</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <CommentComposer
         text={text}
         onChangeText={(value) => { setText(value); setInlineError(null); }}
@@ -274,6 +285,9 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
         onAnonymousChange={(value) => {
           identityLocked.current = true;
           setChosenAnonymous(value);
+          if (!anonymity.locked) {
+            void api.updateMyProfile({ preferAnonymousReports: value }).then(() => queryClient.invalidateQueries({ queryKey: ['me'] })).catch(() => undefined);
+          }
         }}
         disabled={false}
         pending={pending}

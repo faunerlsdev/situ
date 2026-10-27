@@ -11,6 +11,7 @@ using Situ.Application.Features.Reports.GetReport;
 using Situ.Application.Features.Reports.GetReportCatalog;
 using Situ.Application.Features.Reports.GetReportBatch;
 using Situ.Application.Features.Reports.GetReportMap;
+using Situ.Application.Features.Reports.GetPublicReportMap;
 using Situ.Application.Features.Reports.GetReportShare;
 using Situ.Application.Features.Reports.ListMyReports;
 using Situ.Application.Features.Reports.OpenReportMedia;
@@ -89,7 +90,17 @@ public sealed class ReportEndpoints : IEndpoint
             .WithSummary("Tarjeta pública para compartir: categoría y zona aproximada, sin texto ni autor.")
             .WithDescription("Los reportes de menores o que no son públicos responden sin datos y no deben indexarse.")
             .Produces<GetReportShareResponse>()
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .RequireRateLimiting("share-public");
+
+        group.MapGet("/public/reports/map", PublicMap)
+            .WithName("GetPublicReportMap")
+            .WithTags("Reports")
+            .WithSummary("Mapa limitado para quien no tiene cuenta: pines públicos de adultos, últimas 24 horas.")
+            .WithDescription("Sin autor, texto, medios ni conteos. La ubicación se redondea a 3 decimales (~111 m). Un token no cambia la respuesta.")
+            .Produces<GetPublicReportMapResponse>()
+            .AllowAnonymous()
+            .RequireRateLimiting("public-map");
 
         group.MapPatch("/reports/{id:guid}", Update)
             .WithName("UpdateReport")
@@ -235,6 +246,18 @@ public sealed class ReportEndpoints : IEndpoint
         var result = await handler.Handle(
             new CreateReportRequest(userId, body.CategoryId, body.Description, body.Latitude, body.Longitude, visibility, body.IsAnonymous, body.MediaIds ?? []),
             cancellationToken);
+        return result.ToHttpResult();
+    }
+
+    private static async Task<IResult> PublicMap(
+        double minLat,
+        double minLon,
+        double maxLat,
+        double maxLon,
+        IHandler<GetPublicReportMapRequest, Result<GetPublicReportMapResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new GetPublicReportMapRequest(minLat, minLon, maxLat, maxLon), cancellationToken);
         return result.ToHttpResult();
     }
 

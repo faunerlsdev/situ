@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { composePhone, isE164 } from '../product/decisions';
 
 const passwordMessage =
   'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.';
@@ -19,7 +20,8 @@ export const registerSchema = z
   .object({
     givenNames: z.string().trim().min(2, 'Escribe tus nombres.').max(80, 'Los nombres son demasiado largos.'),
     surnames: z.string().trim().min(2, 'Escribe tus apellidos.').max(80, 'Los apellidos son demasiado largos.'),
-    phone: z.string().trim().min(7, 'Escribe un teléfono válido.').max(20, 'El teléfono es demasiado largo.'),
+    callingCode: z.string().trim().regex(/^\d{1,4}$/, 'Elige un indicativo.'),
+    phone: z.string().trim().regex(/^$|^\d{4,14}$/, 'Escribe el número sin el indicativo.'),
     userName: z
       .string()
       .trim()
@@ -52,6 +54,14 @@ export const registerSchema = z
     }
 
     const age = ageInYears(birth);
+    const composed = value.phone ? composePhone(value.callingCode, value.phone) : '';
+    if ((value.phone === '' && (age === null || age >= adultAge)) || (value.phone !== '' && !isE164(composed))) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['phone'],
+        message: 'Escribe el teléfono con indicativo, por ejemplo +573001234567.',
+      });
+    }
     if (age === null || age >= adultAge) {
       if (value.guardianEmail.length > 0 && !z.string().email().safeParse(value.guardianEmail).success) {
         context.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianEmail'], message: 'El correo no es válido.' });

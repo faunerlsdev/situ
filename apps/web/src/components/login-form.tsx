@@ -28,7 +28,7 @@ export function LoginForm() {
     setRetryAfter(null);
 
     try {
-      await postBff('/api/auth/login', values);
+      await postBff('/api/auth/login', { ...values, rememberMe: remember });
       router.push('/mapa');
     } catch (cause) {
       if (cause instanceof AppError && cause.apiCode === 'auth.guardian_consent_required') {
@@ -101,7 +101,7 @@ export function LoginForm() {
             onChange={(event) => setRemember(event.target.checked)}
             className="size-[18px] accent-primary"
           />
-          Recordar
+          Recordarme en este dispositivo
         </label>
         <Link href="/recuperar" className="font-sans text-body font-bold italic">
           ¿Olvidó contraseña?

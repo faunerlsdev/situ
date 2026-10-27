@@ -18,6 +18,12 @@ public sealed record AppVersionsView(PlatformVersionView Ios, PlatformVersionVie
 
 public sealed record LegalLinksView(string TermsUrl, string PrivacyPolicyUrl, string SupportUrl);
 
+public sealed record FeatureFlagsView(bool SocialTabs);
+
+public sealed record WebSessionView(int RefreshDays, int RememberDays);
+
+public sealed record CaptchaPublicView(string Provider, string SiteKey);
+
 public sealed record GetAppConfigResponse(
     PanelCopyView PanelCopy,
     MediaLimitsView MediaLimits,
@@ -27,9 +33,13 @@ public sealed record GetAppConfigResponse(
     AppVersionsView Versions,
     LegalLinksView Legal,
     IReadOnlyList<PanelCopies.Item> PanelCopyByCountry,
-    MapRealtimeView MapRealtime);
+    MapRealtimeView MapRealtime,
+    FeatureFlagsView Features,
+    WebSessionView WebSession,
+    bool PhoneRequiredForMinors,
+    CaptchaPublicView Captcha);
 
-public sealed class GetAppConfigHandler(IApplicationDbContext db)
+public sealed class GetAppConfigHandler(IApplicationDbContext db, CaptchaPublicView? captcha = null)
     : IHandler<GetAppConfigRequest, Result<GetAppConfigResponse>>
 {
     public async Task<Result<GetAppConfigResponse>> Handle(GetAppConfigRequest request, CancellationToken cancellationToken)
@@ -57,7 +67,13 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db)
                 Text(settings, SystemSettingKeys.LegalPrivacyUrl, "https://somossitu.com/privacidad"),
                 Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte")),
             PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry)),
-            GetMapRealtimeConfigHandler.Read(settings)));
+            GetMapRealtimeConfigHandler.Read(settings),
+            new FeatureFlagsView(string.Equals(settings.GetValueOrDefault(SystemSettingKeys.SocialTabsEnabled), "true", StringComparison.OrdinalIgnoreCase)),
+            new WebSessionView(
+                ReportSettings.Int(settings, SystemSettingKeys.WebSessionRefreshDays, 30),
+                ReportSettings.Int(settings, SystemSettingKeys.WebSessionRememberDays, 90)),
+            !string.Equals(settings.GetValueOrDefault(SystemSettingKeys.PhoneRequiredForMinors), "false", StringComparison.OrdinalIgnoreCase),
+            captcha ?? new CaptchaPublicView("Turnstile", "")));
     }
 
     private static string Text(IReadOnlyDictionary<string, string> settings, string key, string fallback)

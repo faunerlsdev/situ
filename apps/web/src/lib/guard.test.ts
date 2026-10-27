@@ -15,10 +15,11 @@ describe('sesión web', () => {
     expect(csrfAccepts('POST', 'http://localhost:3002', 'localhost:3002', 'token', 'token')).toBe(true);
     expect(csrfAccepts('POST', 'http://localhost:3002', 'localhost:3002', 'token', 'otro')).toBe(false);
     expect(csrfAccepts('POST', 'https://otro.example', 'localhost:3002', 'token', 'token')).toBe(false);
+    expect(csrfAccepts('POST', 'http://localhost:3002', 'localhost:3002', undefined, null)).toBe(false);
   });
 
-  it('deja las cookies httpOnly, Strict y Secure fuera de local', () => {
-    expect(sessionCookieOptions(true)).toEqual({ httpOnly: true, secure: true, sameSite: 'strict', path: '/' });
+  it('deja las cookies httpOnly, Lax y Secure fuera de local', () => {
+    expect(sessionCookieOptions(true)).toEqual({ httpOnly: true, secure: true, sameSite: 'lax', path: '/' });
     expect(sessionCookieOptions(false).secure).toBe(false);
   });
 

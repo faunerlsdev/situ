@@ -34,7 +34,7 @@ public class AdminPanelPostgresTests
             UserName.Create("admpg" + Guid.NewGuid().ToString("N")[..6]),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3007001122"),
+            PhoneNumber.Create("+573007001122"),
             "hash",
             new DateOnly(1992, 1, 1),
             city.CountryId,

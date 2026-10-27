@@ -10,6 +10,7 @@ public enum LegalDocumentType
     LocationSharingConsent,
     PersonalizedAdsConsent,
     GuardianNotice,
+    AnonymityNotice,
 }
 
 /// <summary>

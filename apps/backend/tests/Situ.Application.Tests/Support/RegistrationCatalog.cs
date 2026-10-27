@@ -50,6 +50,12 @@ internal sealed class FakeLinks : IPublicLinks
         "https://situ.test" + (path.StartsWith('/') ? path : "/" + path);
 }
 
+internal sealed class AcceptCaptcha(bool ok) : ICaptchaVerifier
+{
+    public Task<bool> VerifyAsync(string? token, string? remoteIp, CancellationToken cancellationToken) =>
+        Task.FromResult(ok && token == "dev-ok");
+}
+
 internal sealed class FakePasswords : IPasswordHasher
 {
     public string Hash(string password) => "hashed:" + password;
@@ -88,7 +94,7 @@ internal static class RegistrationCatalog
             "ana",
             "Ana",
             "Pérez",
-            "3001234567",
+            "+573001234567",
             password ?? "Clave123",
             birth,
             catalog.CountryId,

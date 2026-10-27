@@ -1,5 +1,5 @@
 import type { City, Country, LegalDocument, Region } from '@situ/shared';
-import { adultAge, ageInYears, composeDateOfBirth, messageFromUnknown, notify, registerSchema } from '@situ/shared';
+import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, messageFromUnknown, notify, phonePurpose, registerSchema } from '@situ/shared';
 import type { RegisterValues } from '@situ/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
@@ -39,6 +39,7 @@ export default function RegisterScreen() {
     defaultValues: {
       givenNames: '',
       surnames: '',
+      callingCode: '57',
       phone: '',
       userName: '',
       email: '',
@@ -174,7 +175,7 @@ export default function RegisterScreen() {
         userName: values.userName,
         givenNames: values.givenNames,
         surnames: values.surnames,
-        phone: values.phone,
+        phone: values.phone ? composePhone(values.callingCode, values.phone) : '',
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
@@ -226,11 +227,25 @@ export default function RegisterScreen() {
         {form.formState.errors.surnames?.message ? <Text style={styles.fieldError}>{form.formState.errors.surnames.message}</Text> : null}
         <Controller
           control={form.control}
+          name="callingCode"
+          render={({ field }) => (
+            <View style={styles.phoneRow}>
+              {callingCodes.map((item) => (
+                <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.label} accessibilityState={{ selected: field.value === item.code }} onPress={() => field.onChange(item.code)} style={[styles.code, field.value === item.code && styles.codeOn]}>
+                  <Text style={styles.codeLabel}>+{item.code}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        />
+        <Controller
+          control={form.control}
           name="phone"
           render={({ field }) => (
             <WideField value={field.value} onChangeText={field.onChange} placeholder="Teléfono" accessibilityLabel="Teléfono" autoComplete="tel" textContentType="telephoneNumber" keyboardType="phone-pad" />
           )}
         />
+        <Text style={styles.hint}>{phonePurpose}</Text>
         {form.formState.errors.phone?.message ? <Text style={styles.fieldError}>{form.formState.errors.phone.message}</Text> : null}
         <Controller
           control={form.control}
@@ -462,6 +477,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  phoneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  code: { minHeight: 36, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
+  codeOn: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  codeLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 13 },
+  hint: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13, lineHeight: 18 },
   fieldError: {
     color: theme.colors.danger,
     fontFamily: theme.fontFamily.sansBold,

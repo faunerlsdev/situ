@@ -8,6 +8,7 @@ public enum ConsentMethod
     Settings,
     GuardianFlow,
     AdulthoodReacceptance,
+    FirstUse,
 }
 
 /// <summary>

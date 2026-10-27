@@ -4,7 +4,10 @@ using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Profiles.Avatars;
 using Situ.Application.Features.Profiles.CheckUserName;
+using Situ.Application.Features.Identity.ChangePhone;
+using Situ.Application.Features.Legal.AcknowledgeAnonymityNotice;
 using Situ.Application.Features.Profiles.UpdateMyProfile;
+using Situ.Application.Features.Retention.RequestPersonalDataExport;
 
 namespace Situ.Api.Endpoints.Profiles;
 
@@ -12,6 +15,25 @@ public sealed class ProfileEndpoints : IEndpoint
 {
     public static void Map(RouteGroupBuilder group)
     {
+        group.MapPost("/me/phone", ChangePhone)
+            .WithName("ChangePhone")
+            .WithTags("Profile")
+            .RequireRateLimiting("profile-write")
+            .RequireAuthorization(AuthorizationPolicies.User);
+
+        group.MapPost("/me/anonymity-notice", AcknowledgeNotice)
+            .WithName("AcknowledgeAnonymityNotice")
+            .WithTags("Profile")
+            .Produces<AcknowledgeAnonymityNoticeResponse>()
+            .RequireAuthorization(AuthorizationPolicies.User);
+
+        group.MapPost("/me/data-export", ExportData)
+            .WithName("RequestPersonalDataExport")
+            .WithTags("Profile")
+            .Produces<RequestPersonalDataExportResponse>()
+            .RequireRateLimiting("profile-write")
+            .RequireAuthorization(AuthorizationPolicies.User);
+
         group.MapPatch("/me/profile", Update)
             .WithName("UpdateMyProfile")
             .WithTags("Profile")
@@ -55,6 +77,52 @@ public sealed class ProfileEndpoints : IEndpoint
             .WithTags("Profile")
             .AllowAnonymous();
     }
+
+    private static async Task<IResult> ChangePhone(
+        ChangePhoneBody body,
+        HttpContext http,
+        ICurrentUser currentUser,
+        IHandler<ChangePhoneRequest, Result> handler,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        return (await handler.Handle(new ChangePhoneRequest(userId, http.Connection.RemoteIpAddress?.ToString(), body.CurrentPassword, body.Phone), cancellationToken)).ToHttpResult();
+    }
+
+    private static async Task<IResult> AcknowledgeNotice(
+        HttpContext http,
+        ICurrentUser currentUser,
+        IHandler<AcknowledgeAnonymityNoticeRequest, Result<AcknowledgeAnonymityNoticeResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        return (await handler.Handle(
+            new AcknowledgeAnonymityNoticeRequest(userId, http.Connection.RemoteIpAddress?.ToString(), http.Request.Headers.UserAgent.ToString()),
+            cancellationToken)).ToHttpResult();
+    }
+
+    private static async Task<IResult> ExportData(
+        ICurrentUser currentUser,
+        IHandler<RequestPersonalDataExportRequest, Result<RequestPersonalDataExportResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        return (await handler.Handle(new RequestPersonalDataExportRequest(userId), cancellationToken)).ToHttpResult();
+    }
+
+    private sealed record ChangePhoneBody(string CurrentPassword, string Phone);
 
     private static async Task<IResult> Update(
         UpdateProfileBody body,

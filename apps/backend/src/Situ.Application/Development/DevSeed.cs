@@ -23,9 +23,9 @@ public static class DevSeed
 
     public static readonly IReadOnlyList<SampleUser> Users =
     [
-        new("ana.ejemplo@situ.test", "ana_ejemplo", "Ana", "Ejemplo", "3001000001"),
-        new("bruno.ejemplo@situ.test", "bruno_ejemplo", "Bruno", "Ejemplo", "3001000002"),
-        new("carla.ejemplo@situ.test", "carla_ejemplo", "Carla", "Ejemplo", "3001000003"),
+        new("ana.ejemplo@situ.test", "ana_ejemplo", "Ana", "Ejemplo", "+573001000001"),
+        new("bruno.ejemplo@situ.test", "bruno_ejemplo", "Bruno", "Ejemplo", "+573001000002"),
+        new("carla.ejemplo@situ.test", "carla_ejemplo", "Carla", "Ejemplo", "+573001000003"),
     ];
 
     private static readonly SampleReport[] Samples =

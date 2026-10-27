@@ -11,7 +11,6 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserReques
         RuleFor(request => request.UserName).NotEmpty();
         RuleFor(request => request.GivenNames).NotEmpty();
         RuleFor(request => request.Surnames).NotEmpty();
-        RuleFor(request => request.Phone).NotEmpty();
         RuleFor(request => request.Password)
             .Must(PasswordPolicy.IsValid)
             .WithMessage("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.");

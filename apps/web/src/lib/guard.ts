@@ -34,7 +34,7 @@ export function sessionCookieOptions(secure: boolean) {
   return {
     httpOnly: true,
     secure,
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     path: '/',
   };
 }

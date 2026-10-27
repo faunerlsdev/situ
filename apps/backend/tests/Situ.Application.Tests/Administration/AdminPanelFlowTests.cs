@@ -249,21 +249,21 @@ public class AdminPanelFlowTests
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
         var mail = new FakeEmailSender();
-        var handler = new SubmitTakedownHandler(db, clock, mail);
-        var honeypot = await handler.Handle(Request("bot@correo.com", "http://spam.test"), CancellationToken.None);
-        Assert.True(honeypot.Value!.Accepted);
+        var handler = new SubmitTakedownHandler(db, clock, mail, new AcceptCaptcha(true));
+        var rejected = await handler.Handle(Request("bot@correo.com", "http://spam.test", "no"), CancellationToken.None);
+        Assert.Equal("captcha.invalid", rejected.Error!.Code);
         Assert.Empty(db.TakedownRequests);
 
         for (var index = 0; index < 3; index++)
         {
-            var sent = await handler.Handle(Request("persona@correo.com", null), CancellationToken.None);
+            var sent = await handler.Handle(Request("persona@correo.com", null, "dev-ok"), CancellationToken.None);
             Assert.StartsWith("TD-", sent.Value!.TrackingCode);
         }
 
         var stored = await db.TakedownRequests.FirstAsync();
         Assert.Equal(Now.Add(TakedownRequest.DefaultResponseWindow), stored.DueAt);
         Assert.Contains(stored.Id.ToString("N")[..8], mail.Messages[0].Body, StringComparison.OrdinalIgnoreCase);
-        var limited = await handler.Handle(Request("persona@correo.com", null), CancellationToken.None);
+        var limited = await handler.Handle(Request("persona@correo.com", null, "dev-ok"), CancellationToken.None);
         Assert.Equal("takedown.rate_limited", limited.Error!.Code);
         Assert.Equal(3, await db.TakedownRequests.CountAsync());
     }
@@ -329,8 +329,8 @@ public class AdminPanelFlowTests
         Assert.Equal("category.not_found", missing.Error!.Code);
     }
 
-    private static SubmitTakedownRequest Request(string email, string? website) =>
-        new("Ana Pérez", email, "Report", Guid.CreateVersion7(), "Aparezco en este reporte y pido el retiro.", website, 3000, "10.1.1.1");
+    private static SubmitTakedownRequest Request(string email, string? website, string? captcha = "dev-ok") =>
+        new("Ana Pérez", email, "Report", Guid.CreateVersion7(), "Aparezco en este reporte y pido el retiro.", website, 3000, "10.1.1.1", captcha);
 
     private static User Person(IdentityTestDb db, string email, string userName, DateOnly birth)
     {
@@ -351,7 +351,7 @@ public class AdminPanelFlowTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("300555" + (1000 + db.Users.Local.Count).ToString()),
+            PhoneNumber.Create("+57300555" + (1000 + db.Users.Local.Count).ToString()),
             "hash",
             birth,
             country.Id,

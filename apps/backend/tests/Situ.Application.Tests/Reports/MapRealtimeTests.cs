@@ -27,7 +27,7 @@ public class MapRealtimeTests
     {
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
-        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "3001111111");
+        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "+573001111111");
         var category = Category("accidente");
         db.ReportCategories.Add(category);
         await db.SaveChangesAsync();
@@ -111,7 +111,7 @@ public class MapRealtimeTests
         await using var db = new IdentityTestDb(options);
         db.Database.EnsureCreated();
         var clock = new FixedClock(Now);
-        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "3001111111");
+        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "+573001111111");
         var category = Category("accidente");
         db.ReportCategories.Add(category);
         await db.SaveChangesAsync();
@@ -168,7 +168,7 @@ public class MapRealtimeTests
     {
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
-        var user = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "3001111111");
+        var user = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "+573001111111");
         var device = UserDevice.Register(user.Id, "phone", DevicePlatform.IOS, "iPhone", "1", null, Now);
         db.UserDevices.Add(device);
         await db.SaveChangesAsync();
@@ -192,10 +192,10 @@ public class MapRealtimeTests
     {
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
-        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "3001111111");
-        var viewer = await UserAsync(db, clock, 30, "diego@situ.test", "diego", "3004444444");
-        var stranger = await UserAsync(db, clock, 30, "bruno@situ.test", "bruno", "3002222222");
-        var minor = await UserAsync(db, clock, 16, "carla@situ.test", "carla", "3003333333");
+        var author = await UserAsync(db, clock, 30, "ana@situ.test", "ana", "+573001111111");
+        var viewer = await UserAsync(db, clock, 30, "diego@situ.test", "diego", "+573004444444");
+        var stranger = await UserAsync(db, clock, 30, "bruno@situ.test", "bruno", "+573002222222");
+        var minor = await UserAsync(db, clock, 16, "carla@situ.test", "carla", "+573003333333");
         var open = Category("accidente");
         var adult = Category("solo_adultos", adultOnly: true);
         db.ReportCategories.AddRange(open, adult);

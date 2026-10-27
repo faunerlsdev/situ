@@ -268,6 +268,10 @@ internal static class CatalogSeed
         [SystemSettingKeys.MapMaxCells] = "Celdas máximas que una conexión puede seguir a la vez.",
         [SystemSettingKeys.MapSubscribeCallsPerMinute] = "Cambios de suscripción permitidos por conexión en un minuto.",
         [SystemSettingKeys.MapCoalesceIntervalMilliseconds] = "Milisegundos entre tandas de avisos del mapa en tiempo real.",
+        [SystemSettingKeys.PhoneRequiredForMinors] = "Si es true, un menor debe dejar teléfono al registrarse. Pregunta abierta de minimización (RF-MIN-06).",
+        [SystemSettingKeys.SocialTabsEnabled] = "Muestra las pestañas Mensajes y Chisme. Apagado las oculta sin borrar las pantallas.",
+        [SystemSettingKeys.WebSessionRefreshDays] = "Días de la sesión web. Cada renovación vuelve a contar este plazo.",
+        [SystemSettingKeys.WebSessionRememberDays] = "Días de la sesión web cuando la persona marca recordarme en este dispositivo.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)

@@ -20,16 +20,17 @@ export async function POST(request: Request) {
   const record = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : {};
   const login = typeof record.login === 'string' ? record.login : '';
   const password = typeof record.password === 'string' ? record.password : '';
+  const rememberMe = record.rememberMe === true;
 
   try {
-    const session = await http.request<{ accessToken: string; refreshToken: string }>({
+    const session = await http.request<{ accessToken: string; refreshToken: string; refreshTokenExpiresAt: string }>({
       method: 'POST',
       url: '/api/v1/auth/login',
-      data: { login, password, deviceIdentifier: await deviceId(), platform: 'Web', deviceName: 'Web' },
+      data: { login, password, deviceIdentifier: await deviceId(), platform: 'Web', deviceName: 'Web', rememberMe },
       headers: { 'User-Agent': request.headers.get('user-agent') ?? '' },
       skipAuthRefresh: true,
     });
-    await writeSession(session.accessToken, session.refreshToken);
+    await writeSession(session.accessToken, session.refreshToken, session.refreshTokenExpiresAt);
     return NextResponse.json({ ok: true });
   } catch (cause) {
     if (cause instanceof AppError && cause.apiCode === 'auth.guardian_consent_required' && cause.accessToken) {

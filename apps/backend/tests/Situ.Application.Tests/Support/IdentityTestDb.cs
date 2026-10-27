@@ -115,6 +115,7 @@ internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbCont
         configurationBuilder.Properties<UserName>().HaveConversion<UserNameConverter, UserNameComparer>().HaveMaxLength(30);
         configurationBuilder.Properties<PersonName>().HaveConversion<PersonNameConverter, PersonNameComparer>().HaveMaxLength(80);
         configurationBuilder.Properties<PhoneNumber>().HaveConversion<PhoneNumberConverter, PhoneNumberComparer>().HaveMaxLength(16);
+        configurationBuilder.Properties<PhoneNumber?>().HaveConversion<NullablePhoneNumberConverter, NullablePhoneNumberComparer>().HaveMaxLength(16);
         configurationBuilder.Properties<GeoPoint>().HaveConversion<GeoPointConverter, GeoPointComparer>();
         configurationBuilder.Properties<GeoPoint?>().HaveConversion<NullableGeoPointConverter, NullableGeoPointComparer>();
     }

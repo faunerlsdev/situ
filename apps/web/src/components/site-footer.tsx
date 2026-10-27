@@ -17,6 +17,11 @@ export function SiteFooter() {
                 Ayuda
               </a>
             </li>
+            <li>
+              <a href="/retiro-de-contenido" className="font-semibold text-app-text underline-offset-2 hover:underline">
+                Retiro de contenido
+              </a>
+            </li>
           </ul>
         </nav>
       </div>

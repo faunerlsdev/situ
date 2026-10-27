@@ -13,7 +13,7 @@ public sealed class ReportConfirmation : AuditableEntity
     public Guid UserId { get; private set; }
     public ConfirmationType Type { get; private set; }
 
-    /// <summary>Optional: voter position, used to weigh votes cast near the place more.</summary>
+    /// <summary>Kept for older rows. New votes check the distance and do not store the coordinate.</summary>
     public GeoPoint? VoterLocation { get; private set; }
 
     public static ReportConfirmation Create(Guid reportId, Guid userId, ConfirmationType type, GeoPoint? voterLocation, DateTimeOffset now)

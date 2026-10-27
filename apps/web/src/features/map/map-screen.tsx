@@ -32,6 +32,7 @@ export function MapScreen() {
   const [categories, setCategories] = useState<string[]>([]);
   const [since, setSince] = useState<'all' | 'hour' | 'today'>('all');
   const [selected, setSelected] = useState<string | null>(null);
+  const [guestPin, setGuestPin] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [here, setHere] = useState<{ lat: number; lng: number } | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; nonce: number } | null>(null);
@@ -66,6 +67,17 @@ export function MapScreen() {
     maxLat: debounced.north,
     maxLon: debounced.east,
   } : null), [debounced]);
+
+  const publicQuery = useQuery({
+    queryKey: ['public-map', bounds],
+    enabled: !signedIn && bounds !== null,
+    queryFn: () => api.publicMap({
+      minLat: bounds!.minLat,
+      minLon: bounds!.minLon,
+      maxLat: bounds!.maxLat,
+      maxLon: bounds!.maxLon,
+    }),
+  });
 
   const mapQuery = useQuery({
     queryKey: ['map', bounds, categories, since, here],
@@ -132,11 +144,28 @@ export function MapScreen() {
             center={bogota}
             zoom={13}
             focus={focus}
-            pins={markers.map((item) => item.kind === 'cluster'
-              ? { id: item.key, lat: item.latitude, lng: item.longitude, kind: 'cluster', title: `${item.count} reportes`, count: item.count }
-              : { id: item.id, lat: item.latitude, lng: item.longitude, kind: 'point', title: item.categoryCode ?? 'Reporte', iconUrl: icons.get(item.categoryCode ?? '') })}
+            pins={signedIn
+              ? markers.map((item) => item.kind === 'cluster'
+                ? { id: item.key, lat: item.latitude, lng: item.longitude, kind: 'cluster' as const, title: `${item.count} reportes`, count: item.count }
+                : { id: item.id, lat: item.latitude, lng: item.longitude, kind: 'point' as const, title: item.categoryCode ?? 'Reporte', iconUrl: icons.get(item.categoryCode ?? '') })
+              : (publicQuery.data?.items ?? []).map((item, index) => ({
+                id: `guest-${index}`,
+                lat: item.latitude,
+                lng: item.longitude,
+                kind: 'point' as const,
+                title: `${item.categoryName}. ${item.zone}`,
+                iconUrl: icons.get(item.categoryCode),
+              }))}
             onViewport={setViewport}
-            onSelect={setSelected}
+            onSelect={(id) => {
+              if (!signedIn) {
+                setSelected(null);
+                setGuestPin(true);
+                return;
+              }
+              setGuestPin(false);
+              setSelected(id);
+            }}
           />
         </div>
       ) : (
@@ -149,21 +178,30 @@ export function MapScreen() {
       )}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col gap-2 p-3">
         <div className="pointer-events-auto flex flex-wrap gap-2">
-          {(['all', 'hour', 'today'] as const).map((item) => (
+          {signedIn ? (['all', 'hour', 'today'] as const).map((item) => (
             <button key={item} type="button" aria-pressed={since === item} className={`min-h-11 rounded-full px-3 ${since === item ? 'bg-primary text-app-on' : 'bg-app-elevated'}`} onClick={() => setSince(item)}>
               {item === 'hour' ? 'Última hora' : item === 'today' ? 'Hoy' : 'Todo'}
             </button>
-          ))}
+          )) : null}
           <button type="button" className="min-h-11 rounded-full bg-app-elevated px-3" onClick={locate}>Mi ubicación</button>
         </div>
         <CategoryFilters catalog={catalog.data} selected={categories} onChange={setCategories} />
         {offline ? <p role="status" className="pointer-events-auto w-fit rounded-full bg-app-elevated px-3 py-1 text-xs text-app-muted">Sin conexión en tiempo real</p> : null}
         {mapQuery.isError ? <p className="pointer-events-auto rounded bg-app-elevated px-3 py-2 text-sm">{mapMessage(mapQuery.error)}</p> : null}
-        {!signedIn ? <p className="pointer-events-auto rounded bg-app-elevated px-3 py-2 text-sm">Inicia sesión para ver los reportes de esta zona.</p> : null}
+        {!signedIn ? <p className="pointer-events-auto rounded bg-app-elevated px-3 py-2 text-sm">Inicia sesión para ver los detalles</p> : null}
       </div>
       <button type="button" className="absolute bottom-4 left-1/2 z-10 min-h-12 -translate-x-1/2 rounded-full bg-primary px-5 font-bold text-app-on" onClick={() => setSheetOpen(true)}>
         {copy.browse}
       </button>
+      {guestPin && !signedIn ? (
+        <aside className="absolute bottom-20 left-3 right-3 z-20 rounded-3xl bg-app-elevated p-4 shadow-app sm:left-auto sm:w-[380px]">
+          <p className="font-bold">Inicia sesión para ver los detalles</p>
+          <div className="mt-3 flex gap-3">
+            <button type="button" className="min-h-11 rounded bg-primary px-4 font-bold text-app-on" onClick={() => router.push('/login')}>Iniciar sesión</button>
+            <button type="button" className="min-h-11 rounded border border-app-border px-4" onClick={() => router.push('/registro')}>Crear cuenta</button>
+          </div>
+        </aside>
+      ) : null}
       {selected ? (
         <aside className="absolute bottom-20 left-3 right-3 z-20 max-h-[70dvh] overflow-auto rounded-3xl bg-app-elevated p-4 shadow-app sm:left-auto sm:w-[380px]">
           <button type="button" className="min-h-11" aria-label="Cerrar" onClick={() => setSelected(null)}>Cerrar</button>

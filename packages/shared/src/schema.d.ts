@@ -1162,6 +1162,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ChangePhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/anonymity-notice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcknowledgeAnonymityNotice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/data-export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RequestPersonalDataExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/profile": {
         parameters: {
             query?: never;
@@ -1397,6 +1445,26 @@ export interface paths {
          * @description Los reportes de menores o que no son públicos responden sin datos y no deben indexarse.
          */
         get: operations["GetReportShare"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/reports/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mapa limitado para quien no tiene cuenta: pines públicos de adultos, últimas 24 horas.
+         * @description Sin autor, texto, medios ni conteos. La ubicación se redondea a 3 decimales (~111 m). Un token no cambia la respuesta.
+         */
+        get: operations["GetPublicReportMap"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2146,6 +2214,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcknowledgeAnonymityNoticeResponse: {
+            version: string;
+            /** Format: date-time */
+            acceptedAt: string;
+        };
         ActiveBody: {
             isActive: boolean;
         };
@@ -2258,6 +2331,10 @@ export interface components {
         BlockUserResponse: {
             blocked: boolean;
         };
+        CaptchaPublicView: {
+            provider: string;
+            siteKey: string;
+        };
         CategoriesBody: {
             mutedCategoryIds: string[];
         };
@@ -2277,6 +2354,10 @@ export interface components {
             currentPassword: string;
             newPassword: string;
             keepCurrentSession?: null | boolean;
+        };
+        ChangePhoneBody: {
+            currentPassword: string;
+            phone: string;
         };
         CheckUserNameResponse: {
             available: boolean;
@@ -2440,6 +2521,9 @@ export interface components {
             /** Format: date-time */
             accessTokenExpiresAt: string;
         };
+        FeatureFlagsView: {
+            socialTabs: boolean;
+        };
         FileComplaintResponse: {
             /** Format: uuid */
             id: string;
@@ -2491,6 +2575,13 @@ export interface components {
             legal: components["schemas"]["LegalLinksView"];
             panelCopyByCountry: components["schemas"]["Item"][];
             mapRealtime: components["schemas"]["MapRealtimeView"];
+            features: components["schemas"]["FeatureFlagsView"];
+            webSession: components["schemas"]["WebSessionView"];
+            phoneRequiredForMinors: boolean;
+            captcha: components["schemas"]["CaptchaPublicView"];
+        };
+        GetPublicReportMapResponse: {
+            items: components["schemas"]["PublicMapPin"][];
         };
         GetReportBatchResponse: {
             items: components["schemas"]["MapItemView"][];
@@ -2546,6 +2637,8 @@ export interface components {
             guardian: null | components["schemas"]["SessionGuardianView"];
             /** Format: date-time */
             deletionScheduledFor: null | string;
+            phone: null | string;
+            anonymityNoticeAccepted: boolean;
         };
         GuardianConsentStatusResponse: {
             status: string;
@@ -2592,7 +2685,7 @@ export interface components {
             locale: string;
         };
         /** @enum {unknown} */
-        LegalDocumentType: "TermsOfUse" | "PrivacyPolicy" | "PublicProfileConsent" | "LocationSharingConsent" | "PersonalizedAdsConsent" | "GuardianNotice";
+        LegalDocumentType: "TermsOfUse" | "PrivacyPolicy" | "PublicProfileConsent" | "LocationSharingConsent" | "PersonalizedAdsConsent" | "GuardianNotice" | "AnonymityNotice";
         LegalLinksView: {
             termsUrl: string;
             privacyPolicyUrl: string;
@@ -2761,6 +2854,16 @@ export interface components {
             minSupported: string;
             latest: string;
         };
+        PublicMapPin: {
+            categoryCode: string;
+            categoryName: string;
+            approximateTime: string;
+            zone: string;
+            /** Format: double */
+            latitude: number | string;
+            /** Format: double */
+            longitude: number | string;
+        };
         ReactionBody: {
             type: string;
         };
@@ -2788,6 +2891,8 @@ export interface components {
             accessTokenExpiresAt: string;
             /** Format: uuid */
             deviceId: string;
+            /** Format: date-time */
+            refreshTokenExpiresAt: string;
         };
         RegionItem: {
             /** Format: uuid */
@@ -2923,6 +3028,12 @@ export interface components {
             minorStatement?: null | string;
             ipAddress?: null | string;
         };
+        RequestPersonalDataExportResponse: {
+            /** Format: uuid */
+            exportId: string;
+            /** Format: date-time */
+            expiresAt: null | string;
+        };
         ResendConfirmationEmailRequest: {
             email: string;
         };
@@ -3039,6 +3150,8 @@ export interface components {
             pushToken: null | string;
             ipAddress: null | string;
             userAgent: null | string;
+            /** @default false */
+            rememberMe: boolean;
         };
         SignInResponse: {
             accessToken: string;
@@ -3047,6 +3160,8 @@ export interface components {
             accessTokenExpiresAt: string;
             /** Format: uuid */
             deviceId: string;
+            /** Format: date-time */
+            refreshTokenExpiresAt: string;
         };
         SignOutRequest: {
             refreshToken: string;
@@ -3079,6 +3194,7 @@ export interface components {
             website: null | string;
             /** Format: int32 */
             elapsedMs: null | number | string;
+            captchaToken: null | string;
         };
         TextBody: {
             text: string;
@@ -3167,6 +3283,12 @@ export interface components {
         };
         VerifyGuardianEmailRequest: {
             token: string;
+        };
+        WebSessionView: {
+            /** Format: int32 */
+            refreshDays: number | string;
+            /** Format: int32 */
+            rememberDays: number | string;
         };
     };
     responses: never;
@@ -5062,6 +5184,68 @@ export interface operations {
             };
         };
     };
+    ChangePhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePhoneBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AcknowledgeAnonymityNotice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcknowledgeAnonymityNoticeResponse"];
+                };
+            };
+        };
+    };
+    RequestPersonalDataExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequestPersonalDataExportResponse"];
+                };
+            };
+        };
+    };
     UpdateMyProfile: {
         parameters: {
             query?: never;
@@ -5456,6 +5640,31 @@ export interface operations {
             };
         };
     };
+    GetPublicReportMap: {
+        parameters: {
+            query: {
+                minLat: number | string;
+                minLon: number | string;
+                maxLat: number | string;
+                maxLon: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetPublicReportMapResponse"];
+                };
+            };
+        };
+    };
     ConfirmReport: {
         parameters: {
             query?: never;
@@ -5756,6 +5965,7 @@ export interface operations {
         parameters: {
             query?: {
                 revealEmail?: boolean;
+                revealPhone?: boolean;
             };
             header?: never;
             path: {

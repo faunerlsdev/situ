@@ -32,11 +32,11 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("hurto", "Hurto");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor@situ.test", "autor", "3000000001");
-        var home = await UserAsync(db, catalog, 30, "casa@situ.test", "casa", "3000000002");
-        var extra = await UserAsync(db, catalog, 30, "otra@situ.test", "otra", "3000000003", catalog.OtherCityId);
-        var near = await UserAsync(db, catalog, 30, "cerca@situ.test", "cerca", "3000000004", catalog.OtherCityId);
-        var far = await UserAsync(db, catalog, 30, "lejos@situ.test", "lejos", "3000000005", catalog.OtherCityId);
+        var author = await UserAsync(db, catalog, 30, "autor@situ.test", "autor", "+573000000001");
+        var home = await UserAsync(db, catalog, 30, "casa@situ.test", "casa", "+573000000002");
+        var extra = await UserAsync(db, catalog, 30, "otra@situ.test", "otra", "+573000000003", catalog.OtherCityId);
+        var near = await UserAsync(db, catalog, 30, "cerca@situ.test", "cerca", "+573000000004", catalog.OtherCityId);
+        var far = await UserAsync(db, catalog, 30, "lejos@situ.test", "lejos", "+573000000005", catalog.OtherCityId);
         db.UserInterestCities.Add(UserInterestCity.Create(extra.Id, catalog.CityId));
         await PlaceAsync(db, near, 4.715, -74.072);
         await PlaceAsync(db, far, 4.800, -74.072);
@@ -70,8 +70,8 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("accidente", "Accidente de tránsito");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor2@situ.test", "autor2", "3000000011");
-        var friend = await UserAsync(db, catalog, 30, "amigo@situ.test", "amigo", "3000000012");
+        var author = await UserAsync(db, catalog, 30, "autor2@situ.test", "autor2", "+573000000011");
+        var friend = await UserAsync(db, catalog, 30, "amigo@situ.test", "amigo", "+573000000012");
         await PlaceAsync(db, friend, 4.715, -74.072);
         var friendship = Friendship.Request(author.Id, friend.Id, Now);
         friendship.Accept(friend.Id, Now);
@@ -99,8 +99,8 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("basura", "Basura");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor3@situ.test", "autor3", "3000000021");
-        var friend = await UserAsync(db, catalog, 30, "amigo3@situ.test", "amigo3", "3000000022");
+        var author = await UserAsync(db, catalog, 30, "autor3@situ.test", "autor3", "+573000000021");
+        var friend = await UserAsync(db, catalog, 30, "amigo3@situ.test", "amigo3", "+573000000022");
         var friendship = Friendship.Request(author.Id, friend.Id, Now);
         friendship.Accept(friend.Id, Now);
         db.Friendships.Add(friendship);
@@ -125,14 +125,14 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("adulto", "Solo adultos", adult: true);
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor4@situ.test", "autor4", "3000000031");
-        var blocked = await UserAsync(db, catalog, 30, "bloqueo@situ.test", "bloqueo", "3000000032");
-        var anonBlocker = await UserAsync(db, catalog, 30, "anonb@situ.test", "anonb", "3000000033");
-        var muted = await UserAsync(db, catalog, 30, "silencio@situ.test", "silencio", "3000000034");
-        var minor = await UserAsync(db, catalog, 16, "menor@situ.test", "menor", "3000000035");
-        var off = await UserAsync(db, catalog, 30, "apagado@situ.test", "apagado", "3000000036");
-        var suspended = await UserAsync(db, catalog, 30, "suspendido@situ.test", "suspendido", "3000000037");
-        var named = await UserAsync(db, catalog, 30, "publico@situ.test", "publico", "3000000038");
+        var author = await UserAsync(db, catalog, 30, "autor4@situ.test", "autor4", "+573000000031");
+        var blocked = await UserAsync(db, catalog, 30, "bloqueo@situ.test", "bloqueo", "+573000000032");
+        var anonBlocker = await UserAsync(db, catalog, 30, "anonb@situ.test", "anonb", "+573000000033");
+        var muted = await UserAsync(db, catalog, 30, "silencio@situ.test", "silencio", "+573000000034");
+        var minor = await UserAsync(db, catalog, 16, "menor@situ.test", "menor", "+573000000035");
+        var off = await UserAsync(db, catalog, 30, "apagado@situ.test", "apagado", "+573000000036");
+        var suspended = await UserAsync(db, catalog, 30, "suspendido@situ.test", "suspendido", "+573000000037");
+        var named = await UserAsync(db, catalog, 30, "publico@situ.test", "publico", "+573000000038");
         db.UserBlocks.Add(UserBlock.CreateFull(blocked.Id, author.Id, Now));
         db.UserBlocks.Add(UserBlock.HideAnonymousContent(anonBlocker.Id, author.Id, ContentTargetType.Report, Guid.NewGuid(), Now, Now));
         db.UserCategoryInterests.Add(UserCategoryInterest.Create(muted.Id, category.Id, true));
@@ -164,8 +164,8 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("hurto2", "Hurto");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor5@situ.test", "autor5", "3000000041");
-        var blocker = await UserAsync(db, catalog, 30, "viewer@situ.test", "viewer", "3000000042");
+        var author = await UserAsync(db, catalog, 30, "autor5@situ.test", "autor5", "+573000000041");
+        var blocker = await UserAsync(db, catalog, 30, "viewer@situ.test", "viewer", "+573000000042");
         db.UserBlocks.Add(UserBlock.HideAnonymousContent(blocker.Id, author.Id, ContentTargetType.Report, Guid.NewGuid(), Now, Now));
         var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
 
@@ -182,8 +182,8 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("retencion", "Retén");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor6@situ.test", "autor6", "3000000051");
-        var minor = await UserAsync(db, catalog, 16, "menor6@situ.test", "menor6", "3000000052");
+        var author = await UserAsync(db, catalog, 30, "autor6@situ.test", "autor6", "+573000000051");
+        var minor = await UserAsync(db, catalog, 16, "menor6@situ.test", "menor6", "+573000000052");
         var device = UserDevice.Register(minor.Id, "phone", DevicePlatform.IOS, null, null, null, Now);
         db.UserDevices.Add(device);
         await db.SaveChangesAsync();
@@ -221,9 +221,9 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("trafico", "Tráfico");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor7@situ.test", "autor7", "3000000061");
-        var quiet = await UserAsync(db, catalog, 30, "silencio7@situ.test", "silencio7", "3000000062");
-        var awake = await UserAsync(db, catalog, 30, "despierto@situ.test", "despierto", "3000000063", catalog.OtherCityId);
+        var author = await UserAsync(db, catalog, 30, "autor7@situ.test", "autor7", "+573000000061");
+        var quiet = await UserAsync(db, catalog, 30, "silencio7@situ.test", "silencio7", "+573000000062");
+        var awake = await UserAsync(db, catalog, 30, "despierto@situ.test", "despierto", "+573000000063", catalog.OtherCityId);
         var quietSettings = NotificationSettings.CreateDefault(quiet.Id, "America/Bogota", Now);
         quietSettings.Update(true, true, 1000, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/Bogota", Now);
         var awakeSettings = NotificationSettings.CreateDefault(awake.Id, "America/New_York", Now);
@@ -272,7 +272,7 @@ public class NotificationFlowTests
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
         var catalog = await CatalogAsync(db);
-        var user = await UserAsync(db, catalog, 30, "punto@situ.test", "punto", "3000000071");
+        var user = await UserAsync(db, catalog, 30, "punto@situ.test", "punto", "+573000000071");
         var device = await db.UserDevices.SingleAsync(item => item.UserId == user.Id);
         device.UpdatePushToken("ExponentPushToken[abc]");
         db.RefreshTokens.Add(RefreshToken.Issue(user.Id, device.Id, "refresh-plain", Now, TimeSpan.FromDays(30)));
@@ -307,7 +307,7 @@ public class NotificationFlowTests
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
         var catalog = await CatalogAsync(db);
-        var user = await UserAsync(db, catalog, 30, "borrar@situ.test", "borrar", "3000000171");
+        var user = await UserAsync(db, catalog, 30, "borrar@situ.test", "borrar", "+573000000171");
         var current = await db.UserDevices.SingleAsync(item => item.UserId == user.Id);
         current.UpdatePushToken("ExponentPushToken[current]");
         var other = UserDevice.Register(user.Id, "other-phone", DevicePlatform.Android, null, null, null, Now);
@@ -334,8 +334,8 @@ public class NotificationFlowTests
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
         var catalog = await CatalogAsync(db);
-        var author = await UserAsync(db, catalog, 30, "dueno@situ.test", "dueno", "3000000181");
-        var viewer = await UserAsync(db, catalog, 30, "visita@situ.test", "visita", "3000000182");
+        var author = await UserAsync(db, catalog, 30, "dueno@situ.test", "dueno", "+573000000181");
+        var viewer = await UserAsync(db, catalog, 30, "visita@situ.test", "visita", "+573000000182");
         var expired = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public);
         var removed = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public, 4.72, -74.08);
         var review = await ReportAsync(db, author, Guid.NewGuid(), true, ContentVisibility.Public, 4.73, -74.09);
@@ -366,8 +366,8 @@ public class NotificationFlowTests
         var catalog = await CatalogAsync(db);
         var category = Category("choque", "Choque");
         db.ReportCategories.Add(category);
-        var author = await UserAsync(db, catalog, 30, "autor8@situ.test", "autor8", "3000000081");
-        var reader = await UserAsync(db, catalog, 30, "lector@situ.test", "lector", "3000000082");
+        var author = await UserAsync(db, catalog, 30, "autor8@situ.test", "autor8", "+573000000081");
+        var reader = await UserAsync(db, catalog, 30, "lector@situ.test", "lector", "+573000000082");
         var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
         var push = new RecordingPush { Reject = true };
 
@@ -388,8 +388,8 @@ public class NotificationFlowTests
         await using var db = IdentityTestDb.Create();
         var clock = new FixedClock(Now);
         var catalog = await CatalogAsync(db);
-        var author = await UserAsync(db, catalog, 30, "autor9@situ.test", "autor9", "3000000091");
-        var commenter = await UserAsync(db, catalog, 30, "comenta@situ.test", "comenta", "3000000092");
+        var author = await UserAsync(db, catalog, 30, "autor9@situ.test", "autor9", "+573000000091");
+        var commenter = await UserAsync(db, catalog, 30, "comenta@situ.test", "comenta", "+573000000092");
         var report = await ReportAsync(db, author, Guid.NewGuid(), false, ContentVisibility.Public);
         var comment = Comment.Create(ContentTargetType.Report, report.Id, commenter.Id, "Vi lo mismo en la esquina", true, 1, null, author.Id, Now);
         db.Comments.Add(comment);

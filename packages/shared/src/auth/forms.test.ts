@@ -7,6 +7,7 @@ function values(overrides: Partial<RegisterValues> = {}): RegisterValues {
   return {
     givenNames: 'Ana',
     surnames: 'Perez',
+    callingCode: '57',
     phone: '3001234567',
     userName: 'ana_perez',
     email: 'ana@example.com',

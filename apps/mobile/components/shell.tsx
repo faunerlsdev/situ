@@ -1,4 +1,4 @@
-import { notificationMessages, notify, profileMessages } from '@situ/shared';
+import { notificationMessages, notify, profileMessages, shellTabHrefs, socialTabsFrom } from '@situ/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'expo-router';
 import * as Location from 'expo-location';
@@ -8,6 +8,7 @@ import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { setMapPlace } from '@/features/reports/place';
+import { useAppConfig } from '@/features/reports/use-app-config';
 import { api } from '@/lib/api';
 
 import { useSession } from '@/providers/session-provider';
@@ -86,12 +87,14 @@ export function WazeTabBar() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
+  const config = useAppConfig();
+  const visible = tabs.filter((tab) => shellTabHrefs(socialTabsFrom(config.data)).includes(tab.href));
 
   return (
     <View style={{ backgroundColor: theme.colors.surface, paddingBottom: insets.bottom }}>
       <View style={styles.divider} />
       <View style={styles.tabs}>
-        {tabs.map((tab) => {
+        {visible.map((tab) => {
           const active = pathname === tab.href;
           return (
             <Pressable

@@ -192,7 +192,7 @@ public class StaffMfaFlowTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("300555" + (2000 + db.Users.Local.Count).ToString()),
+            PhoneNumber.Create("+57300555" + (2000 + db.Users.Local.Count).ToString()),
             "hashed:Clave123",
             new DateOnly(1990, 1, 1),
             country.Id,

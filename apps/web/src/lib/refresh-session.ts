@@ -9,13 +9,13 @@ export async function refreshFromCookie() {
   }
 
   try {
-    const session = await http.request<{ accessToken: string; refreshToken: string }>({
+    const session = await http.request<{ accessToken: string; refreshToken: string; refreshTokenExpiresAt?: string }>({
       method: 'POST',
       url: '/api/v1/auth/refresh',
       data: { refreshToken },
       skipAuthRefresh: true,
     });
-    await writeSession(session.accessToken, session.refreshToken);
+    await writeSession(session.accessToken, session.refreshToken, session.refreshTokenExpiresAt);
     return true;
   } catch (cause) {
     if (cause instanceof AppError) {

@@ -86,12 +86,12 @@ public sealed class ConfirmReportHandler(IApplicationDbContext db, IClock clock)
         var reward = request.Type == ConfirmationType.StillThere && previous is null;
         if (existing is null)
         {
-            existing = ReportConfirmation.Create(report.Id, request.UserId, request.Type, voter, now);
+            existing = ReportConfirmation.Create(report.Id, request.UserId, request.Type, null, now);
             db.ReportConfirmations.Add(existing);
         }
         else
         {
-            existing.Change(request.Type, voter, now);
+            existing.Change(request.Type, null, now);
         }
 
         report.ReplaceConfirmation(previous, request.Type, extension, now);

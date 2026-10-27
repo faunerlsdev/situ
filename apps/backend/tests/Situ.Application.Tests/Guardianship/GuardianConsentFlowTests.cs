@@ -351,7 +351,7 @@ public class GuardianConsentFlowTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3001234567"),
+            PhoneNumber.Create("+573001234567"),
             "hashed:Clave123",
             DateOnly.FromDateTime(clock.UtcNow.UtcDateTime).AddYears(years),
             Guid.NewGuid(),

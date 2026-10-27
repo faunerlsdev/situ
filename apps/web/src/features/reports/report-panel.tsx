@@ -2,6 +2,9 @@
 
 import {
   absoluteMediaUrl,
+  anonymityNotice,
+  anonymityNoticeAccepted,
+  anonymityStatus,
   commentValidation,
   complaintReasons,
   composerAnonymity,
@@ -71,8 +74,9 @@ export function ReportPanel({ id, signedIn, here }: { id: string; signedIn: bool
         <button type="button" className="min-h-11 rounded border border-app-border px-3" onClick={() => void confirm(id, 'GoneNow', here, queryClient)}>Ya no está</button>
         <button type="button" className="min-h-11 rounded border border-app-border px-3" onClick={() => void share(id)}>Compartir</button>
       </div>
+      <Link href={`/retiro-de-contenido?reporte=${id}`} className="text-sm font-bold text-primary">¿Apareces en este chisme?</Link>
       <ComplaintForm targetId={id} />
-      <CommentBox reportId={id} detail={detail.data} isMinor={me.data?.isMinor === true} />
+      <CommentBox reportId={id} detail={detail.data} isMinor={me.data?.isMinor === true} profile={me.data} />
     </article>
   );
 }
@@ -97,7 +101,7 @@ function MediaList({ media }: { media: ReportDetail['media'] }) {
   );
 }
 
-function CommentBox({ reportId, detail, isMinor }: { reportId: string; detail: ReportDetail; isMinor: boolean }) {
+function CommentBox({ reportId, detail, isMinor, profile }: { reportId: string; detail: ReportDetail; isMinor: boolean; profile: unknown }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [chosen, setChosen] = useState(true);
@@ -133,9 +137,23 @@ function CommentBox({ reportId, detail, isMinor }: { reportId: string; detail: R
         <textarea value={text} onChange={(event) => setText(event.target.value)} aria-label="Escribe un comentario" className="min-h-20 rounded border border-app-border bg-app-input p-2" />
       </label>
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={rule.anonymous} disabled={rule.locked} onChange={(event) => setChosen(event.target.checked)} />
-        {feedbackMessages.commentAnonymous}
+        <input type="checkbox" checked={rule.anonymous} disabled={rule.locked} onChange={(event) => {
+          setChosen(event.target.checked);
+          if (!rule.locked) {
+            void api.updateMyProfile({ preferAnonymousReports: event.target.checked }).catch(() => undefined);
+          }
+        }} />
+        Publicar como anónimo
       </label>
+      <p className="text-sm">{anonymityStatus(rule.anonymous)}</p>
+      {rule.locked ? <p className="text-sm text-app-muted">{feedbackMessages.commentAnonymousLocked}</p> : null}
+      {!anonymityNoticeAccepted(profile) ? (
+        <div className="rounded border border-app-border p-3 text-sm">
+          <p className="font-bold">{anonymityNotice.title}</p>
+          <p>{anonymityNotice.body}</p>
+          <button type="button" className="mt-2 min-h-11 font-bold text-primary" onClick={() => void api.acknowledgeAnonymityNotice().then(() => queryClient.invalidateQueries({ queryKey: ['me'] }))}>Entendido</button>
+        </div>
+      ) : null}
       <button type="button" className="min-h-11 justify-self-start rounded bg-primary px-4 font-bold text-app-on" onClick={() => void send()}>Publicar</button>
     </section>
   );
@@ -176,6 +194,9 @@ function ComplaintForm({ targetId }: { targetId: string }) {
 }
 
 async function confirm(id: string, type: 'StillThere' | 'GoneNow', here: { lat: number; lng: number } | null, queryClient: ReturnType<typeof useQueryClient>) {
+  if (typeof window !== 'undefined' && !window.confirm('Usamos tu ubicación solo para medir la distancia. No la guardamos.')) {
+    return;
+  }
   const point = here ?? await browserPoint();
   if (!point) {
     notify.warning('Activa tu ubicación para confirmar lo que ves en el lugar.');

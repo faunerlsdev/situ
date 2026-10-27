@@ -79,7 +79,7 @@ public class RealtimeTicketTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("300555" + (1000 + db.Users.Local.Count).ToString()),
+            PhoneNumber.Create("+57300555" + (1000 + db.Users.Local.Count).ToString()),
             "hash",
             new DateOnly(1996, 4, 4),
             country.Id,

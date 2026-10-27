@@ -47,7 +47,7 @@ public class RegisterUserHandlerTests
         Assert.Contains("Hola Ana", email.Messages[0].Body);
         Assert.Equal("Ana", user.GivenNames.Value);
         Assert.Equal("Pérez", user.Surnames.Value);
-        Assert.Equal("3001234567", user.Phone.Value);
+        Assert.Equal("+573001234567", user.Phone!.Value);
         Assert.Contains("token=", email.Messages[0].Body);
     }
 

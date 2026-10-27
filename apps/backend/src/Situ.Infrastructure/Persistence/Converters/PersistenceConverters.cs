@@ -67,6 +67,27 @@ public sealed class PhoneNumberConverter : ValueConverter<PhoneNumber, string>
     }
 }
 
+public sealed class NullablePhoneNumberConverter : ValueConverter<PhoneNumber?, string?>
+{
+    public NullablePhoneNumberConverter()
+        : base(
+            phone => phone == null ? null : phone.Value,
+            value => value == null ? null : PhoneNumber.Create(value))
+    {
+    }
+}
+
+public sealed class NullablePhoneNumberComparer : ValueComparer<PhoneNumber?>
+{
+    public NullablePhoneNumberComparer()
+        : base(
+            (left, right) => left == null ? right == null : right != null && left.Value == right.Value,
+            value => value == null ? 0 : value.Value.GetHashCode(StringComparison.Ordinal),
+            value => value == null ? null : PhoneNumber.Create(value.Value))
+    {
+    }
+}
+
 public sealed class PhoneNumberComparer : ValueComparer<PhoneNumber>
 {
     public PhoneNumberComparer()

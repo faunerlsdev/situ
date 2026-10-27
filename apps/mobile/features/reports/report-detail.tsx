@@ -9,6 +9,7 @@ import {
   presentAuthor,
   readApiUrl,
   relativeTime,
+  sites,
   rollbackReaction,
   toggleReaction,
 } from '@situ/shared';
@@ -16,7 +17,7 @@ import type { ReactionSnapshot } from '@situ/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { blockContent } from '@/features/interaction/block-content';
 import { CommentSection } from '@/features/interaction/comment-section';
@@ -132,6 +133,9 @@ export function ReportDetail({ id, focusComments = false }: { id: string; focusC
                 style={styles.action}
               >
                 <Text style={styles.danger}>Bloquear</Text>
+              </Pressable>
+              <Pressable accessibilityRole="link" accessibilityLabel="¿Apareces en este chisme?" onPress={() => void Linking.openURL(`${sites.web}/retiro-de-contenido?reporte=${id}`)} style={styles.action}>
+                <Text style={styles.link}>¿Apareces en este chisme?</Text>
               </Pressable>
             </View>
           </View>

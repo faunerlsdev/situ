@@ -60,6 +60,15 @@ export type ApiClientOptions = {
   onSessionExpired?: () => void;
 };
 
+export type PublicMapPin = {
+  categoryCode: string;
+  categoryName: string;
+  approximateTime: string;
+  zone: string;
+  latitude: number;
+  longitude: number;
+};
+
 export function createServices(http: HttpClient) {
   return {
     listCountries() {
@@ -97,6 +106,15 @@ export function createServices(http: HttpClient) {
     },
     updateMyProfile(body: { userName?: string | null; displayName?: string | null; bio?: string | null; homeCityId?: string | null; preferAnonymousReports?: boolean | null }) {
       return http.request<void>({ method: 'PATCH', url: '/api/v1/me/profile', data: body, requiresAuth: true });
+    },
+    changePhone(body: { currentPassword: string; phone: string }) {
+      return http.request<void>({ method: 'POST', url: '/api/v1/me/phone', data: body, requiresAuth: true });
+    },
+    acknowledgeAnonymityNotice() {
+      return http.request<{ version: string; acceptedAt: string }>({ method: 'POST', url: '/api/v1/me/anonymity-notice', requiresAuth: true });
+    },
+    requestDataExport() {
+      return http.request<{ exportId: string; expiresAt: string | null }>({ method: 'POST', url: '/api/v1/me/data-export', requiresAuth: true });
     },
     usernameAvailable(userName: string) {
       return http.request<{ available: boolean }>({
@@ -396,6 +414,24 @@ export function createServices(http: HttpClient) {
         url: `/api/v1/reports/map?${params.toString()}`,
         requiresAuth: true,
         signal,
+      });
+    },
+    publicMap(query: { minLat: number; minLon: number; maxLat: number; maxLon: number }, signal?: AbortSignal) {
+      const params = new URLSearchParams();
+      params.set('minLat', String(query.minLat));
+      params.set('minLon', String(query.minLon));
+      params.set('maxLat', String(query.maxLat));
+      params.set('maxLon', String(query.maxLon));
+      return http.request<{ items: PublicMapPin[] }>({
+        url: `/api/v1/public/reports/map?${params.toString()}`,
+        signal,
+      });
+    },
+    submitTakedown(body: { requesterName: string; requesterEmail: string; targetType: string; targetId: string; description: string; captchaToken: string }) {
+      return http.request<{ accepted: boolean; trackingCode: string }>({
+        method: 'POST',
+        url: '/api/v1/takedown-requests',
+        data: body,
       });
     },
     batchReports(ids: string[], signal?: AbortSignal) {

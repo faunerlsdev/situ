@@ -254,7 +254,7 @@ public class ProfileAccountFlowTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3001234567"),
+            PhoneNumber.Create("+573001234567"),
             passwordHash,
             DateOnly.FromDateTime(clock.UtcNow.UtcDateTime).AddYears(-years),
             catalog.CountryId,

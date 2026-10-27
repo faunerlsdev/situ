@@ -16,7 +16,8 @@ public sealed record SubmitTakedownRequest(
     string Description,
     string? Website,
     int? ElapsedMs,
-    string? IpAddress);
+    string? IpAddress,
+    string? CaptchaToken);
 
 public sealed record SubmitTakedownResponse(bool Accepted, string TrackingCode);
 
@@ -32,14 +33,24 @@ public sealed class SubmitTakedownValidator : AbstractValidator<SubmitTakedownRe
     }
 }
 
-public sealed class SubmitTakedownHandler(IApplicationDbContext db, IClock clock, IEmailSender email)
+public sealed class SubmitTakedownHandler(IApplicationDbContext db, IClock clock, IEmailSender email, ICaptchaVerifier captcha)
     : IHandler<SubmitTakedownRequest, Result<SubmitTakedownResponse>>
 {
     public async Task<Result<SubmitTakedownResponse>> Handle(SubmitTakedownRequest request, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(request.Website))
+        var human = false;
+        try
         {
-            return Result<SubmitTakedownResponse>.Success(new SubmitTakedownResponse(true, Tracking("honeypot")));
+            human = await captcha.VerifyAsync(request.CaptchaToken, request.IpAddress, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            human = false;
+        }
+
+        if (!human)
+        {
+            return Result<SubmitTakedownResponse>.Failure(Error.Validation("captcha.invalid", "No pudimos comprobar que eres una persona. Inténtalo de nuevo."));
         }
 
         if (!Enum.TryParse<ContentTargetType>(request.TargetType, out var targetType))

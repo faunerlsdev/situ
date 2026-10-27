@@ -11,7 +11,7 @@ async function rotate() {
     return false;
   }
 
-  const response = await http.requestResponse<{ accessToken?: string; refreshToken?: string }>({
+  const response = await http.requestResponse<{ accessToken?: string; refreshToken?: string; refreshTokenExpiresAt?: string }>({
     method: 'POST',
     url: '/api/v1/auth/refresh',
     data: { refreshToken },
@@ -22,7 +22,7 @@ async function rotate() {
     return false;
   }
 
-  await writeSession(response.data.accessToken, response.data.refreshToken);
+  await writeSession(response.data.accessToken, response.data.refreshToken, response.data.refreshTokenExpiresAt);
   return true;
 }
 

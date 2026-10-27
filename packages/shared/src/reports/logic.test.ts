@@ -156,6 +156,10 @@ describe('app config', () => {
     },
     panelCopyByCountry: [],
     mapRealtime: { cellDegrees: 0.05, maxCells: 16, coalesceIntervalMilliseconds: 1000, subscribeCallsPerMinute: 20 },
+    features: { socialTabs: false },
+    webSession: { refreshDays: 30, rememberDays: 90 },
+    phoneRequiredForMinors: true,
+    captcha: { provider: 'Turnstile', siteKey: '' },
   } satisfies AppConfig;
 
   it('uses the response when the network answers and the cache when it does not', () => {

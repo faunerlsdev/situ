@@ -561,7 +561,7 @@ public class InteractionFlowTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3001234567"),
+            PhoneNumber.Create("+573001234567"),
             "hash",
             DateOnly.FromDateTime(clock.UtcNow.UtcDateTime).AddYears(-years),
             countryId,

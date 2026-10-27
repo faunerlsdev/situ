@@ -6,4 +6,5 @@ public sealed record RefreshSessionResponse(
     string AccessToken,
     string RefreshToken,
     DateTimeOffset AccessTokenExpiresAt,
-    Guid DeviceId);
+    Guid DeviceId,
+    DateTimeOffset RefreshTokenExpiresAt);

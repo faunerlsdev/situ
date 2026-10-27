@@ -932,6 +932,38 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Milisegundos entre tandas de avisos del mapa en tiempo real.",
                             Key = "map.coalesce_interval_milliseconds",
                             Value = "1000"
+                        },
+                        new
+                        {
+                            Id = new Guid("020d75f9-3000-6b8e-e036-959bcde9c2ae"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Si es true, un menor debe dejar teléfono al registrarse. Pregunta abierta de minimización (RF-MIN-06).",
+                            Key = "registration.phone_required_for_minors",
+                            Value = "true"
+                        },
+                        new
+                        {
+                            Id = new Guid("440b9908-7298-e9b6-65cf-08d6870e3eef"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Muestra las pestañas Mensajes y Chisme. Apagado las oculta sin borrar las pantallas.",
+                            Key = "features.social_tabs",
+                            Value = "false"
+                        },
+                        new
+                        {
+                            Id = new Guid("af927380-2343-0c1c-da91-295b13b6646f"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Días de la sesión web. Cada renovación vuelve a contar este plazo.",
+                            Key = "web.session_refresh_days",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("edc5c736-fadd-3768-ad85-b11d191d7cac"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Días de la sesión web cuando la persona marca recordarme en este dispositivo.",
+                            Key = "web.session_remember_days",
+                            Value = "90"
                         });
                 });
 
@@ -2613,7 +2645,6 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnName("password_hash");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
                         .HasColumnName("phone");
@@ -2736,6 +2767,10 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
                         .HasColumnName("push_token");
+
+                    b.Property<bool>("RememberWebSession")
+                        .HasColumnType("boolean")
+                        .HasColumnName("remember_web_session");
 
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")

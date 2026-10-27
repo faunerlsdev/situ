@@ -25,7 +25,7 @@ public sealed class User : AggregateRoot
     public UserName UserName { get; private set; }
     public PersonName GivenNames { get; private set; }
     public PersonName Surnames { get; private set; }
-    public PhoneNumber Phone { get; private set; }
+    public PhoneNumber? Phone { get; private set; }
     public string PasswordHash { get; private set; }
     public DateOnly DateOfBirth { get; private set; }
 
@@ -73,7 +73,7 @@ public sealed class User : AggregateRoot
         UserName userName,
         PersonName givenNames,
         PersonName surnames,
-        PhoneNumber phone,
+        PhoneNumber? phone,
         string passwordHash,
         DateOnly dateOfBirth,
         Guid countryId,
@@ -111,6 +111,9 @@ public sealed class User : AggregateRoot
         user.Raise(new UserRegisteredEvent(user.Id, email.Value, isMinor));
         return user;
     }
+
+    /// <summary>Replaces the phone after the caller has re-authenticated. The number itself is not written to the audit log.</summary>
+    public void ChangePhone(PhoneNumber phone) => Phone = phone;
 
     public int AgeOn(DateTimeOffset now) => AgeCalculator.AgeOn(DateOfBirth, AgeCalculator.ToDate(now));
 
@@ -361,7 +364,7 @@ public sealed class User : AggregateRoot
         UserName = global::Situ.Domain.Common.UserName.Create($"gone{suffix}");
         GivenNames = PersonName.Create("Eliminado");
         Surnames = PersonName.Create("Eliminado");
-        Phone = global::Situ.Domain.Common.PhoneNumber.Create("3000000000");
+        Phone = null;
         PasswordHash = "erased";
         DateOfBirth = new DateOnly(2000, 1, 1);
         TwoFactorSecret = null;
@@ -387,7 +390,7 @@ public sealed class User : AggregateRoot
         UserName = global::Situ.Domain.Common.UserName.Create($"gone{suffix}");
         GivenNames = PersonName.Create("Eliminado");
         Surnames = PersonName.Create("Eliminado");
-        Phone = global::Situ.Domain.Common.PhoneNumber.Create("3000000000");
+        Phone = null;
         PasswordHash = "erased";
         DateOfBirth = new DateOnly(2000, 1, 1);
         TwoFactorSecret = null;

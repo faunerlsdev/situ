@@ -1,4 +1,4 @@
-import { commentLimit, feedbackMessages } from '@situ/shared';
+import { anonymityStatus, commentLimit, feedbackMessages } from '@situ/shared';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { theme } from '@/theme/theme';
@@ -65,8 +65,9 @@ export function CommentComposer({
           accessibilityLabel={feedbackMessages.commentAnonymous}
           trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
         />
-        <Text style={styles.hint}>{feedbackMessages.commentAnonymous}</Text>
+        <Text style={styles.hint}>Publicar como anónimo</Text>
       </View>
+      <Text style={styles.hint}>{anonymityStatus(anonymous)}</Text>
       <Text style={styles.hint}>{anonymousLocked ? feedbackMessages.commentAnonymousLocked : feedbackMessages.commentAnonymousHelp}</Text>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       {inlineError ? <Text style={styles.error}>{inlineError}</Text> : null}

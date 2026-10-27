@@ -1,4 +1,4 @@
-import { AppError, notify, profileMessages } from '@situ/shared';
+import { AppError, callingCodes, composePhone, notify, phonePurpose, profileMessages } from '@situ/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -31,6 +31,9 @@ export default function EditProfileScreen() {
   const [available, setAvailable] = useState<boolean | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pending, setPending] = useState(false);
+  const [callingCode, setCallingCode] = useState('57');
+  const [phone, setPhone] = useState('');
+  const [phonePassword, setPhonePassword] = useState('');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -103,6 +106,21 @@ export default function EditProfileScreen() {
     }
   }
 
+  async function savePhone() {
+    if (!phone.trim() || !phonePassword) {
+      notify.warning('Escribe el número y tu contraseña actual.');
+      return;
+    }
+    try {
+      await api.changePhone({ currentPassword: phonePassword, phone: composePhone(callingCode, phone) });
+      setPhonePassword('');
+      notify.success('Actualizamos tu teléfono.');
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
+    } catch (error) {
+      notify.error(error);
+    }
+  }
+
   if (me.isError) {
     return (
       <View style={[styles.screen, { paddingTop: insets.top + 12 }]}>
@@ -136,6 +154,20 @@ export default function EditProfileScreen() {
       />
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.save} disabled={pending} onPress={() => void save()} style={styles.button}>
         <Text style={styles.buttonLabel}>{pending ? profileMessages.saving : profileMessages.save}</Text>
+      </Pressable>
+      <Text style={styles.title}>Teléfono</Text>
+      <Text style={styles.body}>{phonePurpose}</Text>
+      <View style={styles.codes}>
+        {callingCodes.map((item) => (
+          <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.label} onPress={() => setCallingCode(item.code)}>
+            <Text style={styles.link}>{callingCode === item.code ? item.label : `+${item.code}`}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Field label="Número" value={phone} onChangeText={setPhone} autoCapitalize="none" />
+      <Field label="Contraseña actual" value={phonePassword} onChangeText={setPhonePassword} autoCapitalize="none" />
+      <Pressable accessibilityRole="button" accessibilityLabel="Guardar teléfono" onPress={() => void savePhone()} style={styles.button}>
+        <Text style={styles.buttonLabel}>Guardar teléfono</Text>
       </Pressable>
     </ScrollView>
   );
@@ -241,6 +273,7 @@ const styles = StyleSheet.create({
   hint: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 14 },
   counter: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13, textAlign: 'right' },
   row: { minHeight: 44, justifyContent: 'center' },
+  codes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
   button: { minHeight: 44, borderRadius: theme.radius.button, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
   buttonLabel: { color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },

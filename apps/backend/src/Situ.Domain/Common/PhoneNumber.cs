@@ -2,11 +2,14 @@ using System.Text.RegularExpressions;
 
 namespace Situ.Domain.Common;
 
-/// <summary>A phone number stored as digits, with an optional leading +.</summary>
+/// <summary>
+/// A phone number in E.164 (for example +573001234567). Uniqueness is not required:
+/// two accounts may share a number, and the API never says whether one is already registered.
+/// </summary>
 public sealed record PhoneNumber
 {
     private static readonly Regex Separators = new(@"[\s().\-]", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private static readonly Regex Pattern = new(@"^\+?\d{7,15}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex Pattern = new(@"^\+[1-9]\d{7,14}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private PhoneNumber(string value)
     {
@@ -46,6 +49,19 @@ public sealed record PhoneNumber
 
         phone = new PhoneNumber(compact);
         return true;
+    }
+
+    /// <summary>Shows the country code and the last four digits. The full number stays out of the panel.</summary>
+    public string Mask()
+    {
+        var digits = Value[1..];
+        var country = digits.StartsWith("57", StringComparison.Ordinal) && digits.Length > 6
+            ? "57"
+            : digits.Length > 10
+                ? digits[..(digits.Length - 10)]
+                : digits[..Math.Min(2, digits.Length)];
+        var last = digits.Length >= 4 ? digits[^4..] : digits;
+        return $"+{country} ••• ••• {last}";
     }
 
     public override string ToString() => Value;

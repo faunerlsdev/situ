@@ -68,6 +68,10 @@ internal static partial class SettingsRules
             [SystemSettingKeys.PanelCopyByCountry] = Copies,
             [SystemSettingKeys.ProfileReservedUserNames] = value => Text(value, 1000),
             [SystemSettingKeys.ProfileBlockedTerms] = value => Text(value, 1000),
+            [SystemSettingKeys.PhoneRequiredForMinors] = Bool,
+            [SystemSettingKeys.SocialTabsEnabled] = Bool,
+            [SystemSettingKeys.WebSessionRefreshDays] = value => Int(value, 1, 365),
+            [SystemSettingKeys.WebSessionRememberDays] = value => Int(value, 1, 365),
         };
 
         foreach (var key in new[]
@@ -94,6 +98,17 @@ internal static partial class SettingsRules
         }
 
         return Result<string>.Success(number.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static Result<string> Bool(string value)
+    {
+        var trimmed = value.Trim().ToLowerInvariant();
+        if (trimmed is not ("true" or "false"))
+        {
+            return Result<string>.Failure(Error.Validation("settings.invalid_value", "Escribe true o false."));
+        }
+
+        return Result<string>.Success(trimmed);
     }
 
     private static Result<string> Text(string value, int max)

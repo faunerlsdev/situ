@@ -105,8 +105,8 @@ public sealed class AdminEndpoints : IEndpoint
     private static async Task<IResult> Users(string? query, ICurrentUser current, IHandler<SearchAdminUsersRequest, Result<SearchAdminUsersResponse>> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(new SearchAdminUsersRequest(current.UserId ?? Guid.Empty, query ?? ""), cancellationToken)).ToHttpResult();
 
-    private static async Task<IResult> User(Guid id, bool? revealEmail, HttpContext http, ICurrentUser current, IHandler<GetAdminUserRequest, Result<AdminUserDetail>> handler, CancellationToken cancellationToken) =>
-        (await handler.Handle(new GetAdminUserRequest(current.UserId ?? Guid.Empty, Ip(http), id, revealEmail == true), cancellationToken)).ToHttpResult();
+    private static async Task<IResult> User(Guid id, bool? revealEmail, bool? revealPhone, HttpContext http, ICurrentUser current, IHandler<GetAdminUserRequest, Result<AdminUserDetail>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new GetAdminUserRequest(current.UserId ?? Guid.Empty, Ip(http), id, revealEmail == true, revealPhone == true), cancellationToken)).ToHttpResult();
 
     private static async Task<IResult> Sanction(Guid id, string action, ReasonBody body, HttpContext http, ICurrentUser current, IHandler<SanctionUserRequest, Result> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(new SanctionUserRequest(current.UserId ?? Guid.Empty, Ip(http), id, action, body.Reason, body.Until), cancellationToken)).ToHttpResult();
@@ -314,9 +314,10 @@ public sealed class TakedownEndpoints : IEndpoint
             body.Description,
             body.Website,
             body.ElapsedMs,
-            http.Connection.RemoteIpAddress?.ToString()), cancellationToken);
+            http.Connection.RemoteIpAddress?.ToString(),
+            body.CaptchaToken), cancellationToken);
         return result.IsSuccess ? Results.Accepted(value: result.Value) : result.ToHttpResult();
     }
 }
 
-public sealed record TakedownBody(string RequesterName, string RequesterEmail, string TargetType, Guid TargetId, string Description, string? Website, int? ElapsedMs);
+public sealed record TakedownBody(string RequesterName, string RequesterEmail, string TargetType, Guid TargetId, string Description, string? Website, int? ElapsedMs, string? CaptchaToken);

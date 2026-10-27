@@ -43,7 +43,7 @@ internal static class IdentityErrors
         Error.Validation("person_name.invalid", "Escribe tus apellidos. Solo letras, espacios, apóstrofos o guiones.");
 
     public static Error InvalidPhone() =>
-        Error.Validation("phone.invalid", "El teléfono debe tener entre 7 y 15 dígitos.");
+        Error.Validation("phone.invalid", "Escribe el teléfono con indicativo, por ejemplo +573001234567.");
 
     public static Error InvalidUserName() =>
         Error.Validation(

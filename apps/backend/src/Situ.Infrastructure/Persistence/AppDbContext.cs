@@ -168,6 +168,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         configurationBuilder.Properties<Situ.Domain.Common.UserName>().HaveConversion<UserNameConverter, UserNameComparer>().HaveMaxLength(30);
         configurationBuilder.Properties<Situ.Domain.Common.PersonName>().HaveConversion<PersonNameConverter, PersonNameComparer>().HaveMaxLength(80);
         configurationBuilder.Properties<Situ.Domain.Common.PhoneNumber>().HaveConversion<PhoneNumberConverter, PhoneNumberComparer>().HaveMaxLength(16);
+        configurationBuilder.Properties<Situ.Domain.Common.PhoneNumber?>().HaveConversion<NullablePhoneNumberConverter, NullablePhoneNumberComparer>().HaveMaxLength(16);
         configurationBuilder.Properties<Situ.Domain.Common.GeoPoint>()
             .HaveConversion<GeoPointConverter, GeoPointComparer>()
             .HaveColumnType("geography(point, 4326)");

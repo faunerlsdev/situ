@@ -410,3 +410,14 @@ Con tus últimas respuestas quedan cerradas las decisiones de producto; solo fal
 
 1. **Revisión legal:** que un abogado de Habeas Data confirme que la firma digital interna basta como prueba de la autorización (Ley 527 de 1999), el flujo de menores y las transmisiones anónimas de menores.
 2. **Proyectos de ley:** seguir su trámite y activar el módulo de verificación de edad e identidad si se aprueban (RF-MIN-12).
+
+## Decisiones posteriores a la v2
+
+Fecha: 2026-10-27.
+
+- **Teléfono obligatorio en el registro.** El teléfono se conserva en el registro de backend, móvil y web. Se guarda en formato internacional E.164, con selector de indicativo y Colombia +57 por defecto. No se exige unicidad y la API no dice si un número ya está registrado, para no permitir enumerar cuentas. Es dato personal: entra en la exportación, se borra al eliminar la cuenta, no va en logs ni en la bitácora, y en el panel solo se ve enmascarado con el permiso `users.view_email`, dejando registro de la consulta sin el número.
+- **Teléfono de menores.** La clave `registration.phone_required_for_minors` nace en true. Si se pone en false, el teléfono es opcional solo para menores. Queda como pregunta abierta para el abogado por RF-MIN-06 (minimización).
+- **Anonimato encendido por defecto para todos.** Las cuentas nuevas, adultas y menores, nacen con la preferencia de publicar como anónimo. No se pisan las elecciones de las cuentas que ya existen. El interruptor "Publicar como anónimo" se ve en el reporte y en el comentario, con el estado "Se publicará como Situero anónimo" o "Se publicará con tu nombre de usuario". El aviso de primer uso se guarda con fecha y versión. Un menor no puede apagarlo en una publicación pública.
+- **Pestañas Mensajes y Chisme ocultas.** La bandera `features.social_tabs` nace apagada. Las pantallas siguen en el código y no aparecen en la navegación.
+- **Mapa limitado para visitantes.** Sin cuenta, la web usa `GET /api/v1/public/reports/map`: solo reportes públicos de adultos de las últimas 24 horas, máximo 50 pines, sin autor, texto, medios ni conteos. La ubicación se redondea a 3 decimales de grado, unos 111 metros. Un token no amplía esa respuesta.
+- **Formulario público de retiro.** La página `/retiro-de-contenido` usa `POST /api/v1/takedown-requests`, con captcha Cloudflare Turnstile verificado en el servidor. Si el verificador no responde, no se guarda nada. La respuesta es neutra, con número de seguimiento y plazo de 15 días.

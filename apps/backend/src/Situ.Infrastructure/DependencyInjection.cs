@@ -50,6 +50,24 @@ public static class DependencyInjection
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IPublicLinks, PublicLinks>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        var captchaProvider = configuration["Captcha:Provider"];
+        if (string.IsNullOrWhiteSpace(captchaProvider))
+        {
+            captchaProvider = string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase) ? "Development" : "Turnstile";
+        }
+
+        services.AddSingleton(new Situ.Application.Features.Configuration.GetAppConfig.CaptchaPublicView(
+            captchaProvider,
+            configuration["Captcha:SiteKey"] ?? string.Empty));
+        if (string.Equals(captchaProvider, "Development", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<ICaptchaVerifier, Captcha.DevelopmentCaptchaVerifier>();
+        }
+        else
+        {
+            services.AddSingleton<ICaptchaVerifier>(serviceProvider =>
+                new Captcha.TurnstileCaptchaVerifier(new HttpClient(), serviceProvider.GetRequiredService<IConfiguration>()));
+        }
 
         services.AddSingleton<IGuardianConsentSigner, HmacGuardianConsentSigner>();
 

@@ -41,8 +41,8 @@ public class NotificationProximityPostGisTests
             var region = Region.Create(country.Id, "Cundinamarca", "25");
             var city = City.Create(region.Id, country.Id, "Bogotá", new GeoPoint(4.711, -74.072), "America/Bogota");
             db.AddRange(country, region, city);
-            var nearUser = Person(city, "cerca-pg@situ.test", "cercapg", "3001110001");
-            var farUser = Person(city, "lejos-pg@situ.test", "lejospg", "3001110002");
+            var nearUser = Person(city, "cerca-pg@situ.test", "cercapg", "+573001110001");
+            var farUser = Person(city, "lejos-pg@situ.test", "lejospg", "+573001110002");
             db.Users.AddRange(nearUser, farUser);
             var nearDevice = UserDevice.Register(nearUser.Id, "near-phone", DevicePlatform.IOS, null, null, null, Now);
             var farDevice = UserDevice.Register(farUser.Id, "far-phone", DevicePlatform.IOS, null, null, null, Now);

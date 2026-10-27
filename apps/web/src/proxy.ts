@@ -18,12 +18,13 @@ export function proxy(request: NextRequest) {
   const api = apiSources();
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://maps.googleapis.com https://maps.gstatic.com${devEval}`,
+    `script-src 'self' 'nonce-${nonce}' https://maps.googleapis.com https://maps.gstatic.com https://challenges.cloudflare.com${devEval}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: https://maps.gstatic.com https://maps.googleapis.com https://*.gstatic.com https://*.googleapis.com https://*.ggpht.com ${api.http}`,
     `media-src 'self' blob: ${api.http}`,
     "font-src 'self' https://fonts.gstatic.com",
-    `connect-src 'self' ${api.http} ${api.ws} https://maps.googleapis.com https://maps.gstatic.com`,
+    `connect-src 'self' ${api.http} ${api.ws} https://maps.googleapis.com https://maps.gstatic.com https://challenges.cloudflare.com`,
+    "frame-src https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
@@ -44,7 +45,7 @@ export function proxy(request: NextRequest) {
     response.cookies.set(csrfCookie, crypto.randomUUID(), {
       httpOnly: false,
       secure,
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
     });
   }
@@ -53,7 +54,7 @@ export function proxy(request: NextRequest) {
     response.cookies.set(deviceCookie, crypto.randomUUID(), {
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 400,
     });

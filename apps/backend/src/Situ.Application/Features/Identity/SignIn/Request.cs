@@ -11,10 +11,12 @@ public sealed record SignInRequest(
     string? AppVersion,
     string? PushToken,
     string? IpAddress,
-    string? UserAgent);
+    string? UserAgent,
+    bool RememberMe = false);
 
 public sealed record SignInResponse(
     string AccessToken,
     string RefreshToken,
     DateTimeOffset AccessTokenExpiresAt,
-    Guid DeviceId);
+    Guid DeviceId,
+    DateTimeOffset RefreshTokenExpiresAt);

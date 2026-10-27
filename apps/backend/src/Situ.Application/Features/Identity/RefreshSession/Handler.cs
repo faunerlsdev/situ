@@ -55,7 +55,8 @@ public sealed class RefreshSessionHandler(IApplicationDbContext db, IClock clock
         }
 
         device.Touch(now, request.IpAddress);
-        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now);
+        var refreshFor = await WebSessionDuration.ForDeviceAsync(db, device, cancellationToken);
+        var issued = SessionIssuer.Issue(tokens, user.Id, device.Id, now, refreshLifetime: refreshFor);
         current.RotateTo(issued.Stored.Id, now);
         db.RefreshTokens.Add(issued.Stored);
         await db.SaveChangesAsync(cancellationToken);
@@ -63,7 +64,8 @@ public sealed class RefreshSessionHandler(IApplicationDbContext db, IClock clock
             issued.AccessToken,
             issued.RefreshToken,
             issued.AccessTokenExpiresAt,
-            device.Id));
+            device.Id,
+            issued.Stored.ExpiresAt));
     }
 
     private async Task RevokeFamilyAsync(Guid deviceId, DateTimeOffset now, CancellationToken cancellationToken)

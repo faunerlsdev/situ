@@ -15,6 +15,7 @@ import {
   publishBlock,
   readApiUrl,
   relativeTime,
+  sites,
   rollbackReaction,
   toggleReaction,
   toMapMarkers,
@@ -514,6 +515,9 @@ export function MapScreen() {
               <SymbolView name={blockIcon} tintColor={theme.colors.danger} size={22} />
             </Pressable>
           </View>
+          <Pressable accessibilityRole="link" accessibilityLabel="¿Apareces en este chisme?" onPress={() => void Linking.openURL(`${sites.web}/retiro-de-contenido?reporte=${selectedPoint.id}`)}>
+            <Text style={styles.cardMeta}>¿Apareces en este chisme?</Text>
+          </Pressable>
         </View>
       ) : null}
       <ComplaintSheet

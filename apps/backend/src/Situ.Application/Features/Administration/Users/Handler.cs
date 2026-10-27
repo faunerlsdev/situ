@@ -69,7 +69,7 @@ public sealed class SearchAdminUsersHandler(IApplicationDbContext db, IClock clo
     }
 }
 
-public sealed record GetAdminUserRequest(Guid ActorId, string? IpAddress, Guid UserId, bool RevealEmail);
+public sealed record GetAdminUserRequest(Guid ActorId, string? IpAddress, Guid UserId, bool RevealEmail, bool RevealPhone = false);
 
 public sealed record AdminUserDetail(
     Guid Id,
@@ -84,7 +84,8 @@ public sealed record AdminUserDetail(
     int DeviceCount,
     int ReportCount,
     int ComplaintsReceived,
-    int SanctionCount);
+    int SanctionCount,
+    string? MaskedPhone);
 
 public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
     : IHandler<GetAdminUserRequest, Result<AdminUserDetail>>
@@ -104,9 +105,21 @@ public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
 
         var now = clock.UtcNow;
         var reveal = request.RevealEmail && await StaffGate.HasAsync(db, request.ActorId, StaffPermissionCodes.UsersViewEmail, cancellationToken);
+        var revealPhone = request.RevealPhone && await StaffGate.HasAsync(db, request.ActorId, StaffPermissionCodes.UsersViewEmail, cancellationToken);
+        string? maskedPhone = null;
         if (reveal)
         {
             AdminSupport.Record(db, request.ActorId, "users.view_email", nameof(User), user.Id.ToString(), AdminSupport.Json(new { emailRevealed = true }), request.IpAddress, now);
+        }
+
+        if (revealPhone && user.Phone is { } phone)
+        {
+            maskedPhone = phone.Mask();
+            AdminSupport.Record(db, request.ActorId, "users.view_phone", nameof(User), user.Id.ToString(), AdminSupport.Json(new { phoneRevealed = true }), request.IpAddress, now);
+        }
+
+        if (reveal || maskedPhone is not null)
+        {
             await db.SaveChangesAsync(cancellationToken);
         }
 
@@ -134,7 +147,8 @@ public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
             devices,
             reports,
             complaints,
-            sanctions));
+            sanctions,
+            maskedPhone));
     }
 
     private async Task<string> PlanCodeAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)

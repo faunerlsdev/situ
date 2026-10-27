@@ -1,5 +1,8 @@
 import {
   alertModal,
+  anonymityNotice,
+  anonymityNoticeAccepted,
+  anonymityStatus,
   AppError,
   asNumber,
   categoriesUnder,
@@ -319,14 +322,25 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
             return;
           }
           identityLocked.current = true;
-          setAnonymous((value) => !value);
+          const next = !anonymous;
+          setAnonymous(next);
+          void api.updateMyProfile({ preferAnonymousReports: next }).catch(() => undefined);
         }}
         style={styles.switchRow}
       >
         <View style={[styles.switchKnob, rule.isAnonymous && styles.switchOn]} />
-        <Text style={styles.hint}>Publicar como anónimo. Los demás no verán tu nombre ni tu perfil. SITU sí guarda tu identidad por seguridad y por requerimientos legales.</Text>
+        <Text style={styles.hint}>Publicar como anónimo</Text>
       </Pressable>
+      <Text style={styles.hint}>{anonymityStatus(rule.isAnonymous)}</Text>
       {rule.explain ? <Text style={styles.hint}>Como eres menor de edad, un reporte público se publica como anónimo. Si prefieres tu nombre, elige Solo amigos.</Text> : null}
+      {!anonymityNoticeAccepted(me.data) ? (
+        <View>
+          <Text style={styles.hint}>{anonymityNotice.title}. {anonymityNotice.body}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Entendido" onPress={() => void api.acknowledgeAnonymityNotice().then(() => queryClient.invalidateQueries({ queryKey: ['me'] }))}>
+            <Text style={styles.link}>Entendido</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <Pressable accessibilityRole="button" accessibilityLabel="Publicar reporte" disabled={create.isPending} onPress={() => void submit()} style={styles.send}>
         <Text style={styles.sendLabel}>{create.isPending ? 'Publicando…' : 'Publicar'}</Text>
       </Pressable>

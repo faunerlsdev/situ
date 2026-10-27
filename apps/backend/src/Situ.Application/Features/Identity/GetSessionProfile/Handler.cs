@@ -4,6 +4,7 @@ using Situ.Application.Common.Results;
 using Situ.Application.Features.Profiles;
 using Situ.Domain.Administration;
 using Situ.Domain.Guardianship;
+using Situ.Domain.Legal;
 using Situ.Domain.Identity;
 using Situ.Domain.Monetization;
 using Situ.Domain.Profiles;
@@ -57,7 +58,9 @@ public sealed record GetSessionProfileResponse(
     SessionPlanView Plan,
     SessionProfileView Profile,
     SessionGuardianView? Guardian,
-    DateTimeOffset? DeletionScheduledFor);
+    DateTimeOffset? DeletionScheduledFor,
+    string? Phone,
+    bool AnonymityNoticeAccepted);
 
 public sealed class GetSessionProfileHandler(
     IApplicationDbContext db,
@@ -152,7 +155,11 @@ public sealed class GetSessionProfileHandler(
                 profile?.IsFriendSharingActive(now) ?? false,
                 profile?.PreferAnonymousReports ?? true),
             guardian,
-            deletionScheduledFor));
+            deletionScheduledFor,
+            user.Phone?.Value,
+            await db.ConsentRecords.AnyAsync(
+                item => item.UserId == user.Id && item.DocumentType == LegalDocumentType.AnonymityNotice && item.RevokedAt == null,
+                cancellationToken)));
     }
 
     private string? AvatarUrl(Guid userId, UserProfile? profile, DateTimeOffset now)

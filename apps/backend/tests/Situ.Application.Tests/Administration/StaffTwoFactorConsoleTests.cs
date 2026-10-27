@@ -91,7 +91,7 @@ public class StaffTwoFactorConsoleTests
             UserName.Create(userName),
             PersonName.Create("Ana"),
             PersonName.Create("Pérez"),
-            PhoneNumber.Create("3005550199"),
+            PhoneNumber.Create("+573005550199"),
             "hashed:Clave123",
             new DateOnly(1990, 1, 1),
             country.Id,

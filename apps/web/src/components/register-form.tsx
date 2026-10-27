@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { City, Country, LegalDocument, Region } from '@situ/shared';
-import { adultAge, ageInYears, composeDateOfBirth, notify, presentError, registerSchema } from '@situ/shared';
+import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, notify, phonePurpose, presentError, registerSchema } from '@situ/shared';
 import type { RegisterValues } from '@situ/shared';
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -29,6 +29,7 @@ export function RegisterForm({
     defaultValues: {
       givenNames: '',
       surnames: '',
+      callingCode: '57',
       phone: '',
       userName: '',
       email: '',
@@ -134,7 +135,7 @@ export function RegisterForm({
         userName: values.userName,
         givenNames: values.givenNames,
         surnames: values.surnames,
-        phone: values.phone,
+        phone: values.phone ? composePhone(values.callingCode, values.phone) : '',
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
@@ -183,7 +184,16 @@ export function RegisterForm({
         <FormStatus error={formError} notice={null} />
         <TextInput id="givenNames" label="Nombres" autoComplete="given-name" error={errors.givenNames?.message} registration={form.register('givenNames')} />
         <TextInput id="surnames" label="Apellidos" autoComplete="family-name" error={errors.surnames?.message} registration={form.register('surnames')} />
+        <label className="grid gap-1 text-sm font-bold" htmlFor="calling-code">
+          Indicativo
+          <select id="calling-code" aria-label="Indicativo" className="min-h-11 rounded border border-app-border bg-app-input px-3" {...form.register('callingCode')}>
+            {callingCodes.map((item) => (
+              <option key={item.code} value={item.code}>{item.label}</option>
+            ))}
+          </select>
+        </label>
         <TextInput id="phone" label="Teléfono" type="tel" autoComplete="tel" error={errors.phone?.message} registration={form.register('phone')} />
+        <p className="text-sm text-app-muted">{phonePurpose}</p>
         <TextInput id="userName" label="Nombre de usuario" autoComplete="username" error={errors.userName?.message} registration={form.register('userName')} />
         <TextInput id="email" label="Correo" type="email" autoComplete="email" error={errors.email?.message} registration={form.register('email')} />
         <TextInput id="password" label="Contraseña" type="password" autoComplete="new-password" error={errors.password?.message} registration={form.register('password')} />

@@ -3,7 +3,9 @@ using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Guardianship.RequestGuardianConsent;
 using Situ.Application.Features.Legal;
+using Situ.Domain.Administration;
 using Situ.Domain.Common;
+using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
 using Situ.Domain.Legal;
 
@@ -44,11 +46,6 @@ public sealed class RegisterUserHandler(
         if (!PersonName.TryCreate(request.Surnames, out var surnames))
         {
             return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidSurnames());
-        }
-
-        if (!PhoneNumber.TryCreate(request.Phone, out var phone))
-        {
-            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
         }
 
         var country = await db.Countries
@@ -96,6 +93,25 @@ public sealed class RegisterUserHandler(
         }
 
         var now = clock.UtcNow;
+        var age = AgeCalculator.AgeOn(request.DateOfBirth, AgeCalculator.ToDate(now));
+        var phoneRequired = age >= MinorProtectionPolicy.AdultAge || await PhoneRequiredForMinorsAsync(cancellationToken);
+        PhoneNumber? phone = null;
+        if (string.IsNullOrWhiteSpace(request.Phone))
+        {
+            if (phoneRequired)
+            {
+                return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
+            }
+        }
+        else if (!PhoneNumber.TryCreate(request.Phone, out var parsed))
+        {
+            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
+        }
+        else
+        {
+            phone = parsed;
+        }
+
         User user;
         try
         {
@@ -194,6 +210,15 @@ public sealed class RegisterUserHandler(
         {
             return false;
         }
+    }
+
+    private async Task<bool> PhoneRequiredForMinorsAsync(CancellationToken cancellationToken)
+    {
+        var value = await db.SystemSettings
+            .Where(item => item.Key == SystemSettingKeys.PhoneRequiredForMinors)
+            .Select(item => item.Value)
+            .FirstOrDefaultAsync(cancellationToken);
+        return !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? Clip(string? value, int maxLength)

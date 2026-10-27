@@ -15,6 +15,18 @@ export type { ToastInput, ToastKind, ToastPlacement, ToastQueue, ToastRecord } f
 export { createDialogStore } from './core/feedback/dialogStore';
 export type { ConfirmRequest, ConfirmType } from './core/feedback/dialogStore';
 export { feedbackMessages, loginErrorMessages, notificationMessages, profileMessages } from './core/feedback/messages';
+export {
+  anonymityNotice,
+  anonymityNoticeAccepted,
+  anonymityStatus,
+  callingCodes,
+  composePhone,
+  isE164,
+  phonePurpose,
+  refreshCookieMaxAge,
+  shellTabHrefs,
+  socialTabsFrom,
+} from './product/decisions';
 export { alertModal, bindNotify, confirm, notify, presentError } from './core/feedback/notify';
 export {
   adultAge,

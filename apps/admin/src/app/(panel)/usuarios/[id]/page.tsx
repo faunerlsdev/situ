@@ -24,6 +24,7 @@ type Detail = {
   reportCount: number;
   complaintsReceived: number;
   sanctionCount: number;
+  maskedPhone?: string | null;
 };
 
 export default function UsuarioPage() {
@@ -34,7 +35,7 @@ export default function UsuarioPage() {
   const [until, setUntil] = useState('');
   const query = useQuery({
     queryKey: ['user', id, reveal],
-    queryFn: () => apiGet<Detail>(`admin/users/${id}${reveal ? '?revealEmail=true' : ''}`),
+    queryFn: () => apiGet<Detail>(`admin/users/${id}${reveal ? '?revealEmail=true&revealPhone=true' : ''}`),
     enabled: can(me.permissions, 'users.view'),
   });
   if (!can(me.permissions, 'users.view')) {
@@ -50,7 +51,8 @@ export default function UsuarioPage() {
           <div className="mt-4 grid gap-2">
             <p className="font-semibold">{user.userName}</p>
             <EmailReveal email={user.email} canReveal={!reveal && can(me.permissions, 'users.view_email')} onReveal={() => setReveal(true)} />
-            {reveal ? <p className="text-sm text-app-muted">Esta consulta queda registrada en la bitácora.</p> : null}
+            {reveal && user.maskedPhone ? <p>Teléfono {user.maskedPhone}</p> : null}
+            {reveal ? <p className="text-sm text-app-muted">Esta consulta queda registrada en la bitácora. El número completo no se muestra.</p> : null}
             <p>Estado {user.status}{user.isMinor ? ' · menor de edad' : ''} · plan {user.planCode}</p>
             <p>Miembro desde {user.memberSinceMonth}/{user.memberSinceYear}</p>
             <p>Dispositivos {user.deviceCount} · reportes públicos {user.reportCount} · denuncias {user.complaintsReceived} · sanciones {user.sanctionCount}</p>
