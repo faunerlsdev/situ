@@ -489,6 +489,32 @@ El detalle de roles, el comando del primer administrador y la sesión corta del 
 
 Responde `202` con `{ "accepted": true, "trackingCode": "TD-A1B2C3D4" }`. En el panel, `GET /api/v1/admin/takedowns` trae `daysRemaining` y `overdue`. `start-review`, `accept` y `reject` exigen el permiso `takedowns.handle`. Aceptar y rechazar piden `resolution`.
 
+## Amigos y perfil público
+
+La web todavía no tiene pantallas. Estos son los endpoints que va a consumir. Todos piden sesión. La base es `/api/v1`.
+
+`GET /users/search?userName=ana` busca el nombre de usuario exacto, de 3 a 30 caracteres. Si no hay coincidencia, si te bloquearon o si la pareja adulto/menor no está permitida, responde `200` con `{ "users": [] }`. No dice por qué. Una coincidencia válida trae solo `userId`, `userName`, `displayName` y `avatarUrl`. Hay un límite por minuto (`friends.search_per_minute`, 10) y la política HTTP `user-search`.
+
+`POST /friends/requests` con `{ "userId": "…" }` responde `{ "status": "sent" }` tanto si la solicitud se creó como si la otra persona no puede recibirla. `{ "status": "incoming" }` significa que esa persona ya te escribió. `409 friendship.already_friends` si ya son amigos. `409 friendship.rate_limited` si superas las pendientes (`friends.max_pending`, 30) o las del día (`friends.max_requests_per_day`, 20).
+
+`POST /friends/requests/{id}/accept`, `/reject` y `/cancel`. `DELETE /friends/{userId}` corta la amistad y la fila de ubicación compartida de esa pareja.
+
+`GET /friends` devuelve `{ "friends": [ { "userId", "userName", "displayName", "avatarUrl", "sharesLocation" } ] }`. `GET /friends/requests` devuelve `incoming` y `outgoing`.
+
+`POST /friends/invitations` con `{ "email": "ana@correo.com" }` siempre responde `{ "status": "sent" }` si el correo es válido, exista o no la cuenta. No envía el correo cuando el destinatario es un menor. El enlace es de un solo uso, vence a los 30 días y apunta a `/amigos/invitacion?token=`. `POST /friends/invitations/accept` con `{ "token": "…" }` lo consume y deja la solicitud pendiente.
+
+`PUT /me/profile-visibility`:
+
+```json
+{ "public": true, "consentVersion": "2026-10-27", "showBio": true, "showReports": true }
+```
+
+Un menor recibe `403 profile.minor_must_be_private`. Sin la versión vigente, `400 profile.consent_required`. Volver a privado es `{ "public": false }` y es inmediato. `GET /me/profile-visibility` trae el texto, la versión exigida, los interruptores y dos vistas: `strangerPreview` (null si estás privado: no apareces) y `friendPreview`.
+
+`GET /users/{userName}` es el perfil. Si no existe, está privado y no son amigos, está bloqueado o la pareja no está permitida, responde `404 profile.not_available` con el texto "No encontramos ese perfil." El perfil público muestra avatar, nombre visible, biografía, miembro desde mes y año, y reportes que no son anónimos. Un amigo también ve los de solo amigos. Nunca incluye correo, teléfono, fecha de nacimiento ni coordenadas.
+
+La clave `friends.allow_adult_minor` nace en `false`.
+
 ## Códigos de error
 
 | HTTP | code | Cuándo |
@@ -509,6 +535,18 @@ Responde `202` con `{ "accepted": true, "trackingCode": "TD-A1B2C3D4" }`. En el 
 | 400 | `report.too_many_files` | Más de 5 imágenes o 1 video |
 | 400 | `report.invalid_visibility` | Visibilidad distinta de Public o FriendsOnly |
 | 400 | `report.invalid_confirmation` | Voto distinto de StillThere o GoneNow |
+| 404 | `profile.not_available` | El perfil no existe, es privado para quien pregunta, está bloqueado o la pareja no puede relacionarse. El texto es siempre "No encontramos ese perfil." |
+| 403 | `profile.minor_must_be_private` | Un menor intenta hacerse público |
+| 400 | `profile.consent_required` | Falta la versión vigente del consentimiento |
+| 400 | `friendship.self` | La solicitud es para uno mismo |
+| 409 | `friendship.already_friends` | Ya son amigos |
+| 409 | `friendship.rate_limited` | Tope de solicitudes o de invitaciones |
+| 409 | `friendship.search_limited` | Demasiadas búsquedas en un minuto |
+| 409 | `friendship.not_pending` | La solicitud ya no está pendiente |
+| 403 | `friendship.not_allowed` | Quien actúa no puede resolver esa solicitud |
+| 404 | `friendship.not_found` | No hay una amistad aceptada con esa persona |
+| 404 | `invitation.not_valid` | El enlace no sirve, venció, ya se usó o el correo no coincide |
+| 400 | `invitation.email_invalid` | El correo no es válido |
 | 404 | `report.not_found` | No existe, o quien consulta no puede verlo |
 | 404 | `report.not_available` | Venció, fue retirado o está en revisión. `reportStatus` dice cuál, sin el motivo de moderación |
 | 403 | `report.not_author` | Otra persona intenta editar o borrar |

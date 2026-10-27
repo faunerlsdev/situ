@@ -1626,6 +1626,182 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SearchUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{userName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetPublicProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListFriendRequests"];
+        put?: never;
+        post: operations["SendFriendRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcceptFriendRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/requests/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RejectFriendRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/requests/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CancelFriendRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["RemoveFriend"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListFriends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["InviteFriendByEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/friends/invitations/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcceptFriendInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/profile-visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetProfileVisibility"];
+        put: operations["SetProfileVisibility"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/2fa/reset": {
         parameters: {
             query?: never;
@@ -2214,6 +2390,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcceptFriendInvitationResponse: {
+            status: string;
+        };
         AcknowledgeAnonymityNoticeResponse: {
             version: string;
             /** Format: date-time */
@@ -2533,6 +2712,27 @@ export interface components {
         ForgotPasswordRequest: {
             email: string;
         };
+        FriendListItem: {
+            /** Format: uuid */
+            userId: string;
+            userName: string;
+            displayName: string;
+            avatarUrl: null | string;
+            sharesLocation: boolean;
+        };
+        FriendRequestActionResponse: {
+            status: string;
+        };
+        FriendRequestItem: {
+            /** Format: uuid */
+            requestId: string;
+            direction: string;
+            /** Format: uuid */
+            userId: string;
+            userName: string;
+            displayName: string;
+            avatarUrl: null | string;
+        };
         GalleryAvatarBody: {
             /** Format: uuid */
             galleryItemId: string;
@@ -2665,6 +2865,12 @@ export interface components {
             cityId: string;
             name: string;
         };
+        InviteBody: {
+            email: string;
+        };
+        InviteFriendByEmailResponse: {
+            status: string;
+        };
         IssueRealtimeTicketResponse: {
             ticket: string;
             /** Format: date-time */
@@ -2715,6 +2921,13 @@ export interface components {
         };
         ListCountriesResponse: {
             countries: components["schemas"]["CountryItem"][];
+        };
+        ListFriendRequestsResponse: {
+            incoming: components["schemas"]["FriendRequestItem"][];
+            outgoing: components["schemas"]["FriendRequestItem"][];
+        };
+        ListFriendsResponse: {
+            friends: components["schemas"]["FriendListItem"][];
         };
         ListLegalDocumentsResponse: {
             documents: components["schemas"]["LegalDocumentItem"][];
@@ -2855,6 +3068,16 @@ export interface components {
             minSupported: string;
             latest: string;
         };
+        ProfileVisibilityView: {
+            public: boolean;
+            consentVersion: null | string;
+            requiredConsentVersion: string;
+            consentText: string;
+            showBio: boolean;
+            showReports: boolean;
+            strangerPreview: null | components["schemas"]["PublicProfileView"];
+            friendPreview: components["schemas"]["PublicProfileView"];
+        };
         PublicMapPin: {
             categoryCode: string;
             categoryName: string;
@@ -2864,6 +3087,28 @@ export interface components {
             latitude: number | string;
             /** Format: double */
             longitude: number | string;
+        };
+        PublicProfileView: {
+            /** Format: uuid */
+            userId: string;
+            userName: string;
+            displayName: string;
+            avatarUrl: null | string;
+            bio: null | string;
+            /** Format: int32 */
+            memberSinceYear: number | string;
+            /** Format: int32 */
+            memberSinceMonth: number | string;
+            sharesLocation: boolean;
+            isFriend: boolean;
+            reports: components["schemas"]["PublicReportCard"][];
+        };
+        PublicReportCard: {
+            /** Format: uuid */
+            id: string;
+            excerpt: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         ReactionBody: {
             type: string;
@@ -3075,6 +3320,16 @@ export interface components {
         RevokeGuardianConsentRequest: {
             token: string;
         };
+        SearchUsersResponse: {
+            users: components["schemas"]["UserCard"][];
+        };
+        SendFriendRequestBody: {
+            /** Format: uuid */
+            userId: string;
+        };
+        SendFriendRequestResponse: {
+            status: string;
+        };
         SessionAvatarView: {
             kind: string;
             url: null | string;
@@ -3276,6 +3531,13 @@ export interface components {
             name: string;
             description: string;
         };
+        UserCard: {
+            /** Format: uuid */
+            userId: string;
+            userName: string;
+            displayName: string;
+            avatarUrl: null | string;
+        };
         /** @enum {unknown} */
         UserStatus: "PendingEmailConfirmation" | "PendingGuardianConsent" | "Active" | "Suspended" | "Banned" | "DeletionRequested" | "Deleted";
         VerifyGuardianEmailCodeRequest: {
@@ -3284,6 +3546,12 @@ export interface components {
         };
         VerifyGuardianEmailRequest: {
             token: string;
+        };
+        VisibilityBody: {
+            public: boolean;
+            consentVersion: null | string;
+            showBio: null | boolean;
+            showReports: null | boolean;
         };
         WebSessionView: {
             /** Format: int32 */
@@ -5877,6 +6145,292 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    SearchUsers: {
+        parameters: {
+            query?: {
+                userName?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchUsersResponse"];
+                };
+            };
+        };
+    };
+    GetPublicProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicProfileView"];
+                };
+            };
+        };
+    };
+    ListFriendRequests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFriendRequestsResponse"];
+                };
+            };
+        };
+    };
+    SendFriendRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendFriendRequestBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SendFriendRequestResponse"];
+                };
+            };
+        };
+    };
+    AcceptFriendRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FriendRequestActionResponse"];
+                };
+            };
+        };
+    };
+    RejectFriendRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FriendRequestActionResponse"];
+                };
+            };
+        };
+    };
+    CancelFriendRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FriendRequestActionResponse"];
+                };
+            };
+        };
+    };
+    RemoveFriend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListFriends: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFriendsResponse"];
+                };
+            };
+        };
+    };
+    InviteFriendByEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteFriendByEmailResponse"];
+                };
+            };
+        };
+    };
+    AcceptFriendInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptFriendInvitationResponse"];
+                };
+            };
+        };
+    };
+    GetProfileVisibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileVisibilityView"];
+                };
+            };
+        };
+    };
+    SetProfileVisibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisibilityBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileVisibilityView"];
+                };
             };
         };
     };

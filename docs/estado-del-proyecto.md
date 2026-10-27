@@ -11,8 +11,8 @@ Se analizaron **147** requisitos (RF-XXX-NN).
 | Estado | Cantidad | % |
 | --- | ---: | ---: |
 | COMPLETO | 11 | 7,5 % |
-| PARCIAL | 69 | 46,9 % |
-| SOLO BACKEND | 36 | 24,5 % |
+| PARCIAL | 77 | 52,4 % |
+| SOLO BACKEND | 28 | 19,0 % |
 | NO INICIADO | 20 | 13,6 % |
 | DIFERIDO CONSCIENTE | 11 | 7,5 % |
 
@@ -21,7 +21,7 @@ Por fase del documento (cada ID en una sola fase):
 | Fase | IDs | Completo | Parcial | Solo backend | No iniciado | Diferido |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 1. MVP | 92 | 11 (12,0 %) | 65 (70,7 %) | 2 (2,2 %) | 13 (14,1 %) | 1 (1,1 %) |
-| 2. Social y vivo | 37 | 0 | 3 (8,1 %) | 27 (73,0 %) | 6 (16,2 %) | 1 (2,7 %) |
+| 2. Social y vivo | 37 | 0 | 11 (29,7 %) | 19 (51,4 %) | 6 (16,2 %) | 1 (2,7 %) |
 | 3. Monetización | 10 | 0 | 1 (10 %) | 7 (70 %) | 1 (10 %) | 1 (10 %) |
 | 4. Empresas | 8 | 0 | 0 | 0 | 0 | 8 (100 %) |
 | 5. Web live | 0 | — | — | — | — | — |
@@ -34,8 +34,8 @@ Por sección:
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Registro y acceso (AUT) | 12 | 5 | 5 | 0 | 2 | 0 |
 | Menores (MIN) | 12 | 2 | 6 | 2 | 2 | 0 |
-| Perfil (PER) | 6 | 0 | 3 | 3 | 0 | 0 |
-| Ubicación (UBI) | 11 | 0 | 0 | 7 | 4 | 0 |
+| Perfil (PER) | 6 | 0 | 6 | 0 | 0 | 0 |
+| Ubicación (UBI) | 11 | 0 | 1 | 6 | 4 | 0 |
 | Mapa (MAP) | 10 | 0 | 7 | 0 | 3 | 0 |
 | Menú (MEN) | 2 | 0 | 2 | 0 | 0 | 0 |
 | Panel chismosear (PAN) | 4 | 0 | 3 | 0 | 0 | 1 |
@@ -43,7 +43,7 @@ Por sección:
 | Reportes (REP) | 6 | 0 | 6 | 0 | 0 | 0 |
 | Anonimato (ANO) | 9 | 1 | 6 | 0 | 1 | 1 |
 | Transmisión (LIV) | 12 | 0 | 1 | 11 | 0 | 0 |
-| Amigos (AMI) | 4 | 0 | 0 | 4 | 0 | 0 |
+| Amigos (AMI) | 4 | 0 | 4 | 0 | 0 | 0 |
 | Notificaciones (NOT) | 7 | 0 | 7 | 0 | 0 | 0 |
 | Publicidad (MON) | 3 | 0 | 0 | 1 | 2 | 0 |
 | Suscripciones (SUS) | 4 | 0 | 1 | 1 | 1 | 1 |
@@ -99,16 +99,16 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | --- | --- | --- | --- | --- |
 | RF-PER-01 | Avatar genérico, galería o foto propia con recorte | PARCIAL | `ProfileEndpoints.cs`, `Profiles/Avatars/Handler.cs`, `apps/mobile/app/editar-perfil.tsx`, `apps/admin` avatares | Web sin perfil; no hay recorte |
 | RF-PER-02 | Editar nombre, usuario, biografía, ciudad y contraseña | PARCIAL | `UpdateMyProfile/Handler.cs`, `ChangePasswordEndpoint.cs`, pantallas móviles `editar-perfil` y `cambiar-contrasena` | Web sin estas pantallas |
-| RF-PER-03 | Privado por defecto; pasar a público muestra el ícono en el mapa | SOLO BACKEND | `UserProfile.CreateDefault` deja `Private`; `MakePublic` | Sin API ni pantalla |
-| RF-PER-04 | Un privado solo lo ven amigos y nunca el mapa general | SOLO BACKEND | `UserProfile.PublicPresence` | El mapa de reportes no dibuja personas |
+| RF-PER-03 | Privado por defecto; pasar a público muestra el ícono en el mapa | PARCIAL | `PUT /me/profile-visibility` y `apps/mobile/app/visibilidad.tsx`. El perfil nace privado | El mapa todavía no dibuja el ícono de la persona. La web no tiene la pantalla |
+| RF-PER-04 | Un privado solo lo ven amigos y nunca el mapa general | PARCIAL | `GET /users/{userName}` responde igual si no existe o si es privado y quien pregunta no es amigo | El mapa de reportes no dibuja personas |
 | RF-PER-05 | Bloquear y denunciar usuarios | PARCIAL | `InteractionEndpoints.cs` bloques y denuncias `ContentTargetType.User`, `apps/mobile/app/bloqueados.tsx` | La web denuncia reportes, no personas |
-| RF-PER-06 | Consentimiento explícito al hacerse público, con fecha y versión | SOLO BACKEND | `PublicProfileConsentedAt` en `MakePublic` | Nadie llama `MakePublic` desde la aplicación |
+| RF-PER-06 | Consentimiento explícito al hacerse público, con fecha y versión | PARCIAL | `PUT /me/profile-visibility` exige la versión vigente, guarda fecha y texto. Un menor recibe `profile.minor_must_be_private` | La web no tiene la pantalla |
 | RF-UBI-01 | Interruptor de ubicación con amigos, apagado, con consentimiento | SOLO BACKEND | `EnableFriendLocationSharing` | Sin endpoint ni pantalla |
 | RF-UBI-02 | Solo amigos aceptados la ven | SOLO BACKEND | `FriendPresence` | El mapa no consulta amistades |
 | RF-UBI-03 | Todos los amigos o una lista | SOLO BACKEND | `LocationSharingMode.SelectedFriends`, tabla `location_share_recipients` | Sin API |
 | RF-UBI-04 | Duración: 1 h, 8 h o hasta apagar | SOLO BACKEND | `FriendLocationSharingEndsAt` | Sin UI |
 | RF-UBI-05 | Indicador permanente mientras se comparte | NO INICIADO | — | Todo |
-| RF-UBI-06 | Al bloquear o eliminar un amigo, deja de ver la ubicación al instante | SOLO BACKEND | Bloqueos en `Interaction/Blocks/Handler.cs` | No hay emisión de ubicación que cortar |
+| RF-UBI-06 | Al bloquear o eliminar un amigo, deja de ver la ubicación al instante | PARCIAL | `RemoveFriendHandler` y el bloqueo total llaman `SeverRelationshipAsync`: cancelan la amistad y borran `location_share_recipients` de esa pareja | No hay canal de ubicación en vivo que cerrar. El interruptor global de compartir con otros amigos se queda encendido |
 | RF-UBI-07 | Solo el móvil emite; la web muestra y no emite | NO INICIADO | — | No hay canal de ubicación |
 | RF-UBI-08 | Sin señal, "última vez visto" | NO INICIADO | — | Todo |
 | RF-UBI-09 | Modo invisible temporal | SOLO BACKEND | `ActivateGhostMode` | Sin API |
@@ -125,12 +125,12 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | RF-MAP-04 | Tarjeta con categoría, hora, distancia, autor, "Sigue ahí", comentar, compartir y denunciar | PARCIAL | Tarjeta móvil y `apps/web/src/features/reports/report-panel.tsx` | Sin prueba en dispositivo ni E2E con sesión |
 | RF-MAP-05 | Transmisiones con cámara roja y pulso | NO INICIADO | El mapa real no las pinta; `map-placeholder.tsx` es un adelanto | Todo |
 | RF-MAP-06 | Avatares públicos y de amigos que comparten ubicación | NO INICIADO | `GetReportMap` no lee `UserLocation` | Todo en el mapa |
-| RF-MAP-07 | Filtros por categoría, tiempo y tipo (amigos, en vivo) | PARCIAL | Chips de categoría, última hora y hoy en móvil y web | "Solo amigos" y "solo en vivo" no existen; la web manda `friendsOnly: false` |
+| RF-MAP-07 | Filtros por categoría, tiempo y tipo (amigos, en vivo) | PARCIAL | Chips de categoría, última hora, hoy y "Solo amigos" en el móvil. `type=friends` deja los reportes cuyo autor soy yo o un amigo aceptado | Falta "solo en vivo". La web sigue mandando `friendsOnly: false` |
 | RF-MAP-08 | TTL por categoría; sale por vencimiento o por "Ya no está" | PARCIAL | `ExpireReportsHandler`, `ConfirmReport/Handler.cs`, `ReportMaintenanceService.cs` | No visto en un dispositivo |
 | RF-MAP-09 | Modo día/noche y buscador de lugares | NO INICIADO | El formulario móvil sí geocodifica (`report-form.tsx` `searchAddress`) | El mapa no busca ni cambia de modo |
 | RF-MAP-10 | Íconos en tiempo real sin recargar | PARCIAL | Hub `/hubs/map`, `use-map-realtime.ts`, `apps/web/src/features/map/use-map-live.ts`, `MapRealtimeTests.cs` | Sin prueba del socket con un ticket real |
 | RF-MEN-01 | El ícono de usuario abre el menú | PARCIAL | `apps/mobile/app/(tabs)/perfil.tsx` y `cuenta.tsx` | La web no tiene ese menú |
-| RF-MEN-02 | Perfil, reportes, amigos, notificaciones, privacidad, suscripción, legales, ayuda y salir | PARCIAL | `cuenta.tsx` abre legales, dispositivos, notificaciones y salir | Suscripción no está; amigos es un texto vacío; web sin menú |
+| RF-MEN-02 | Perfil, reportes, amigos, notificaciones, privacidad, suscripción, legales, ayuda y salir | PARCIAL | `cuenta.tsx` y el menú abren amigos, visibilidad del perfil, legales, dispositivos, notificaciones y salir | Suscripción no está; la web no tiene menú |
 | RF-PAN-01 | Barra "Quiero chismosear" o "Quiero reportar", texto remoto, y micrófono | PARCIAL | `panel.browse_copy` / `panel.report_copy`, `GetAppConfig`, barra en móvil y web | El micrófono no está |
 | RF-PAN-02 | Cuadrícula de categorías con ícono, nombre y descripción | PARCIAL | Sheet móvil y web `map-screen.tsx` | En la web, elegir categoría abre "próximamente" |
 | RF-PAN-03 | Dictado por voz para buscar categoría o redactar | DIFERIDO CONSCIENTE | Comentario en `map-screen.tsx`: "dictado por voz al final del MVP" | Todo |
@@ -176,10 +176,10 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | RF-LIV-10 | Sin publicidad durante la transmisión | SOLO BACKEND | No hay anuncios en ninguna superficie | No hay transmisión donde aplicarlo |
 | RF-LIV-11 | Los menores solo transmiten a amigos | SOLO BACKEND | `MinorProtectionPolicy.CanStreamTo`, prueba de dominio | Sin transmisión |
 | RF-LIV-12 | Copia interna cifrada de corta vida | SOLO BACKEND | `InternalCopyExpiresAt`, setting `live.internal_copy_retention_days` | Sin cifrado ni archivo |
-| RF-AMI-01 | Buscar por nombre de usuario | SOLO BACKEND | `Friendship.cs`; `apps/mobile/app/(tabs)/amigos.tsx` es un texto | Sin endpoint de búsqueda de personas |
-| RF-AMI-02 | Invitar por correo | SOLO BACKEND | `FriendInvitation.cs` | Sin envío |
-| RF-AMI-03 | Enviar, aceptar, rechazar, cancelar, eliminar y bloquear | SOLO BACKEND | Métodos en `Friendship.cs`; el bloqueo de usuarios sí está en interacción | La amistad no tiene API |
-| RF-AMI-04 | Lista con perfil, reportes y ubicación si la comparten | SOLO BACKEND | La pestaña Amigos no lista a nadie | Todo lo visible |
+| RF-AMI-01 | Buscar por nombre de usuario | PARCIAL | `GET /users/search` coincide el usuario exacto. La pestaña Amigos del móvil busca y muestra la tarjeta mínima | La web no busca personas |
+| RF-AMI-02 | Invitar por correo | PARCIAL | `POST /friends/invitations` envía un enlace de un solo uso. La respuesta es la misma si la cuenta existe, no existe o es un menor | La web no tiene la pantalla. El enlace abre una página que todavía no está |
+| RF-AMI-03 | Enviar, aceptar, rechazar, cancelar, eliminar y bloquear | PARCIAL | `POST /friends/requests` y aceptar, rechazar, cancelar y `DELETE /friends/{userId}`. El bloqueo total ya cortaba la relación | La web no tiene estas acciones |
+| RF-AMI-04 | Lista con perfil, reportes y ubicación si la comparten | PARCIAL | `GET /friends` trae avatar y si comparte ubicación. La ficha de amigo abre reportes con nombre | La web no lista amigos. El mapa aún no dibuja a la persona |
 | RF-NOT-01 | Activar o apagar cada tipo | PARCIAL | `NotificationEndpoints.cs`, `notification-settings.tsx` | Web sin ajustes; "en vivo" sale deshabilitado |
 | RF-NOT-02 | Ciudad de interés y ciudades adicionales | PARCIAL | `GET/PUT /me/interest-cities`; la ciudad del registro alimenta el dispatch | No confirmé el alta de ciudades extra en la pantalla |
 | RF-NOT-03 | Radio (1 km) y categorías de interés | PARCIAL | `notification-settings.tsx` (`RADIUS_STEPS`), `category-interests` | — |
@@ -320,8 +320,8 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 
 ### Después del MVP
 
-7. **Amigos.** Alcance: buscar, invitar, aceptar y listar. Cierra RF-AMI-01 a 04. Esfuerzo: L.
-8. **Perfil público y ubicación.** Alcance: consentimiento, interruptores, emisión solo desde el móvil y avatares en el mapa. Cierra RF-PER-03, RF-PER-04, RF-PER-06, RF-UBI-01 a 08 y RF-MAP-06. Esfuerzo: L.
+7. **Amigos en la web.** El backend y el móvil ya buscan, invitan, aceptan y listan (RF-AMI-01 a 04, parcial). Falta la web, que consumirá los endpoints de `docs/api.md`. Esfuerzo: M.
+8. **Ubicación en el mapa.** El consentimiento y los interruptores del perfil público ya están (RF-PER-03, RF-PER-04, RF-PER-06, parcial). Falta emitir la ubicación solo desde el móvil, cortar el canal en vivo al bloquear (el gancho ya borra la fila) y dibujar avatares. Cierra RF-UBI-01 a 08 y RF-MAP-06. Esfuerzo: L.
 9. **Transmisión.** Alcance: proveedor de video, ícono en el mapa, ver desde la web, retención de 2 meses. Cierra RF-LIV-01 a 12, RF-MAP-05, RF-MIN-09 y RF-WEB-02. Esfuerzo: L.
 10. **Planes y noticias.** Alcance: cobro móvil y web, puntaje y primicia. La factura electrónica queda para después de producción. Cierra RF-SUS-01 a 03, RF-MON-01, RF-MON-03 y RF-ALG-01 a 06. Esfuerzo: L.
 

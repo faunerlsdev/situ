@@ -48,6 +48,13 @@ public sealed class UserProfile : AggregateRoot
 
     public ProfileVisibility Visibility { get; private set; }
     public DateTimeOffset? PublicProfileConsentedAt { get; private set; }
+    public string? PublicProfileConsentVersion { get; private set; }
+
+    /// <summary>When false, people who can open the profile do not see the biography.</summary>
+    public bool ShowBio { get; private set; } = true;
+
+    /// <summary>When false, people who can open the profile do not see named reports.</summary>
+    public bool ShowPublicReports { get; private set; } = true;
 
     public bool ShowRealtimeLocation { get; private set; } = true;
 
@@ -104,7 +111,9 @@ public sealed class UserProfile : AggregateRoot
     }
 
     /// <summary>Turns the profile public after explicit consent. Not allowed for minors (RF-MIN-04).</summary>
-    public void MakePublic(int age, DateTimeOffset consentedAt)
+    public void MakePublic(int age, DateTimeOffset consentedAt) => MakePublic(age, consentedAt, "unversioned");
+
+    public void MakePublic(int age, DateTimeOffset consentedAt, string consentVersion)
     {
         Guard.That(
             MinorProtectionPolicy.CanHavePublicProfile(age),
@@ -113,7 +122,14 @@ public sealed class UserProfile : AggregateRoot
 
         Visibility = ProfileVisibility.Public;
         PublicProfileConsentedAt = consentedAt;
+        PublicProfileConsentVersion = Guard.NotEmpty(consentVersion, nameof(consentVersion), 40);
         ShowRealtimeLocation = true;
+    }
+
+    public void SetPublicSwitches(bool showBio, bool showReports)
+    {
+        ShowBio = showBio;
+        ShowPublicReports = showReports;
     }
 
     public void MakePrivate() => Visibility = ProfileVisibility.Private;

@@ -52,6 +52,51 @@ import { toAppError } from './normalize';
 import type { HttpClient, HttpClientOptions } from './client';
 import { httpTimeouts } from '../config/env';
 
+export type UserCard = {
+  userId: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+};
+
+export type UserSearchResponse = { users: UserCard[] };
+
+export type FriendListItem = UserCard & { sharesLocation: boolean };
+
+export type FriendListResponse = { friends: FriendListItem[] };
+
+export type FriendRequestItem = UserCard & { requestId: string; direction: string };
+
+export type FriendRequestsResponse = { incoming: FriendRequestItem[]; outgoing: FriendRequestItem[] };
+
+export type FriendActionResponse = { status: string };
+
+export type PublicReportCard = { id: string; excerpt: string; createdAt: string };
+
+export type PublicProfile = {
+  userId: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  memberSinceYear: number;
+  memberSinceMonth: number;
+  sharesLocation: boolean;
+  isFriend: boolean;
+  reports: PublicReportCard[];
+};
+
+export type ProfileVisibility = {
+  public: boolean;
+  consentVersion: string | null;
+  requiredConsentVersion: string;
+  consentText: string;
+  showBio: boolean;
+  showReports: boolean;
+  strangerPreview: PublicProfile | null;
+  friendPreview: PublicProfile;
+};
+
 export type ApiClientOptions = {
   baseUrl: string;
   getAccessToken?: () => string | null;
@@ -575,6 +620,87 @@ export function createServices(http: HttpClient) {
       return http.request<{ blocks: BlockListItem[] }>({
         method: 'GET',
         url: '/api/v1/blocks',
+        requiresAuth: true,
+      });
+    },
+    searchUsers(userName: string) {
+      return http.request<UserSearchResponse>({
+        url: `/api/v1/users/search?userName=${encodeURIComponent(userName)}`,
+        requiresAuth: true,
+      });
+    },
+    publicProfile(userName: string) {
+      return http.request<PublicProfile>({
+        url: `/api/v1/users/${encodeURIComponent(userName)}`,
+        requiresAuth: true,
+      });
+    },
+    friends() {
+      return http.request<FriendListResponse>({ url: '/api/v1/friends', requiresAuth: true });
+    },
+    friendRequests() {
+      return http.request<FriendRequestsResponse>({ url: '/api/v1/friends/requests', requiresAuth: true });
+    },
+    sendFriendRequest(userId: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: '/api/v1/friends/requests',
+        data: { userId },
+        requiresAuth: true,
+      });
+    },
+    acceptFriendRequest(id: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: `/api/v1/friends/requests/${encodeURIComponent(id)}/accept`,
+        requiresAuth: true,
+      });
+    },
+    rejectFriendRequest(id: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: `/api/v1/friends/requests/${encodeURIComponent(id)}/reject`,
+        requiresAuth: true,
+      });
+    },
+    cancelFriendRequest(id: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: `/api/v1/friends/requests/${encodeURIComponent(id)}/cancel`,
+        requiresAuth: true,
+      });
+    },
+    removeFriend(userId: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/friends/${encodeURIComponent(userId)}`,
+        requiresAuth: true,
+      });
+    },
+    inviteFriend(email: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: '/api/v1/friends/invitations',
+        data: { email },
+        requiresAuth: true,
+      });
+    },
+    acceptFriendInvitation(token: string) {
+      return http.request<FriendActionResponse>({
+        method: 'POST',
+        url: '/api/v1/friends/invitations/accept',
+        data: { token },
+        requiresAuth: true,
+      });
+    },
+    profileVisibility() {
+      return http.request<ProfileVisibility>({ url: '/api/v1/me/profile-visibility', requiresAuth: true });
+    },
+    setProfileVisibility(body: { public: boolean; consentVersion?: string | null; showBio?: boolean | null; showReports?: boolean | null }) {
+      return http.request<ProfileVisibility>({
+        method: 'PUT',
+        url: '/api/v1/me/profile-visibility',
+        data: body,
         requiresAuth: true,
       });
     },

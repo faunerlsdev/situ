@@ -187,14 +187,10 @@ internal static class InteractionAccess
             .ToListAsync(cancellationToken);
         db.LocationShareRecipients.RemoveRange(shares);
 
-        var profiles = await db.UserProfiles
-            .Where(item => item.UserId == left || item.UserId == right)
-            .ToListAsync(cancellationToken);
-        foreach (var profile in profiles)
-        {
-            profile.DisableFriendLocationSharing();
-            profile.MarkUpdated(now);
-        }
+        // The pair stops here: the friendship is no longer accepted and these rows are gone.
+        // The global "share with friends" switch stays on so other friends are not cut off.
+        // The next location channel must read accepted friendships and these rows, and stop
+        // pushing this pair as soon as they disappear. There is no live channel yet.
     }
 }
 

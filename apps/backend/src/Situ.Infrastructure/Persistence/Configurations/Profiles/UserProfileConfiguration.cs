@@ -13,6 +13,9 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         builder.Property(e => e.DisplayName).HasMaxLength(60);
         builder.Property(e => e.PreferAnonymousReports).HasDefaultValue(true);
         builder.Property(e => e.Bio).HasMaxLength(UserProfile.BioMaxLength);
+        builder.Property(e => e.PublicProfileConsentVersion).HasMaxLength(40);
+        builder.Property(e => e.ShowBio).HasDefaultValue(true);
+        builder.Property(e => e.ShowPublicReports).HasDefaultValue(true);
         builder.Property(e => e.AvatarUrl).HasMaxLength(500);
         builder.Required<UserProfile, User>(e => e.UserId);
         builder.Optional<UserProfile, AvatarGalleryItem>(e => e.AvatarGalleryItemId);

@@ -9,7 +9,9 @@ using Situ.Domain.Common;
 using Situ.Domain.Identity;
 using Situ.Domain.Moderation;
 using Situ.Domain.Monetization;
+using Situ.Domain.Profiles;
 using Situ.Domain.Reports;
+using Situ.Domain.Social;
 
 namespace Situ.Application.Features.Administration.Users;
 
@@ -85,7 +87,9 @@ public sealed record AdminUserDetail(
     int ReportCount,
     int ComplaintsReceived,
     int SanctionCount,
-    string? MaskedPhone);
+    string? MaskedPhone,
+    int FriendCount,
+    string ProfileVisibility);
 
 public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
     : IHandler<GetAdminUserRequest, Result<AdminUserDetail>>
@@ -134,6 +138,10 @@ public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
                 || (item.TargetType == ContentTargetType.Comment && publicCommentIds.Contains(item.TargetId)),
             cancellationToken);
         var sanctions = await db.ModerationActions.CountAsync(item => item.TargetType == ContentTargetType.User && item.TargetId == user.Id, cancellationToken);
+        var friends = await db.Friendships.CountAsync(
+            item => item.Status == FriendshipStatus.Accepted && (item.RequesterId == user.Id || item.AddresseeId == user.Id),
+            cancellationToken);
+        var profile = await db.UserProfiles.FirstOrDefaultAsync(item => item.UserId == user.Id, cancellationToken);
         return Result<AdminUserDetail>.Success(new AdminUserDetail(
             user.Id,
             user.UserName.Value,
@@ -148,7 +156,9 @@ public sealed class GetAdminUserHandler(IApplicationDbContext db, IClock clock)
             reports,
             complaints,
             sanctions,
-            maskedPhone));
+            maskedPhone,
+            friends,
+            profile?.Visibility == ProfileVisibility.Public ? "Public" : "Private"));
     }
 
     private async Task<string> PlanCodeAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)

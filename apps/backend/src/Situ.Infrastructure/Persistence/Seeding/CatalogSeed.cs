@@ -273,6 +273,13 @@ internal static class CatalogSeed
         [SystemSettingKeys.SocialTabsEnabled] = "Muestra las pestañas Mensajes y Chisme. Apagado las oculta sin borrar las pantallas.",
         [SystemSettingKeys.WebSessionRefreshDays] = "Días de la sesión web. Cada renovación vuelve a contar este plazo.",
         [SystemSettingKeys.WebSessionRememberDays] = "Días de la sesión web cuando la persona marca recordarme en este dispositivo.",
+        [SystemSettingKeys.FriendsAllowAdultMinor] = "Si es false, un adulto y un menor no pueden ser amigos ni enviarse solicitudes.",
+        [SystemSettingKeys.FriendsMaxPending] = "Solicitudes de amistad pendientes que una persona puede tener abiertas.",
+        [SystemSettingKeys.FriendsMaxRequestsPerDay] = "Solicitudes de amistad que una persona puede enviar en 24 horas.",
+        [SystemSettingKeys.FriendsMaxInvitationsPerDay] = "Invitaciones por correo que una persona puede enviar en 24 horas.",
+        [SystemSettingKeys.FriendsSearchPerMinute] = "Búsquedas de usuario que una persona puede hacer en un minuto.",
+        [SystemSettingKeys.ProfilePublicConsentVersion] = "Versión del texto que hay que aceptar para hacer público el perfil.",
+        [SystemSettingKeys.ProfilePublicConsentText] = "Texto del consentimiento para hacer público el perfil.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)

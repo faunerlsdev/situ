@@ -18,6 +18,8 @@ SITU es un mapa para contar lo que está pasando en un lugar: un accidente, un h
 
 Puedes publicar con tu nombre de usuario o como anónimo. Las demás personas no ven quién eres cuando eliges el anonimato. Puedes comentar, confirmar si el hecho sigue ahí y recibir un aviso cuando algo ocurre cerca o en tu ciudad.
 
+Puedes buscar a alguien por su nombre de usuario exacto, invitarlo por correo y aceptar la amistad. El perfil nace privado. Un adulto puede hacerlo público si acepta el texto que explica qué verán los demás. Un menor no puede tener perfil público y no puede ser amigo de un adulto.
+
 Si un contenido no debería estar, lo denuncias. Si no quieres ver a alguien, lo bloqueas. Un menor de edad necesita la autorización de su representante para usar la cuenta. Desde los 14 años, con esa autorización. Puedes eliminar tu cuenta en la app o en la página pública de eliminación.
 
 Esta versión no tiene anuncios ni compras.
@@ -28,6 +30,8 @@ Cuenta de revisión: la crea el comando `store:seed-reviewer` descrito en `docs/
 
 Para ver un reporte no hace falta estar en la calle. La cuenta puede publicar desde el mapa. La ubicación se pide solo con la app abierta. No hay inicio de sesión con Apple, Google ni Facebook. No hay anuncios ni compras. La transmisión en vivo no está en esta versión.
 
+Amigos está en el menú: búsqueda por usuario exacto, solicitudes e invitación por correo. Visibilidad de mi perfil explica el consentimiento. Un menor no puede hacerse público. Un adulto y un menor no quedan como amigos.
+
 La eliminación de la cuenta está en Mi cuenta. También está en `https://app.DOMINIO/cuenta/eliminar`.
 
 ## Clasificación de edad y contenido
@@ -36,7 +40,7 @@ Responde así:
 
 - Contenido generado por usuarios: sí. Hay filtro de términos, denuncia, bloqueo y un plazo de respuesta visible.
 - Ubicación: sí, solo mientras se usa la app. Precisa y aproximada.
-- Menores: la cuenta se puede crear desde los 14 años. Por debajo de la mayoría de edad hace falta la autorización de un representante. No está dirigida a menores de 13 ni de 14.
+- Menores: la cuenta se puede crear desde los 14 años. Por debajo de la mayoría de edad hace falta la autorización de un representante. No está dirigida a menores de 13 ni de 14. El perfil de un menor permanece privado. Un adulto y un menor no pueden ser amigos.
 - Violencia, accidentes y hechos de la calle: pueden aparecer en un reporte porque eso es lo que la gente publica. No es contenido gráfico propio de la app. Marca la frecuencia que ofrezca el cuestionario como ocasional, no como el tema principal de un juego.
 - Anuncios: no.
 - Compras: no. Los planes Free, Basic, Pro y Advanced existen en el producto, pero esta versión no vende nada dentro de la app. Cuando se cobre, hay que cambiar la declaración de compras, el formulario de pagos y, si aplica, el de suscripciones.

@@ -34,6 +34,12 @@ public sealed class PublicLinks(EmailOptions options) : IPublicLinks
         return $"{root}/tutor/gestionar?token={Uri.EscapeDataString(plainToken)}";
     }
 
+    public string FriendInvitation(string plainToken)
+    {
+        var root = options.WebPublicBaseUrl.TrimEnd('/');
+        return $"{root}/amigos/invitacion?token={Uri.EscapeDataString(plainToken)}";
+    }
+
     public string Absolute(string path)
     {
         var relative = path.StartsWith('/') ? path : "/" + path;

@@ -10,6 +10,12 @@ La clave `registration.phone_required_for_minors` nace en `true`: un menor debe 
 
 Pregunta: ¿pedir el teléfono a un menor cumple la minimización, o debe nacer opcional para esa edad?
 
+## Pregunta abierta: amistad entre adulto y menor
+
+La clave `friends.allow_adult_minor` nace en `false`. Con ese valor, un adulto y un menor no pueden ser amigos ni enviarse solicitudes. Los menores solo se relacionan con menores. Un menor solo se encuentra si alguien escribe su nombre de usuario exacto y no sale en listados ni en sugerencias. La invitación por correo no se envía cuando el destinatario resulta ser menor, y la API responde igual que si el correo no tuviera cuenta.
+
+Decisión de producto, pendiente de revisión legal: ¿la separación adulto/menor debe seguir siendo la regla, o hay un caso (por ejemplo un representante) en el que un adulto pueda ser amigo de un menor sin abrir el perfil público?
+
 ## Otras preguntas ya registradas
 
 - Si la firma digital interna del correo de constancia basta como prueba de la autorización del representante (Ley 527 de 1999).

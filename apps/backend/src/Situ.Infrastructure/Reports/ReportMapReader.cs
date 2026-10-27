@@ -70,7 +70,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
             && !(report.IsAnonymous && query.AnonymousBlockedIds.Contains(report.AuthorId))
             && (query.Since is null || report.CreatedAt >= query.Since)
             && (query.CategoryIds.Count == 0 || query.CategoryIds.Contains(report.CategoryId))
-            && (!query.FriendsOnly || report.Visibility == ContentVisibility.FriendsOnly)
+            && (!query.FriendsOnly || report.AuthorId == query.ViewerId || query.FriendIds.Contains(report.AuthorId))
             && (report.Visibility == ContentVisibility.Public
                 || report.AuthorId == query.ViewerId
                 || query.FriendIds.Contains(report.AuthorId)))
@@ -182,7 +182,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
               AND ST_Intersects(r.location, ST_MakeEnvelope(@minLon, @minLat, @maxLon, @maxLat, 4326)::geography)
               AND (@categoryCount = 0 OR r.category_id = ANY(@categories))
               AND (CAST(@since AS timestamptz) IS NULL OR r.created_at >= CAST(@since AS timestamptz))
-              AND (@friendsOnly = false OR r.visibility = 'FriendsOnly')
+              AND (@friendsOnly = false OR r.author_id = @viewer OR r.author_id = ANY(@friends))
               AND (@minor = false OR c.is_adult_only = false)
               AND NOT (r.author_id = ANY(@blocked))
               AND NOT (r.is_anonymous AND r.author_id = ANY(@anonymousBlocked))
@@ -218,7 +218,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
               AND ST_Intersects(r.location, ST_MakeEnvelope(@minLon, @minLat, @maxLon, @maxLat, 4326)::geography)
               AND (@categoryCount = 0 OR r.category_id = ANY(@categories))
               AND (CAST(@since AS timestamptz) IS NULL OR r.created_at >= CAST(@since AS timestamptz))
-              AND (@friendsOnly = false OR r.visibility = 'FriendsOnly')
+              AND (@friendsOnly = false OR r.author_id = @viewer OR r.author_id = ANY(@friends))
               AND (@minor = false OR c.is_adult_only = false)
               AND NOT (r.author_id = ANY(@blocked))
               AND NOT (r.is_anonymous AND r.author_id = ANY(@anonymousBlocked))

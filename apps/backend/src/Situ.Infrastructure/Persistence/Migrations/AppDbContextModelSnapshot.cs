@@ -972,6 +972,62 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Días de la sesión web cuando la persona marca recordarme en este dispositivo.",
                             Key = "web.session_remember_days",
                             Value = "90"
+                        },
+                        new
+                        {
+                            Id = new Guid("e54152a3-1bc2-8e35-f396-1586d7ccd73c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Si es false, un adulto y un menor no pueden ser amigos ni enviarse solicitudes.",
+                            Key = "friends.allow_adult_minor",
+                            Value = "false"
+                        },
+                        new
+                        {
+                            Id = new Guid("9d2644d0-57c2-debd-eb6e-acbfa5c45264"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Solicitudes de amistad pendientes que una persona puede tener abiertas.",
+                            Key = "friends.max_pending",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("a67e6ba4-67e3-2861-42d8-e911dae879ba"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Solicitudes de amistad que una persona puede enviar en 24 horas.",
+                            Key = "friends.max_requests_per_day",
+                            Value = "20"
+                        },
+                        new
+                        {
+                            Id = new Guid("9f7d1f8e-8d78-2284-74b4-a136c9b40f31"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Invitaciones por correo que una persona puede enviar en 24 horas.",
+                            Key = "friends.max_invitations_per_day",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Id = new Guid("3a59a26f-4995-8c54-60e8-bb7fdb2c47a6"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Búsquedas de usuario que una persona puede hacer en un minuto.",
+                            Key = "friends.search_per_minute",
+                            Value = "10"
+                        },
+                        new
+                        {
+                            Id = new Guid("23a30842-e839-4e23-259d-b779e99e7618"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión del texto que hay que aceptar para hacer público el perfil.",
+                            Key = "profile.public_consent_version",
+                            Value = "2026-10-27"
+                        },
+                        new
+                        {
+                            Id = new Guid("e522a2eb-6914-7c38-b881-be47b8e8741d"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto del consentimiento para hacer público el perfil.",
+                            Key = "profile.public_consent_text",
+                            Value = "Si haces público tu perfil, cualquier persona con cuenta puede ver tu nombre visible, tu usuario, tu foto, tu biografía y los reportes que publicas con tu nombre. Tu ubicación en el mapa puede mostrarse si dejas activa la ubicación en tiempo real. Puedes volver a privado cuando quieras. Un menor de edad no puede tener perfil público."
                         });
                 });
 
@@ -4981,6 +5037,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("prefer_anonymous_reports");
 
+                    b.Property<string>("PublicProfileConsentVersion")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("public_profile_consent_version");
+
                     b.Property<DateTimeOffset?>("PublicProfileConsentedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("public_profile_consented_at");
@@ -4988,6 +5049,18 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<bool>("ShareLocationWithFriends")
                         .HasColumnType("boolean")
                         .HasColumnName("share_location_with_friends");
+
+                    b.Property<bool>("ShowBio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("show_bio");
+
+                    b.Property<bool>("ShowPublicReports")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("show_public_reports");
 
                     b.Property<bool>("ShowRealtimeLocation")
                         .HasColumnType("boolean")

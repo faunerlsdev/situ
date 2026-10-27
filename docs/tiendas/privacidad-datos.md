@@ -10,13 +10,15 @@ Al borrar la cuenta, la app y la página `https://app.${DOMAIN_ROOT}/cuenta/elim
 
 | Dato | ¿Se recoge? | Finalidad | ¿Se comparte con terceros? | Cifrado en tránsito | Borrado |
 | --- | --- | --- | --- | --- | --- |
-| Correo | Sí, obligatorio | Cuenta, confirmación e inicio de sesión | Sí, con el proveedor de correo, solo para enviar el mensaje | Sí | Se anonimiza al terminar la gracia |
+| Correo | Sí, obligatorio | Cuenta, confirmación, inicio de sesión e invitación de amistad | Sí, con el proveedor de correo, solo para enviar el mensaje. La invitación no dice si ese correo ya tiene cuenta | Sí | Se anonimiza al terminar la gracia. Las invitaciones de esa persona se borran con la cuenta |
 | Fecha de nacimiento | Sí, obligatoria | Saber si es menor y pedir autorización del representante | No | Sí | Se sustituye al terminar la gracia |
 | Teléfono | Sí. Obligatorio para menores; opcional para adultos | Seguridad de la cuenta. No se muestra a otras personas | No | Sí | Se borra al terminar la gracia |
 | Ubicación precisa | Sí, mientras se usa la app | Centrar el mapa, publicar un reporte, confirmar que estás cerca y, si la persona lo activa, alertas de proximidad | Sí, con Google Maps, cuando el mapa de Android usa el SDK de Google. La API de SITU también recibe el punto del reporte o de la alerta | Sí | La alerta de proximidad la borra el servidor a los 30 minutos. El punto de un reporte vive con ese reporte |
 | Ubicación aproximada | Sí, el permiso grueso va junto al preciso | La misma del mapa y de la distancia | La misma que la precisa | Sí | La misma que la precisa |
 | Fotos y videos | Sí, solo si la persona los elige | Reporte o foto de perfil | No con un tercero. Otras personas de SITU ven el reporte publicado | Sí | Se borran con el reporte o con la foto de perfil. La eliminación de cuenta anonimiza al autor |
 | Contenido de usuario | Sí: nombre visible, usuario, bio, reportes y comentarios | La función de la red | No con un tercero. Lo ven otras personas de SITU según la visibilidad del reporte | Sí | La bio y el nombre se anonimizan con la cuenta. El texto de un reporte sigue la retención del reporte |
+| Relaciones de amistad | Sí: quién invitó a quién y el estado de la solicitud | Mostrar amigos, solicitudes y el filtro de reportes de amigos | No con un tercero. El amigo ve el nombre de usuario, el nombre visible y el avatar | Sí | Se borran al eliminar la cuenta. Bloquear o eliminar a un amigo corta esa relación al instante |
+| Perfil público | Solo si un adulto lo enciende y acepta el texto vigente | Que otras personas con cuenta vean nombre visible, usuario, foto, bio y reportes con nombre | No con un tercero. Lo ve quien tenga sesión, si el perfil es público. Un menor no puede encenderlo | Sí | Volver a privado es inmediato. La fecha y la versión del consentimiento se guardan. La eliminación de cuenta deja el perfil privado |
 | Identificadores del dispositivo | Sí: UUID creado por la app y token de Expo Push | Sesión, límite de dispositivos y notificaciones | El token de push se envía a Expo para entregar la notificación. No se usa para anuncios ni seguimiento | Sí | El token se borra al cerrar la sesión o al eliminar la cuenta |
 | Diagnósticos | No. No hay SDK de fallos ni de analítica | — | No | — | — |
 
@@ -26,13 +28,15 @@ En el formulario marca también: no se venden datos, no se usan para publicidad 
 
 | Tipo | Vinculado a la identidad | Seguimiento | Finalidad | Terceros |
 | --- | --- | --- | --- | --- |
-| Correo | Sí | No | Funcionalidad de la app | Proveedor de correo, para el envío |
+| Correo | Sí | No | Funcionalidad de la app | Proveedor de correo, para confirmación, acceso e invitaciones de amistad |
 | Fecha de nacimiento | Sí | No | Funcionalidad de la app | Ninguno |
 | Teléfono | Sí | No | Funcionalidad de la app | Ninguno |
 | Ubicación precisa | Sí | No | Funcionalidad de la app | Google Maps, si la build de iOS lleva clave de Google. Si no lleva clave, el mapa es de Apple |
 | Ubicación aproximada | Sí | No | Funcionalidad de la app | La misma que la precisa |
 | Fotos o videos | Sí | No | Funcionalidad de la app | Ninguno. Otras personas de SITU ven lo publicado |
 | Contenido de usuario | Sí | No | Funcionalidad de la app | Ninguno. Otras personas de SITU ven lo publicado |
+| Relaciones de amistad | Sí | No | Funcionalidad de la app | Ninguno. El amigo ve usuario, nombre visible y avatar |
+| Perfil público | Sí, solo si un adulto lo acepta | No | Funcionalidad de la app | Ninguno. Quien tiene sesión ve el perfil público. Un menor no puede hacerlo público |
 | Identificadores del dispositivo | Sí | No | Funcionalidad de la app | Expo, solo el token de push |
 | Diagnósticos | No se recogen | No | — | — |
 

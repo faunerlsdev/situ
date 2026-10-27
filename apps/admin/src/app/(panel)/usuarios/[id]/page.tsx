@@ -25,6 +25,8 @@ type Detail = {
   complaintsReceived: number;
   sanctionCount: number;
   maskedPhone?: string | null;
+  friendCount?: number;
+  profileVisibility?: string;
 };
 
 export default function UsuarioPage() {
@@ -56,6 +58,8 @@ export default function UsuarioPage() {
             <p>Estado {user.status}{user.isMinor ? ' · menor de edad' : ''} · plan {user.planCode}</p>
             <p>Miembro desde {user.memberSinceMonth}/{user.memberSinceYear}</p>
             <p>Dispositivos {user.deviceCount} · reportes públicos {user.reportCount} · denuncias {user.complaintsReceived} · sanciones {user.sanctionCount}</p>
+            <p>Amigos {user.friendCount ?? 0} · perfil {user.profileVisibility === 'Public' ? 'público' : 'privado'}</p>
+            <p className="text-sm text-app-muted">Las denuncias de este perfil entran a la cola de denuncias como Usuario. Esta ficha no muestra identidad anónima.</p>
             {can(me.permissions, 'users.suspend') ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {['warn', 'suspend', 'ban', 'reinstate', 'force-logout'].map((item) => (

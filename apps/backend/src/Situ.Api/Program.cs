@@ -182,6 +182,15 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("user-search", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
     options.AddPolicy("username-lookup", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),

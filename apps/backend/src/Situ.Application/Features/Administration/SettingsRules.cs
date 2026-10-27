@@ -71,6 +71,13 @@ internal static partial class SettingsRules
             [SystemSettingKeys.ModerationResponseCommitment] = value => Text(value, 280),
             [SystemSettingKeys.PhoneRequiredForMinors] = Bool,
             [SystemSettingKeys.SocialTabsEnabled] = Bool,
+            [SystemSettingKeys.FriendsAllowAdultMinor] = Bool,
+            [SystemSettingKeys.FriendsMaxPending] = value => Int(value, 1, 200),
+            [SystemSettingKeys.FriendsMaxRequestsPerDay] = value => Int(value, 1, 100),
+            [SystemSettingKeys.FriendsMaxInvitationsPerDay] = value => Int(value, 1, 50),
+            [SystemSettingKeys.FriendsSearchPerMinute] = value => Int(value, 1, 60),
+            [SystemSettingKeys.ProfilePublicConsentVersion] = value => Text(value, 40),
+            [SystemSettingKeys.ProfilePublicConsentText] = value => Text(value, 1000),
             [SystemSettingKeys.WebSessionRefreshDays] = value => Int(value, 1, 365),
             [SystemSettingKeys.WebSessionRememberDays] = value => Int(value, 1, 365),
         };

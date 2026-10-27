@@ -102,6 +102,8 @@ function RootNavigator() {
         <Stack.Screen name="reportes" />
         <Stack.Screen name="bloqueados" />
         <Stack.Screen name="cuenta" />
+        <Stack.Screen name="visibilidad" />
+        <Stack.Screen name="usuario/[userName]" />
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="cambiar-contrasena" />
         <Stack.Screen name="dispositivos" />
@@ -113,6 +115,7 @@ function RootNavigator() {
       <Stack.Screen name="r/[id]" options={{ animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="adios" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="confirmar-correo" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
+      <Stack.Screen name="invitacion" options={{ animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="restablecer" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="tutor" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
     </Stack>

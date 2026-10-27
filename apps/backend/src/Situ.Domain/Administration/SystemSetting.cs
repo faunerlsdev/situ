@@ -98,6 +98,13 @@ public static class SystemSettingKeys
     public const string SocialTabsEnabled = "features.social_tabs";
     public const string WebSessionRefreshDays = "web.session_refresh_days";
     public const string WebSessionRememberDays = "web.session_remember_days";
+    public const string FriendsAllowAdultMinor = "friends.allow_adult_minor";
+    public const string FriendsMaxPending = "friends.max_pending";
+    public const string FriendsMaxRequestsPerDay = "friends.max_requests_per_day";
+    public const string FriendsMaxInvitationsPerDay = "friends.max_invitations_per_day";
+    public const string FriendsSearchPerMinute = "friends.search_per_minute";
+    public const string ProfilePublicConsentVersion = "profile.public_consent_version";
+    public const string ProfilePublicConsentText = "profile.public_consent_text";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -161,5 +168,12 @@ public static class SystemSettingKeys
         [SocialTabsEnabled] = "false",
         [WebSessionRefreshDays] = "30",
         [WebSessionRememberDays] = "90",
+        [FriendsAllowAdultMinor] = "false",
+        [FriendsMaxPending] = "30",
+        [FriendsMaxRequestsPerDay] = "20",
+        [FriendsMaxInvitationsPerDay] = "10",
+        [FriendsSearchPerMinute] = "10",
+        [ProfilePublicConsentVersion] = "2026-10-27",
+        [ProfilePublicConsentText] = "Si haces público tu perfil, cualquier persona con cuenta puede ver tu nombre visible, tu usuario, tu foto, tu biografía y los reportes que publicas con tu nombre. Tu ubicación en el mapa puede mostrarse si dejas activa la ubicación en tiempo real. Puedes volver a privado cuando quieras. Un menor de edad no puede tener perfil público.",
     };
 }

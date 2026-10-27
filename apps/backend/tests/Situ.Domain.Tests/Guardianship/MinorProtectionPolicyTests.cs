@@ -45,6 +45,15 @@ public class MinorProtectionPolicyTests
         Assert.True(MinorProtectionPolicy.CanComment(30, ContentVisibility.Public, false));
     }
 
+    [Fact]
+    public void Adults_and_minors_are_not_friends_unless_the_setting_allows_it()
+    {
+        Assert.False(MinorProtectionPolicy.CanBeFriends(17, 30, false));
+        Assert.True(MinorProtectionPolicy.CanBeFriends(16, 17, false));
+        Assert.True(MinorProtectionPolicy.CanBeFriends(20, 30, false));
+        Assert.True(MinorProtectionPolicy.CanBeFriends(17, 30, true));
+    }
+
     [Theory]
     [InlineData(17, false, false)]
     [InlineData(17, true, true)]

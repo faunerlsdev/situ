@@ -24,6 +24,13 @@ public static class MinorProtectionPolicy
     /// <summary>Minors keep a private profile and never appear on the public map (RF-MIN-04).</summary>
     public static bool CanHavePublicProfile(int age) => age >= AdultAge;
 
+    /// <summary>
+    /// When <paramref name="allowAdultMinor"/> is false, an adult and a minor cannot be friends.
+    /// Minors only relate to minors. The flag is a system setting and defaults to false.
+    /// </summary>
+    public static bool CanBeFriends(int ageA, int ageB, bool allowAdultMinor) =>
+        allowAdultMinor || IsMinor(ageA) == IsMinor(ageB);
+
     /// <summary>A minor cannot upload their own photo as an avatar. Gallery icons stay available.</summary>
     public static bool CanUploadProfilePhoto(int age) => age >= AdultAge;
 

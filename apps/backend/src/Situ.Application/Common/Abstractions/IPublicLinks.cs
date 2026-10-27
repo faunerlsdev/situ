@@ -13,6 +13,8 @@ public interface IPublicLinks
 
     string GuardianManage(string plainToken);
 
+    string FriendInvitation(string plainToken);
+
     /// <summary>Turns a relative API path into an absolute URL the phone can load.</summary>
     string Absolute(string path);
 }

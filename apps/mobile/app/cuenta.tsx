@@ -80,6 +80,12 @@ export default function CuentaScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.devices} onPress={() => router.push('/dispositivos')} style={styles.row}>
         <Text style={styles.label}>{profileMessages.devices}</Text>
       </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Amigos" onPress={() => router.push('/amigos')} style={styles.row}>
+        <Text style={styles.label}>Amigos</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => router.push('/visibilidad')} style={styles.row}>
+        <Text style={styles.label}>Visibilidad de mi perfil</Text>
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.terms} onPress={() => void Linking.openURL(legal.termsUrl)} style={styles.row}>
         <Text style={styles.label}>{profileMessages.terms}</Text>
       </Pressable>

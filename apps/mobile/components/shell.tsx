@@ -137,7 +137,7 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
   const { signOut } = useSession();
   const insets = useSafeAreaInsets();
 
-  function go(href: '/perfil' | '/amigos' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
+  function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
     onClose();
     router.push(href);
   }
@@ -153,6 +153,9 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
           </Pressable>
           <Pressable accessibilityRole="button" onPress={() => go('/amigos')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Amigos</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => go('/visibilidad')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>Visibilidad de mi perfil</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Mis reportes" onPress={() => go('/reportes')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Mis reportes</Text>
