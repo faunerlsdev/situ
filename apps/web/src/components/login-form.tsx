@@ -10,8 +10,7 @@ import { useForm } from 'react-hook-form';
 import { InlineAlert } from '@/components/feedback/inline';
 import { SituLoader } from '@/components/feedback/situ-loader';
 import { useDelayedFlag } from '@/components/feedback/use-feedback';
-import { postBff, setGuardianAccessToken } from '@/lib/http';
-import { webDeviceId } from '@/lib/browser-auth';
+import { postBff } from '@/lib/http';
 import { useLockoutLabel } from './use-lockout';
 
 export function LoginForm() {
@@ -29,11 +28,10 @@ export function LoginForm() {
     setRetryAfter(null);
 
     try {
-      await postBff('/api/auth/login', { ...values, deviceIdentifier: webDeviceId() });
+      await postBff('/api/auth/login', values);
       router.push('/mapa');
     } catch (cause) {
-      if (cause instanceof AppError && cause.apiCode === 'auth.guardian_consent_required' && cause.accessToken) {
-        setGuardianAccessToken(cause.accessToken);
+      if (cause instanceof AppError && cause.apiCode === 'auth.guardian_consent_required') {
         router.push('/representante');
         return;
       }

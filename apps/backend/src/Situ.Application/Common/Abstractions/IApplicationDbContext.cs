@@ -55,6 +55,8 @@ public interface IApplicationDbContext
 
     DbSet<SecurityToken> SecurityTokens { get; }
 
+    DbSet<RealtimeTicket> RealtimeTickets { get; }
+
     DbSet<User> Users { get; }
 
     DbSet<UserDevice> UserDevices { get; }

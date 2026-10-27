@@ -1,12 +1,12 @@
 'use client';
 
+import { DataView, EyeIcon, IconButton, PageHeader, PrimaryButton, fieldClass } from '@/components/catalog';
 import { useMe } from '@/components/frame';
 import { PanelState } from '@/components/states';
 import { apiGet } from '@/lib/client';
 import { can } from '@/lib/navigation';
 import { denied } from '@/lib/problem';
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useState } from 'react';
 
 type Search = { users: { id: string; userName: string; email: string; status: string; isMinor: boolean }[] };
@@ -24,21 +24,34 @@ export default function UsuariosPage() {
     return <PanelState loading={false} error={denied()}>{null}</PanelState>;
   }
 
+  const users = search.data?.users ?? [];
   return (
     <section>
-      <h1 className="font-display text-3xl">Usuarios</h1>
-      <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={(event) => { event.preventDefault(); setSubmitted(query.trim()); }}>
-        <label className="flex-1">Buscar por usuario o correo exacto
-          <input minLength={3} value={query} onChange={(event) => setQuery(event.target.value)} className="mt-1 w-full rounded border border-app-border bg-app-input px-3 py-2" />
+      <PageHeader title="Usuarios" hint="Busca por usuario o por el correo exacto." />
+      <form className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={(event) => { event.preventDefault(); setSubmitted(query.trim()); }}>
+        <label className="min-w-0 flex-1 text-sm">Buscar
+          <input minLength={3} value={query} onChange={(event) => setQuery(event.target.value)} className={fieldClass} />
         </label>
-        <button type="submit" className="self-end rounded bg-app-primary px-4 py-2 font-semibold text-app-on">Buscar</button>
+        <PrimaryButton type="submit">Buscar</PrimaryButton>
       </form>
-      <PanelState loading={search.isFetching} error={search.error} empty={Boolean(submitted) && (search.data?.users.length ?? 0) === 0}>
-        <ul className="mt-4 grid gap-2">
-          {search.data?.users.map((user) => (
-            <li key={user.id} className="break-all"><Link href={`/usuarios/${user.id}`} className="font-semibold text-app-primary">{user.userName}</Link> · {user.email} · {user.status}{user.isMinor ? ' · menor' : ''}</li>
-          ))}
-        </ul>
+      <PanelState loading={search.isFetching && submitted.length >= 3} error={search.error}>
+        {submitted ? (
+          <div className="mt-4">
+            <DataView
+              columns={['Usuario', 'Correo', 'Estado']}
+              emptyLabel="No hay cuentas con esa búsqueda."
+              rows={users.map((user) => ({
+                id: user.id,
+                cells: [
+                  <span key="name" className="font-semibold">{user.userName}{user.isMinor ? ' · menor' : ''}</span>,
+                  <span key="email" className="break-all">{user.email}</span>,
+                  user.status,
+                ],
+                actions: <IconButton label={`Ver ${user.userName}`} href={`/usuarios/${user.id}`}><EyeIcon /></IconButton>,
+              }))}
+            />
+          </div>
+        ) : null}
       </PanelState>
     </section>
   );

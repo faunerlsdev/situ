@@ -49,7 +49,8 @@ public sealed class AdminEndpoints : IEndpoint
         admin.MapPost("/users/{id:guid}/force-logout", (Guid id, ReasonBody body, HttpContext http, ICurrentUser current, IHandler<SanctionUserRequest, Result> handler, CancellationToken cancellationToken) =>
             Sanction(id, "force-logout", body, http, current, handler, cancellationToken)).WithName("ForceLogoutAdminUser");
 
-        admin.MapGet("/categories", Categories).WithName("ListAdminCategories").WithSummary("Catálogo completo, con traducciones y excepciones.");
+        admin.MapGet("/categories", Categories).WithName("ListAdminCategories").WithSummary("Catálogo completo, con vigencia, orden y reportes activos.").Produces<ListAdminCategoriesResponse>();
+        admin.MapGet("/categories/{id:guid}", Category).WithName("GetAdminCategory").WithSummary("Una categoría con su vigencia, orden y reportes activos.").Produces<AdminCategoryView>();
         admin.MapPost("/categories", CreateCategory).WithName("AdminCreateCategory");
         admin.MapPut("/categories/{id:guid}", UpdateCategory).WithName("AdminUpdateCategory");
         admin.MapPost("/categories/{id:guid}/active", SetActive).WithName("AdminSetCategoryActive");
@@ -112,6 +113,9 @@ public sealed class AdminEndpoints : IEndpoint
 
     private static async Task<IResult> Categories(ICurrentUser current, IHandler<ListAdminCategoriesRequest, Result<ListAdminCategoriesResponse>> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(new ListAdminCategoriesRequest(current.UserId ?? Guid.Empty), cancellationToken)).ToHttpResult();
+
+    private static async Task<IResult> Category(Guid id, ICurrentUser current, IHandler<GetAdminCategoryRequest, Result<AdminCategoryView>> handler, CancellationToken cancellationToken) =>
+        (await handler.Handle(new GetAdminCategoryRequest(current.UserId ?? Guid.Empty, id), cancellationToken)).ToHttpResult();
 
     private static async Task<IResult> CreateCategory(CreateReportCategoryRequest body, HttpContext http, ICurrentUser current, IHandler<CreateReportCategoryRequest, Result<Guid>> handler, CancellationToken cancellationToken) =>
         (await handler.Handle(body with { ActorId = current.UserId ?? Guid.Empty, IpAddress = Ip(http) }, cancellationToken)).ToHttpResult();

@@ -292,6 +292,43 @@ public class AdminPanelFlowTests
         Assert.Equal("icon.invalid_dimensions", processor.Process(png, 1024 * 1024, 128, 1024).Error!.Code);
     }
 
+    [Fact]
+    public async Task Category_catalog_returns_ttl_status_order_weight_and_the_reports_active_right_now()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var staff = Person(db, "gestor@correo.com", "gestor", new DateOnly(1990, 1, 1));
+        var category = ReportCategory.Create("hurto", "Hurto", "Robo en la vía.", "/b.png", "/m.png", "#112233", 4, 90, 2.5);
+        db.ReportCategories.Add(category);
+        var live = Report.Create(staff.Id, category.Id, null, new GeoPoint(4.71, -74.07), "Sigue en la esquina.", false, false, TimeSpan.FromHours(2), Now);
+        var gone = Report.Create(staff.Id, category.Id, null, new GeoPoint(4.71, -74.07), "Esto ya venció.", false, false, TimeSpan.FromHours(2), Now);
+        gone.Expire(Now);
+        db.Reports.AddRange(live, gone);
+        await db.SaveChangesAsync();
+        await Grant(db, staff.Id, StaffPermissionCodes.CategoriesManage);
+
+        var list = await new ListAdminCategoriesHandler(db, clock).Handle(new ListAdminCategoriesRequest(staff.Id), CancellationToken.None);
+        var row = Assert.Single(list.Value!.Categories);
+        Assert.Equal(90, row.TtlMinutes);
+        Assert.Equal(2.5, row.ImportanceWeight);
+        Assert.True(row.IsActive);
+        Assert.Equal(4, row.SortOrder);
+        Assert.Equal(1, row.ActiveReportCount);
+
+        var json = JsonSerializer.Serialize(list.Value, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Assert.Contains("\"ttlMinutes\":90", json);
+        Assert.Contains("\"importanceWeight\":2.5", json);
+        Assert.Contains("\"isActive\":true", json);
+        Assert.Contains("\"sortOrder\":4", json);
+        Assert.Contains("\"activeReportCount\":1", json);
+
+        var one = await new GetAdminCategoryHandler(db, clock).Handle(new GetAdminCategoryRequest(staff.Id, category.Id), CancellationToken.None);
+        Assert.Equal(90, one.Value!.TtlMinutes);
+        Assert.Equal(1, one.Value.ActiveReportCount);
+        var missing = await new GetAdminCategoryHandler(db, clock).Handle(new GetAdminCategoryRequest(staff.Id, Guid.CreateVersion7()), CancellationToken.None);
+        Assert.Equal("category.not_found", missing.Error!.Code);
+    }
+
     private static SubmitTakedownRequest Request(string email, string? website) =>
         new("Ana Pérez", email, "Report", Guid.CreateVersion7(), "Aparezco en este reporte y pido el retiro.", website, 3000, "10.1.1.1");
 

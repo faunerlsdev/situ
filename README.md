@@ -11,10 +11,10 @@ La lógica de negocio vive en el backend. Los clientes la consumen.
 | Ruta | Qué es |
 | --- | --- |
 | `apps/backend` | API .NET 10 (`Situ.Api`, `Situ.Application`, `Situ.Domain`, `Situ.Infrastructure`) |
-| `apps/web` | App web, puerto 3000 |
+| `apps/web` | App web, puerto 3002 |
 | `apps/admin` | Panel de administración, puerto 3001 |
 | `apps/landing` | Sitio de producto, puerto 3003 |
-| `apps/support` | Centro de ayuda, puerto 3002 |
+| `apps/support` | Centro de ayuda, puerto 3004 |
 | `apps/mobile` | App Expo (SDK 58) con Expo Router |
 | `packages/shared` | Tokens de marca, tipos y cliente HTTP |
 | `packages/config` | TypeScript y ESLint compartidos |
@@ -218,10 +218,10 @@ El canal de Android es `zone-alerts` en la app y en el campo `channelId` del pus
 | Script | Qué hace |
 | --- | --- |
 | `pnpm dev:api` | `dotnet watch` de `Situ.Api` en http://localhost:5080 |
-| `pnpm dev:web` | Next.js en http://localhost:3000 |
+| `pnpm dev:web` | Next.js en http://localhost:3002 |
 | `pnpm dev:admin` | Panel en http://localhost:3001 |
 | `pnpm dev:landing` | Next.js en http://localhost:3003 |
-| `pnpm dev:support` | Next.js en http://localhost:3002 |
+| `pnpm dev:support` | Next.js en http://localhost:3004 |
 | `pnpm dev:mobile` | Metro de Expo (http://localhost:8081) |
 | `pnpm api:test` | Pruebas de dominio y de arquitectura |
 | `pnpm typecheck` | `tsc` de los paquetes TypeScript vía Turbo |

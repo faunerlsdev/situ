@@ -78,15 +78,26 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         };
         bearer.Events = new JwtBearerEvents
         {
-            OnMessageReceived = context =>
+            OnMessageReceived = async context =>
             {
+                var path = context.HttpContext.Request.Path;
+                var ticket = context.Request.Query["ticket"].ToString();
+                if (MapHubAuth.ReadTicketFromQuery(path, ticket))
+                {
+                    var exchanged = await RealtimeTicketExchange.TryExchangeAsync(context.HttpContext.RequestServices, ticket, context.HttpContext.RequestAborted);
+                    if (exchanged is not null)
+                    {
+                        context.Token = exchanged;
+                    }
+
+                    return;
+                }
+
                 var accessToken = context.Request.Query["access_token"].ToString();
-                if (MapHubAuth.ReadAccessTokenFromQuery(context.HttpContext.Request.Path, accessToken))
+                if (MapHubAuth.ReadAccessTokenFromQuery(path, accessToken))
                 {
                     context.Token = accessToken;
                 }
-
-                return Task.CompletedTask;
             },
         };
     });

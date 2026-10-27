@@ -5,7 +5,7 @@ import { AppError, confirm, messageFromUnknown, notify } from '@situ/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { SituLoader } from '@/components/feedback/situ-loader';
-import { api, setGuardianAccessToken } from '@/lib/http';
+import { api, postBff } from '@/lib/http';
 
 function remaining(iso: string | null, now: number): string {
   if (!iso) {
@@ -105,8 +105,7 @@ export function GuardianWait() {
   }
 
   function leave() {
-    setGuardianAccessToken(null);
-    router.push('/login');
+    void postBff('/api/auth/sign-out').finally(() => router.push('/login'));
   }
 
   return (

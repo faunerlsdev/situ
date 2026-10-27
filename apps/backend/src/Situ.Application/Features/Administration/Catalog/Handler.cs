@@ -6,10 +6,13 @@ using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Profiles;
+using Situ.Domain.Reports;
 
 namespace Situ.Application.Features.Administration.Catalog;
 
 public sealed record ListAdminCategoriesRequest(Guid ActorId);
+
+public sealed record GetAdminCategoryRequest(Guid ActorId, Guid CategoryId);
 
 public sealed record AdminTranslationView(string Locale, string Name, string Description);
 
@@ -29,12 +32,13 @@ public sealed record AdminCategoryView(
     double ImportanceWeight,
     string MediaRequirement,
     bool IsAdultOnly,
+    int ActiveReportCount,
     IReadOnlyList<AdminTranslationView> Translations,
     IReadOnlyList<AdminOverrideView> Overrides);
 
 public sealed record ListAdminCategoriesResponse(IReadOnlyList<AdminCategoryView> Categories, int CatalogVersion);
 
-public sealed class ListAdminCategoriesHandler(IApplicationDbContext db)
+public sealed class ListAdminCategoriesHandler(IApplicationDbContext db, IClock clock)
     : IHandler<ListAdminCategoriesRequest, Result<ListAdminCategoriesResponse>>
 {
     public async Task<Result<ListAdminCategoriesResponse>> Handle(ListAdminCategoriesRequest request, CancellationToken cancellationToken)
@@ -47,25 +51,77 @@ public sealed class ListAdminCategoriesHandler(IApplicationDbContext db)
         var categories = await db.ReportCategories.OrderBy(item => item.SortOrder).ToListAsync(cancellationToken);
         var translations = await db.ReportCategoryTranslations.ToListAsync(cancellationToken);
         var overrides = await db.ReportCategoryOverrides.ToListAsync(cancellationToken);
+        var counts = await ActiveReportCounts.LoadAsync(db, clock, cancellationToken);
         var settings = await ReportSettings.LoadAsync(db, cancellationToken);
         var version = ReportSettings.Int(settings, SystemSettingKeys.ReportCatalogVersion, 1);
-        var views = categories.Select(item => new AdminCategoryView(
-            item.Id,
-            item.Code,
-            item.Name,
-            item.Description,
-            item.ButtonIconUrl,
-            item.MapIconUrl,
-            item.ColorHex,
-            item.SortOrder,
-            item.IsActive,
-            item.TtlMinutes,
-            item.ImportanceWeight,
-            item.MediaRequirement.ToString(),
-            item.IsAdultOnly,
-            translations.Where(row => row.CategoryId == item.Id).Select(row => new AdminTranslationView(row.Locale, row.Name, row.Description)).ToList(),
-            overrides.Where(row => row.CategoryId == item.Id).Select(row => new AdminOverrideView(row.CountryId, row.CityId, row.IsEnabled, row.TtlMinutes)).ToList())).ToList();
+        var views = categories.Select(item => CategoryCatalog.ToView(
+            item,
+            translations,
+            overrides,
+            counts.GetValueOrDefault(item.Id))).ToList();
         return Result<ListAdminCategoriesResponse>.Success(new ListAdminCategoriesResponse(views, version));
+    }
+}
+
+public sealed class GetAdminCategoryHandler(IApplicationDbContext db, IClock clock)
+    : IHandler<GetAdminCategoryRequest, Result<AdminCategoryView>>
+{
+    public async Task<Result<AdminCategoryView>> Handle(GetAdminCategoryRequest request, CancellationToken cancellationToken)
+    {
+        if (await AdminSupport.Allow(db, request.ActorId, StaffPermissionCodes.CategoriesManage, cancellationToken) is { } denied)
+        {
+            return Result<AdminCategoryView>.Failure(denied);
+        }
+
+        var category = await db.ReportCategories.SingleOrDefaultAsync(item => item.Id == request.CategoryId, cancellationToken);
+        if (category is null)
+        {
+            return Result<AdminCategoryView>.Failure(Error.NotFound("category.not_found", "No encontramos esa categoría."));
+        }
+
+        var translations = await db.ReportCategoryTranslations.Where(item => item.CategoryId == category.Id).ToListAsync(cancellationToken);
+        var overrides = await db.ReportCategoryOverrides.Where(item => item.CategoryId == category.Id).ToListAsync(cancellationToken);
+        var counts = await ActiveReportCounts.LoadAsync(db, clock, cancellationToken);
+        return Result<AdminCategoryView>.Success(CategoryCatalog.ToView(category, translations, overrides, counts.GetValueOrDefault(category.Id)));
+    }
+}
+
+internal static class CategoryCatalog
+{
+    public static AdminCategoryView ToView(
+        ReportCategory category,
+        IReadOnlyList<ReportCategoryTranslation> translations,
+        IReadOnlyList<ReportCategoryOverride> overrides,
+        int activeReportCount) =>
+        new(
+            category.Id,
+            category.Code,
+            category.Name,
+            category.Description,
+            category.ButtonIconUrl,
+            category.MapIconUrl,
+            category.ColorHex,
+            category.SortOrder,
+            category.IsActive,
+            category.TtlMinutes,
+            category.ImportanceWeight,
+            category.MediaRequirement.ToString(),
+            category.IsAdultOnly,
+            activeReportCount,
+            translations.Where(item => item.CategoryId == category.Id).Select(item => new AdminTranslationView(item.Locale, item.Name, item.Description)).ToArray(),
+            overrides.Where(item => item.CategoryId == category.Id).Select(item => new AdminOverrideView(item.CountryId, item.CityId, item.IsEnabled, item.TtlMinutes)).ToArray());
+}
+
+internal static class ActiveReportCounts
+{
+    public static async Task<Dictionary<Guid, int>> LoadAsync(IApplicationDbContext db, IClock clock, CancellationToken cancellationToken)
+    {
+        var now = clock.UtcNow;
+        var ids = await db.Reports
+            .Where(report => report.Status == ReportStatus.Active && report.ExpiresAt > now)
+            .Select(report => report.CategoryId)
+            .ToListAsync(cancellationToken);
+        return ids.GroupBy(id => id).ToDictionary(group => group.Key, group => group.Count());
     }
 }
 

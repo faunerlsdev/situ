@@ -2325,6 +2325,55 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.ToTable("login_attempts");
                 });
 
+            modelBuilder.Entity("Situ.Domain.Identity.RealtimeTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_realtime_tickets");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_realtime_tickets_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_realtime_tickets_user_id");
+
+                    b.ToTable("realtime_tickets");
+                });
+
             modelBuilder.Entity("Situ.Domain.Identity.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6299,6 +6348,16 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_login_attempts_user_id");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Identity.RealtimeTicket", b =>
+                {
+                    b.HasOne("Situ.Domain.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_realtime_tickets_user_id");
                 });
 
             modelBuilder.Entity("Situ.Domain.Identity.RefreshToken", b =>

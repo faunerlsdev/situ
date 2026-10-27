@@ -56,9 +56,9 @@ export const brandRadius = {
 } as const;
 
 export const sites = {
-  web: 'http://localhost:3000',
+  web: 'http://localhost:3002',
   landing: 'http://localhost:3003',
-  support: 'http://localhost:3002',
+  support: 'http://localhost:3004',
   admin: 'http://localhost:3001',
 } as const;
 

@@ -18,7 +18,7 @@ const bareRoutes = new Set([
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  if (bareRoutes.has(pathname)) {
+  if (bareRoutes.has(pathname) || pathname.startsWith('/r/') || pathname.startsWith('/reportar')) {
     return (
       <main id="contenido" className="min-h-dvh">
         {children}

@@ -6,7 +6,7 @@ El hub avisa que algo cambió. No manda el reporte. Cada teléfono pide el conte
 
 `/hubs/map` (SignalR, WebSockets).
 
-Autenticación: política `User`. El token de acceso va en el header `Authorization` en la negociación HTTP. En el WebSocket va en la query `access_token`, y el servidor solo lee esa query en `/hubs/map`. El token trae `did`. El dispositivo tiene que existir y no estar revocado. Una cuenta de personal se rechaza.
+Autenticación: política `User`. El token de acceso va en el header `Authorization` en la negociación HTTP. En el WebSocket del teléfono va en la query `access_token`, y el servidor solo lee esa query en `/hubs/map`. La web no pone el access token en el navegador: pide `POST /api/v1/auth/realtime-ticket` (sesión obligatoria) y abre el WebSocket directo, sin negociación, con la query `ticket`. Así el ticket se presenta una sola vez. Ese ticket dura 30 segundos, es de un solo uso, queda ligado al usuario y al dispositivo web, y el hub lo invalida al aceptarlo. Si el socket se cae, la web pide otro ticket. La query `ticket` solo se lee en `/hubs/map`; en cualquier otra ruta no autentica. El token trae `did`. El dispositivo tiene que existir, estar activo y, para el ticket, ser web. Una cuenta de personal se rechaza.
 
 El access token dura 15 minutos. Cuando llega `exp`, el servidor cierra el socket. La app pide un token nuevo y vuelve a conectar.
 

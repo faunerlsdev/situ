@@ -519,6 +519,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/realtime-ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ticket de un solo uso, 30 segundos, para conectar el mapa en tiempo real desde la web. */
+        post: operations["IssueRealtimeTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -1368,6 +1385,26 @@ export interface paths {
         patch: operations["UpdateReport"];
         trace?: never;
     };
+    "/api/v1/reports/{id}/share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tarjeta pública para compartir: categoría y zona aproximada, sin texto ni autor.
+         * @description Los reportes de menores o que no son públicos responden sin datos y no deben indexarse.
+         */
+        get: operations["GetReportShare"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/{id}/confirmation": {
         parameters: {
             query?: never;
@@ -1693,7 +1730,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Catálogo completo, con traducciones y excepciones. */
+        /** Catálogo completo, con vigencia, orden y reportes activos. */
         get: operations["ListAdminCategories"];
         put?: never;
         post: operations["AdminCreateCategory"];
@@ -1710,7 +1747,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Una categoría con su vigencia, orden y reportes activos. */
+        get: operations["GetAdminCategory"];
         put: operations["AdminUpdateCategory"];
         post?: never;
         delete?: never;
@@ -2121,6 +2159,29 @@ export interface components {
             /** Format: int32 */
             commentCount: number | string;
         };
+        AdminCategoryView: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: string;
+            description: string;
+            buttonIconUrl: string;
+            mapIconUrl: string;
+            colorHex: string;
+            /** Format: int32 */
+            sortOrder: number | string;
+            isActive: boolean;
+            /** Format: int32 */
+            ttlMinutes: number | string;
+            /** Format: double */
+            importanceWeight: number | string;
+            mediaRequirement: string;
+            isAdultOnly: boolean;
+            /** Format: int32 */
+            activeReportCount: number | string;
+            translations: components["schemas"]["AdminTranslationView"][];
+            overrides: components["schemas"]["AdminOverrideView"][];
+        };
         AdminLoginResponse: {
             mfaEnrollmentRequired: boolean;
             mfaRequired: boolean;
@@ -2131,10 +2192,24 @@ export interface components {
             /** Format: date-time */
             mfaTokenExpiresAt: null | string;
         };
+        AdminOverrideView: {
+            /** Format: uuid */
+            countryId: null | string;
+            /** Format: uuid */
+            cityId: null | string;
+            isEnabled: boolean;
+            /** Format: int32 */
+            ttlMinutes: null | number | string;
+        };
         AdminRoleView: {
             /** Format: uuid */
             id: string;
             name: string;
+        };
+        AdminTranslationView: {
+            locale: string;
+            name: string;
+            description: string;
         };
         AppVersionsView: {
             ios: components["schemas"]["PlatformVersionView"];
@@ -2440,6 +2515,11 @@ export interface components {
             myConfirmation: null | string;
             comments: components["schemas"]["ReportCommentView"][];
         };
+        GetReportShareResponse: {
+            indexable: boolean;
+            categoryName: null | string;
+            zone: null | string;
+        };
         GetSessionProfileResponse: {
             /** Format: uuid */
             id: string;
@@ -2492,6 +2572,11 @@ export interface components {
             cityId: string;
             name: string;
         };
+        IssueRealtimeTicketResponse: {
+            ticket: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         Item: {
             countryCode: string;
             locale: string;
@@ -2512,6 +2597,11 @@ export interface components {
             termsUrl: string;
             privacyPolicyUrl: string;
             supportUrl: string;
+        };
+        ListAdminCategoriesResponse: {
+            categories: components["schemas"]["AdminCategoryView"][];
+            /** Format: int32 */
+            catalogVersion: number | string;
         };
         ListAvatarGalleryResponse: {
             items: components["schemas"]["AvatarGalleryItemView"][];
@@ -3880,6 +3970,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    IssueRealtimeTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueRealtimeTicketResponse"];
+                };
             };
         };
     };
@@ -5324,6 +5434,28 @@ export interface operations {
             };
         };
     };
+    GetReportShare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetReportShareResponse"];
+                };
+            };
+        };
+    };
     ConfirmReport: {
         parameters: {
             query?: never;
@@ -5776,7 +5908,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ListAdminCategoriesResponse"];
+                };
             };
         };
     };
@@ -5799,6 +5933,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    GetAdminCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryView"];
+                };
             };
         };
     };

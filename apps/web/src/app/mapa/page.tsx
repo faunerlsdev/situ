@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import { MapPlaceholder } from '@/components/map-placeholder';
+import { MapScreen } from '@/features/map/map-screen';
 
 export const metadata: Metadata = { title: 'Mapa' };
 
 export default function MapPage() {
-  return <MapPlaceholder />;
+  return <MapScreen />;
 }

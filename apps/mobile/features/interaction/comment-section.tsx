@@ -20,7 +20,7 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
-import { AccessibilityInfo, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Dimensions, Image, Keyboard, LayoutAnimation, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
@@ -69,6 +69,7 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
     : block.kind === 'guardian'
       ? 'Tu cuenta espera la autorización de un acudiente.'
       : null;
+  const keyboardInset = useKeyboardInset();
   const comments = query.data?.pages.flatMap((page) => page.comments) ?? [];
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const commentsY = useRef(0);
@@ -228,10 +229,11 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, keyboardInset > 0 ? { paddingBottom: keyboardInset } : null]}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.wrap}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={query.isRefetching && !query.isLoading} onRefresh={() => void query.refetch()} tintColor={theme.colors.primary} />}
       >
       {header}
@@ -365,6 +367,34 @@ function CommentRow({
       ))}
     </View>
   );
+}
+
+function useKeyboardInset() {
+  const [inset, setInset] = useState(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillChangeFrame' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, (event) => {
+      const next = Math.max(0, Dimensions.get('window').height - event.endCoordinates.screenY);
+      if (Platform.OS === 'ios') {
+        LayoutAnimation.configureNext(LayoutAnimation.create(event.duration ?? 250, LayoutAnimation.Types.keyboard, LayoutAnimation.Properties.opacity));
+      }
+      setInset(next);
+    });
+    const hide = Keyboard.addListener(hideEvent, (event) => {
+      if (Platform.OS === 'ios') {
+        LayoutAnimation.configureNext(LayoutAnimation.create(event.duration ?? 250, LayoutAnimation.Types.keyboard, LayoutAnimation.Properties.opacity));
+      }
+      setInset(0);
+    });
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  return inset;
 }
 
 function presentWriteError(

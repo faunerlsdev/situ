@@ -11,6 +11,7 @@ using Situ.Application.Features.Reports.GetReport;
 using Situ.Application.Features.Reports.GetReportCatalog;
 using Situ.Application.Features.Reports.GetReportBatch;
 using Situ.Application.Features.Reports.GetReportMap;
+using Situ.Application.Features.Reports.GetReportShare;
 using Situ.Application.Features.Reports.ListMyReports;
 using Situ.Application.Features.Reports.OpenReportMedia;
 using Situ.Application.Features.Reports.ManageReportCategories;
@@ -81,6 +82,14 @@ public sealed class ReportEndpoints : IEndpoint
             .WithSummary("Detalle de un reporte, con multimedia y comentarios resumidos.")
             .Produces<GetReportResponse>()
             .RequireAuthorization(AuthorizationPolicies.User);
+
+        group.MapGet("/reports/{id:guid}/share", Share)
+            .WithName("GetReportShare")
+            .WithTags("Reports")
+            .WithSummary("Tarjeta pública para compartir: categoría y zona aproximada, sin texto ni autor.")
+            .WithDescription("Los reportes de menores o que no son públicos responden sin datos y no deben indexarse.")
+            .Produces<GetReportShareResponse>()
+            .AllowAnonymous();
 
         group.MapPatch("/reports/{id:guid}", Update)
             .WithName("UpdateReport")
@@ -226,6 +235,15 @@ public sealed class ReportEndpoints : IEndpoint
         var result = await handler.Handle(
             new CreateReportRequest(userId, body.CategoryId, body.Description, body.Latitude, body.Longitude, visibility, body.IsAnonymous, body.MediaIds ?? []),
             cancellationToken);
+        return result.ToHttpResult();
+    }
+
+    private static async Task<IResult> Share(
+        Guid id,
+        IHandler<GetReportShareRequest, Result<GetReportShareResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.Handle(new GetReportShareRequest(id), cancellationToken);
         return result.ToHttpResult();
     }
 

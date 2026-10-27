@@ -56,6 +56,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<SecurityToken> SecurityTokens => Set<SecurityToken>();
 
+    public DbSet<RealtimeTicket> RealtimeTickets => Set<RealtimeTicket>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();

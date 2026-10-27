@@ -13,12 +13,9 @@ export function Shell({ env, me, children }: { env: string; me: AdminMe; childre
   const pathname = usePathname();
   const router = useRouter();
   const [idle, setIdle] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const menuOpen = openPath === pathname;
   const items = visibleSections(me.permissions);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     let active = true;
@@ -59,7 +56,7 @@ export function Shell({ env, me, children }: { env: string; me: AdminMe; childre
             className="rounded border border-app-border px-3 py-1 lg:hidden"
             aria-expanded={menuOpen}
             aria-controls="menu-secciones"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() => setOpenPath(menuOpen ? null : pathname)}
           >
             {menuOpen ? 'Cerrar' : 'Menú'}
           </button>

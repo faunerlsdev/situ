@@ -17,6 +17,18 @@ public class MapHubAuthTests
         Assert.Equal(expected, MapHubAuth.ReadAccessTokenFromQuery(path, token));
     }
 
+    [Theory]
+    [InlineData("/hubs/map", "ticket", true)]
+    [InlineData("/hubs/map/negotiate", "ticket", true)]
+    [InlineData("/api/v1/auth/me", "ticket", false)]
+    [InlineData("/api/v1/reports/map", "ticket", false)]
+    [InlineData("/api/v1/auth/realtime-ticket", "ticket", false)]
+    [InlineData("/hubs/map", "", false)]
+    public void The_realtime_ticket_query_is_read_only_for_the_map_hub(string path, string ticket, bool expected)
+    {
+        Assert.Equal(expected, MapHubAuth.ReadTicketFromQuery(path, ticket));
+    }
+
     [Fact]
     public void The_hub_requires_a_full_user_session()
     {

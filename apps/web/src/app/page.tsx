@@ -9,7 +9,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setVisible(true));
-    const go = window.setTimeout(() => router.push('/login'), 400);
+    const go = window.setTimeout(() => router.push('/mapa'), 400);
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(go);

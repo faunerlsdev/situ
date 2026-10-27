@@ -42,6 +42,7 @@ internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbCont
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SecurityToken> SecurityTokens => Set<SecurityToken>();
+    public DbSet<RealtimeTicket> RealtimeTickets => Set<RealtimeTicket>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserDevice> UserDevices => Set<UserDevice>();
     public DbSet<TwoFactorRecoveryCode> TwoFactorRecoveryCodes => Set<TwoFactorRecoveryCode>();
