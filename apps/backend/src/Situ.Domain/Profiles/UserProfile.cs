@@ -22,6 +22,13 @@ public enum LocationSharingMode
     SelectedFriends,
 }
 
+public enum PublicLocationMode
+{
+    Hidden,
+    Approximate,
+    Realtime,
+}
+
 /// <summary>
 /// Public face of a user and its privacy switches (RF-PER-01..06, RF-UBI-01..11).
 /// Two independent location switches:
@@ -64,6 +71,12 @@ public sealed class UserProfile : AggregateRoot
     public bool ShareLocationWithFriends { get; private set; }
     public LocationSharingMode FriendLocationSharingMode { get; private set; }
     public DateTimeOffset? FriendLocationSharingEndsAt { get; private set; }
+    public DateTimeOffset? FriendLocationConsentedAt { get; private set; }
+    public string? FriendLocationConsentVersion { get; private set; }
+    public DateTimeOffset? FriendLocationRemindedAt { get; private set; }
+    public PublicLocationMode PublicLocationMode { get; private set; } = PublicLocationMode.Hidden;
+    public DateTimeOffset? PublicLocationConsentedAt { get; private set; }
+    public string? PublicLocationConsentVersion { get; private set; }
 
     /// <summary>Temporary invisibility: hides the location from everybody without touching the other settings.</summary>
     public DateTimeOffset? GhostModeUntil { get; private set; }
@@ -138,6 +151,28 @@ public sealed class UserProfile : AggregateRoot
 
     public void SetRealtimeLocationVisible(bool visible) => ShowRealtimeLocation = visible;
 
+    public void GrantFriendLocationConsent(DateTimeOffset consentedAt, string consentVersion)
+    {
+        FriendLocationConsentedAt = consentedAt;
+        FriendLocationConsentVersion = Guard.NotEmpty(consentVersion, nameof(consentVersion), 40);
+        FriendLocationRemindedAt = consentedAt;
+    }
+
+    public void RememberFriendLocationReminder(DateTimeOffset now) => FriendLocationRemindedAt = now;
+
+    public void SetPublicLocation(int age, PublicLocationMode mode, DateTimeOffset? consentedAt, string? consentVersion)
+    {
+        Guard.That(MinorProtectionPolicy.CanHavePublicProfile(age) || mode == PublicLocationMode.Hidden, "location.minor_public", "A minor cannot appear on the public map.");
+        if (mode != PublicLocationMode.Hidden)
+        {
+            PublicLocationConsentedAt = consentedAt ?? throw new DomainException("location.consent_required", "Public location needs consent.");
+            PublicLocationConsentVersion = Guard.NotEmpty(consentVersion, nameof(consentVersion), 40);
+        }
+
+        PublicLocationMode = mode;
+        ShowRealtimeLocation = mode == PublicLocationMode.Realtime;
+    }
+
     public void EnableFriendLocationSharing(LocationSharingMode mode, DateTimeOffset? endsAt, DateTimeOffset now)
     {
         Guard.That(endsAt is null || endsAt > now, "profile.invalid_sharing_end", "The sharing end must be in the future.");
@@ -162,6 +197,12 @@ public sealed class UserProfile : AggregateRoot
         MakePrivate();
         SetRealtimeLocationVisible(false);
         DisableFriendLocationSharing();
+        FriendLocationConsentedAt = null;
+        FriendLocationConsentVersion = null;
+        FriendLocationRemindedAt = null;
+        PublicLocationMode = PublicLocationMode.Hidden;
+        PublicLocationConsentedAt = null;
+        PublicLocationConsentVersion = null;
         ClearGhostMode();
         MarkUpdated(now);
     }

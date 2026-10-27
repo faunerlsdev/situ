@@ -50,7 +50,10 @@ import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
 import type { ComplaintTarget } from '@/features/interaction/complaint-sheet';
 import { responseCommitment } from '@/features/interaction/support-copy';
 import { ReactionBar } from '@/features/interaction/reaction-bar';
+import { usePeople } from '@/features/location/use-people';
+import { seenLabel } from '@/features/location/logic';
 import { api } from '@/lib/api';
+import type { MapPerson } from '@situ/shared';
 import { supportFallbackUrl } from '@/lib/store-links';
 import { theme } from '@/theme/theme';
 
@@ -107,6 +110,9 @@ export function MapScreen() {
   userRef.current = user;
   const [gate, setGate] = useState<'checking' | 'explain' | 'ready'>('checking');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<MapPerson | null>(null);
+  const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: gate === 'ready' });
+  const people = usePeople({ active: gate === 'ready' && Platform.OS !== 'web', region: settled, selfId: me.data?.id ?? null });
   const [sheetIndex, setSheetIndex] = useState(0);
   const [parentId, setParentId] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -404,7 +410,7 @@ export function MapScreen() {
         {gate === 'checking' ? <ActivityIndicator color={theme.colors.primary} /> : (
           <>
             <Text style={styles.gateTitle}>Para mostrarte lo que pasa cerca</Text>
-            <Text style={styles.gateBody}>SITU usa tu ubicación para centrar el mapa, calcular distancias y confirmar que estás cerca de un reporte. Si no la concedes, el mapa sigue disponible en tu ciudad.</Text>
+            <Text style={styles.gateBody}>SITU usa tu ubicación mientras la app está abierta para centrar el mapa, calcular distancias, confirmar que estás cerca de un reporte y, si tú lo activas, compartir un punto aproximado con tus amigos. No la usamos en segundo plano. Si no la concedes, el mapa sigue disponible en tu ciudad.</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Continuar" onPress={() => void allowLocation()} style={styles.gateButton}>
               <Text style={styles.gateButtonLabel}>Continuar</Text>
             </Pressable>
@@ -429,6 +435,14 @@ export function MapScreen() {
           {realtime.mode === 'down' ? <Text style={styles.liveText}>Sin conexión en tiempo real</Text> : null}
         </View>
       ) : null}
+      {sharing.data?.enabled && !sharing.data.ghost ? (
+        <View accessibilityRole="text" accessibilityLabel="Estás compartiendo tu ubicación" style={styles.sharing}>
+          <Text style={styles.liveText}>Estás compartiendo tu ubicación</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Dejar de compartir ubicación" onPress={() => void api.setLocationSharing({ enabled: false, mode: sharing.data?.mode ?? 'AllFriends', duration: 'until_off' }).then(() => queryClient.invalidateQueries({ queryKey: ['location-sharing'] })).then(() => notify.success('Dejaste de compartir tu ubicación.')).catch((error) => notify.error(error))} style={styles.sharingOff}>
+            <Text style={styles.sharingOffLabel}>Apagar</Text>
+          </Pressable>
+        </View>
+      ) : null}
       <FilterBar categories={categories} />
       {Platform.OS === 'web' ? (
         <View style={styles.gate}><Text style={styles.gateBody}>El mapa nativo está en la app de iOS y Android.</Text></View>
@@ -443,7 +457,7 @@ export function MapScreen() {
           customMapStyle={mapChoice.status === 'google' ? darkMap : undefined}
           userInterfaceStyle={mapChoice.status === 'apple' ? mapChoice.userInterfaceStyle : undefined}
           initialRegion={region ?? { ...bogota, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
-          showsUserLocation={user !== null}
+          showsUserLocation={user !== null && sharing.data?.hiddenBecauseAnonymous !== true}
           onPanDrag={() => setFollow(false)}
           onRegionChangeComplete={onRegion}
         >
@@ -477,10 +491,51 @@ export function MapScreen() {
               )}
             </Marker>
           ))}
+          {people.map((item) => (
+            <Marker
+              key={item.kind === 'cluster' ? `people-${item.key}` : `person-${item.person.userId}`}
+              coordinate={{ latitude: item.kind === 'cluster' ? item.latitude : item.person.latitude, longitude: item.kind === 'cluster' ? item.longitude : item.person.longitude }}
+              accessibilityLabel={item.kind === 'cluster' ? `${item.count} personas` : item.person.displayName}
+              onPress={() => {
+                if (item.kind === 'cluster') {
+                  const current = region ?? settled;
+                  mapRef.current?.animateToRegion({
+                    latitude: item.latitude,
+                    longitude: item.longitude,
+                    latitudeDelta: (current?.latitudeDelta ?? 0.05) / 2,
+                    longitudeDelta: (current?.longitudeDelta ?? 0.05) / 2,
+                  }, reduceMotion ? 0 : 350);
+                  return;
+                }
+                setSelectedId(null);
+                setSelectedPerson(item.person);
+              }}
+            >
+              {item.kind === 'cluster' ? (
+                <View style={styles.cluster}><Text style={styles.clusterText}>{item.count}</Text></View>
+              ) : (
+                <View style={styles.avatarPin}>
+                  {item.person.avatarUrl ? <Image source={{ uri: item.person.avatarUrl }} style={styles.avatarImage} /> : <Text style={styles.avatarLetter}>{item.person.displayName.slice(0, 1)}</Text>}
+                </View>
+              )}
+            </Marker>
+          ))}
           </MapView>
         </MapErrorBoundary>
       )}
-      {selectedPoint && sheetIndex === 0 ? (
+      {selectedPerson ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{selectedPerson.displayName}</Text>
+          <Text style={styles.cardMeta}>{`@${selectedPerson.userName} · ${seenLabel(selectedPerson.live, selectedPerson.lastSeenAt, Date.now())}`}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Abrir perfil" onPress={() => router.push({ pathname: '/usuario/[userName]', params: { userName: selectedPerson.userName } })} style={styles.vote}>
+            <Text style={styles.voteLabel}>Abrir perfil</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setSelectedPerson(null)} style={styles.close}>
+            <Text style={styles.cardMeta}>Cerrar</Text>
+          </Pressable>
+        </View>
+      ) : null}
+      {selectedPoint && sheetIndex === 0 && !selectedPerson ? (
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <Pressable accessibilityRole="button" accessibilityLabel="Ver detalle del reporte" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.cardBody}>
@@ -744,6 +799,12 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: theme.colors.mapWater },
   bar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: theme.colors.primary, zIndex: 5 },
   live: { position: 'absolute', top: 64, left: 12, zIndex: 4, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: theme.colors.surfaceElevated },
+  sharing: { position: 'absolute', top: 100, left: 12, right: 12, zIndex: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: theme.colors.surfaceElevated },
+  sharingOff: { minHeight: 36, paddingHorizontal: 12, borderRadius: 10, backgroundColor: theme.colors.danger, alignItems: 'center', justifyContent: 'center' },
+  sharingOffLabel: { color: theme.colors.textOnDanger, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
+  avatarPin: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: 36, height: 36 },
+  avatarLetter: { color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.success },
   liveDotDown: { backgroundColor: theme.colors.warning },
   liveText: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },

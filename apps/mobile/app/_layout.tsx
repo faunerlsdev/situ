@@ -20,6 +20,7 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { NotificationRuntime } from '@/features/notifications/push-runtime';
+import { LocationEmitter } from '@/features/location/emitter';
 import { useMe } from '@/features/reports/use-me';
 import { clearLegacyProfile } from '@/lib/local-profile';
 import { FeedbackProvider } from '@/providers/feedback-provider';
@@ -85,6 +86,7 @@ function RootNavigator() {
     <>
     <StatusBar style="light" />
     {isSignedIn ? <NotificationRuntime /> : null}
+    {isSignedIn ? <LocationEmitter /> : null}
     <Stack
       screenOptions={{
         headerShown: false,
@@ -103,6 +105,7 @@ function RootNavigator() {
         <Stack.Screen name="bloqueados" />
         <Stack.Screen name="cuenta" />
         <Stack.Screen name="visibilidad" />
+        <Stack.Screen name="ubicacion" />
         <Stack.Screen name="usuario/[userName]" />
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="cambiar-contrasena" />

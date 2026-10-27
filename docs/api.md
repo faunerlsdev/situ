@@ -511,9 +511,68 @@ La web todavía no tiene pantallas. Estos son los endpoints que va a consumir. T
 
 Un menor recibe `403 profile.minor_must_be_private`. Sin la versión vigente, `400 profile.consent_required`. Volver a privado es `{ "public": false }` y es inmediato. `GET /me/profile-visibility` trae el texto, la versión exigida, los interruptores y dos vistas: `strangerPreview` (null si estás privado: no apareces) y `friendPreview`.
 
-`GET /users/{userName}` es el perfil. Si no existe, está privado y no son amigos, está bloqueado o la pareja no está permitida, responde `404 profile.not_available` con el texto "No encontramos ese perfil." El perfil público muestra avatar, nombre visible, biografía, miembro desde mes y año, y reportes que no son anónimos. Un amigo también ve los de solo amigos. Nunca incluye correo, teléfono, fecha de nacimiento ni coordenadas.
+`GET /users/{userName}` es el perfil. Si no existe, está privado y no son amigos, está bloqueado o la pareja no está permitida, responde `404 profile.not_available` con el texto "No encontramos ese perfil." El perfil público muestra avatar, nombre visible, biografía, miembro desde mes y año, y reportes que no son anónimos. Un amigo también ve los de solo amigos, pero nunca los anónimos. Nunca incluye correo, teléfono, fecha de nacimiento ni coordenadas.
+
+Un reporte anónimo de visibilidad "solo amigos" no entra en el filtro "Solo amigos" del mapa, no sale en "un amigo reportó" y no aparece en el perfil. Si alguien que ya tiene el id lo abre, ve el contenido como usuario anónimo, sin enlace al perfil y sin forma de saber cuál amigo lo escribió. El filtro tampoco muestra el anónimo público de un amigo: si no, prender y apagar "Solo amigos" delataría quién publica sin nombre. El anónimo propio sí se ve, y solo para su autor.
 
 La clave `friends.allow_adult_minor` nace en `false`.
+
+## Ubicación compartida
+
+Solo la app móvil envía la ubicación. La web puede mostrarla y no debe llamar `POST /me/location`. Toda lectura es con la app en primer plano. No hay permiso de segundo plano.
+
+La ubicación no sale en notificaciones, auditorías ni en respuestas de otros endpoints. El servidor no guarda el GPS crudo: lo redondea antes de persistir. Cada envío vuelve a comprobar amistad, bloqueo, modo, zona e identidad anónima, y el hub entrega a cada conexión por separado. No hay grupo de difusión.
+
+`POST /me/location`:
+
+```json
+{ "latitude": 4.711, "longitude": -74.072, "accuracyMeters": 20, "capturedAt": "2026-10-27T15:07:00Z" }
+```
+
+Responde `{ "live": true, "hiddenBecauseAnonymous": false, "hiddenByZone": false }` y no devuelve el punto. Hace falta que compartir con amigos esté activo o que el mapa general esté encendido. Si no, `403 location.sharing_off`. Una lectura vieja, imprecisa o fuera de rango es `400 location.reading_rejected`. Más de `location.posts_per_minute` (4) es `409 location.rate_limited`. La política HTTP `location-post` es un tope aparte de 8 por minuto.
+
+`POST /me/location/pause` marca última vez visto, sin coordenadas en la respuesta: `{ "live": false, "lastSeenAt": "2026-10-27T15:05:00Z" }`. La hora se redondea hacia abajo a `location.last_seen_round_minutes` (5). El punto guardado sigue siendo el último redondeado y vence a los `location.ttl_minutes` (15). El job de purga lo borra.
+
+`GET /me/location-sharing` y `PUT /me/location-sharing`:
+
+```json
+{
+  "enabled": true,
+  "mode": "SelectedFriends",
+  "duration": "1h",
+  "friendIds": ["…"],
+  "consentVersion": "2026-10-27",
+  "ghost": "off"
+}
+```
+
+`duration` es `1h`, `8h` o `until_off`. Si no la envías y ya estabas compartiendo, se conserva el vencimiento. `mode` es `AllFriends` o `SelectedFriends`. `ghost` es `off`, `1h`, `8h` o `tomorrow` (hasta la medianoche de Colombia, 05:00 UTC). El interruptor nace apagado. Encenderlo exige `location.friend_consent_version`. Un menor sin la autorización de ubicación del representante recibe `403 location.guardian_required`. `reminderDue` avisa cada `location.minor_reminder_days` (7). `POST /me/location-sharing/reminder` aplaza ese aviso.
+
+La precisión de amigos es `location.friend_precision_meters` (25). La del mapa general es `location.public_precision_meters` (300).
+
+`PUT /me/public-location` con `{ "mode": "Realtime", "consentVersion": "2026-10-27" }`. Los modos son `Realtime` (el que se ofrece al hacerse público), `Approximate` y `Hidden`. Exige perfil público, consentimiento propio y ser adulto. Un menor recibe `403 location.minor_public`. Un perfil privado recibe `409 location.profile_private`. Tiempo real y aproximada, para quien no es amigo, salen redondeadas a la precisión pública. La diferencia es que tiempo real se refresca con cada lectura.
+
+Zonas, como máximo 5, radio de 50 a 2000 metros:
+
+```json
+{ "name": "Casa", "latitude": 4.711, "longitude": -74.072, "radiusMeters": 150, "mode": "Hidden" }
+```
+
+`mode` es `Hidden` (no se comparte) o `Approximate` (el punto se ensancha al menos al radio). `GET` y `DELETE /me/privacy-zones/{id}`. `PUT` actualiza. Solo el dueño las ve.
+
+`GET /map/people?minLat&minLon&maxLat&maxLon` devuelve personas con perfil público, consentimiento de ubicación y sin publicación anónima activa. El recuadro no puede pasar de 3 grados (`400 location.area_too_large`). No es una difusión: cada consulta filtra bloqueos, menores y anónimos. Un amigo que además comparte sale por el hub, con la precisión de amigos.
+
+### Hub `/hubs/friends`
+
+Misma autenticación que `/hubs/map`: política `User`, y `ticket` o `access_token` en la query solo en `/hubs/friends`. Al conectar, el servidor manda `locations` a esa conexión:
+
+```json
+[{ "userId": "…", "userName": "ana", "displayName": "Ana", "avatarUrl": null, "latitude": 4.711, "longitude": -74.072, "live": true, "lastSeenAt": null }]
+```
+
+Luego, `location` con el mismo objeto cuando un amigo se mueve, y `locationRemoved` con `{ "userId": "…" }` cuando hay que quitar el pin. `live: false` es última vez visto: `lastSeenAt` está redondeado y las coordenadas son el último punto redondeado, no una lectura nueva. El cliente se desconecta al pasar a segundo plano, igual que el hub del mapa.
+
+Bloquear, eliminar amigo, quitarlo de la lista, apagar, vencer, ponerse invisible o borrar la cuenta corta esa entrega y, cuando el interruptor se apaga o la cuenta desaparece, borra la última posición. Quitar a una sola persona no borra el punto para los demás amigos.
 
 ## Códigos de error
 
@@ -547,6 +606,16 @@ La clave `friends.allow_adult_minor` nace en `false`.
 | 404 | `friendship.not_found` | No hay una amistad aceptada con esa persona |
 | 404 | `invitation.not_valid` | El enlace no sirve, venció, ya se usó o el correo no coincide |
 | 400 | `invitation.email_invalid` | El correo no es válido |
+| 403 | `location.sharing_off` | No hay ubicación de amigos ni del mapa general activa |
+| 409 | `location.rate_limited` | Demasiadas lecturas en un minuto |
+| 400 | `location.reading_rejected` | Coordenada, precisión o antigüedad inválidas |
+| 400 | `location.consent_required` | Falta la versión vigente del consentimiento de ubicación |
+| 403 | `location.guardian_required` | Un menor quiere compartir y el representante no autorizó la ubicación |
+| 403 | `location.minor_public` | Un menor intenta salir en el mapa general |
+| 409 | `location.profile_private` | El mapa general pide un perfil público |
+| 409 | `location.zone_limit` | Ya hay 5 zonas de privacidad |
+| 404 | `location.zone_not_found` | La zona no es de esa persona |
+| 400 | `location.area_too_large` | El recuadro del mapa de personas pasa de 3 grados |
 | 404 | `report.not_found` | No existe, o quien consulta no puede verlo |
 | 404 | `report.not_available` | Venció, fue retirado o está en revisión. `reportStatus` dice cuál, sin el motivo de moderación |
 | 403 | `report.not_author` | Otra persona intenta editar o borrar |

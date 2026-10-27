@@ -16,6 +16,12 @@ La clave `friends.allow_adult_minor` nace en `false`. Con ese valor, un adulto y
 
 Decisión de producto, pendiente de revisión legal: ¿la separación adulto/menor debe seguir siendo la regla, o hay un caso (por ejemplo un representante) en el que un adulto pueda ser amigo de un menor sin abrir el perfil público?
 
+## Pregunta abierta: invitación al correo de un tercero
+
+`POST /friends/invitations` pide un correo y envía un mensaje en español. Si ese correo no tiene cuenta, el mensaje lleva un enlace de un solo uso a la web. Si ya tiene cuenta y es un adulto con el que sí se puede ser amigo, el mensaje pide revisar las solicitudes y no incluye un enlace. Si el destinatario es un menor, no se envía nada. La respuesta de la API es la misma en los tres casos y la auditoría no guarda el correo.
+
+Pregunta: ¿enviar esa invitación al correo de alguien que no nos lo dio cumple la Ley 1581, o hay que limitar el envío a correos que la persona ya registró?
+
 ## Otras preguntas ya registradas
 
 - Si la firma digital interna del correo de constancia basta como prueba de la autorización del representante (Ley 527 de 1999).

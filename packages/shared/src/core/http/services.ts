@@ -86,6 +86,63 @@ export type PublicProfile = {
   reports: PublicReportCard[];
 };
 
+export type LocationSharing = {
+  enabled: boolean;
+  mode: string;
+  endsAt: string | null;
+  friendIds: string[];
+  consentGranted: boolean;
+  requiredConsentVersion: string;
+  consentText: string;
+  ghost: boolean;
+  ghostUntil: string | null;
+  isMinor: boolean;
+  guardianAllows: boolean;
+  reminderDue: boolean;
+  hiddenBecauseAnonymous: boolean;
+  publicMode: string;
+  publicConsentGranted: boolean;
+  publicConsentVersion: string;
+  publicConsentText: string;
+  profilePublic: boolean;
+  emitIntervalSeconds: number;
+};
+
+export type LocationSharingUpdate = {
+  enabled: boolean;
+  mode?: string | null;
+  duration?: string | null;
+  friendIds?: string[] | null;
+  consentVersion?: string | null;
+  ghost?: string | null;
+};
+
+export type PostLocationResult = {
+  live: boolean;
+  hiddenBecauseAnonymous: boolean;
+  hiddenByZone: boolean;
+};
+
+export type PrivacyZone = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  mode: string;
+};
+
+export type MapPerson = {
+  userId: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  latitude: number;
+  longitude: number;
+  live: boolean;
+  lastSeenAt: string | null;
+};
+
 export type ProfileVisibility = {
   public: boolean;
   consentVersion: string | null;
@@ -701,6 +758,77 @@ export function createServices(http: HttpClient) {
         method: 'PUT',
         url: '/api/v1/me/profile-visibility',
         data: body,
+        requiresAuth: true,
+      });
+    },
+    locationSharing() {
+      return http.request<LocationSharing>({ url: '/api/v1/me/location-sharing', requiresAuth: true });
+    },
+    setLocationSharing(body: LocationSharingUpdate) {
+      return http.request<LocationSharing>({
+        method: 'PUT',
+        url: '/api/v1/me/location-sharing',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    acknowledgeLocationReminder() {
+      return http.request<LocationSharing>({
+        method: 'POST',
+        url: '/api/v1/me/location-sharing/reminder',
+        requiresAuth: true,
+      });
+    },
+    setPublicLocation(body: { mode: string; consentVersion?: string | null }) {
+      return http.request<LocationSharing>({
+        method: 'PUT',
+        url: '/api/v1/me/public-location',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    postLocation(body: { latitude: number; longitude: number; accuracyMeters: number; capturedAt: string }) {
+      return http.request<PostLocationResult>({
+        method: 'POST',
+        url: '/api/v1/me/location',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    pauseLocation() {
+      return http.request<{ live: boolean; lastSeenAt: string | null }>({
+        method: 'POST',
+        url: '/api/v1/me/location/pause',
+        requiresAuth: true,
+      });
+    },
+    privacyZones() {
+      return http.request<{ zones: PrivacyZone[] }>({ url: '/api/v1/me/privacy-zones', requiresAuth: true });
+    },
+    savePrivacyZone(body: { name: string; latitude: number; longitude: number; radiusMeters: number; mode: string }) {
+      return http.request<PrivacyZone>({
+        method: 'POST',
+        url: '/api/v1/me/privacy-zones',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    deletePrivacyZone(id: string) {
+      return http.request<void>({
+        method: 'DELETE',
+        url: `/api/v1/me/privacy-zones/${encodeURIComponent(id)}`,
+        requiresAuth: true,
+      });
+    },
+    mapPeople(bounds: { minLat: number; minLon: number; maxLat: number; maxLon: number }) {
+      const query = new URLSearchParams({
+        minLat: String(bounds.minLat),
+        minLon: String(bounds.minLon),
+        maxLat: String(bounds.maxLat),
+        maxLon: String(bounds.maxLon),
+      });
+      return http.request<{ people: MapPerson[] }>({
+        url: `/api/v1/map/people?${query.toString()}`,
         requiresAuth: true,
       });
     },

@@ -14,6 +14,9 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         builder.Property(e => e.PreferAnonymousReports).HasDefaultValue(true);
         builder.Property(e => e.Bio).HasMaxLength(UserProfile.BioMaxLength);
         builder.Property(e => e.PublicProfileConsentVersion).HasMaxLength(40);
+        builder.Property(e => e.FriendLocationConsentVersion).HasMaxLength(40);
+        builder.Property(e => e.PublicLocationConsentVersion).HasMaxLength(40);
+        builder.Property(e => e.PublicLocationMode).HasDefaultValue(PublicLocationMode.Hidden);
         builder.Property(e => e.ShowBio).HasDefaultValue(true);
         builder.Property(e => e.ShowPublicReports).HasDefaultValue(true);
         builder.Property(e => e.AvatarUrl).HasMaxLength(500);

@@ -28,9 +28,9 @@ Esta versión no tiene anuncios ni compras.
 
 Cuenta de revisión: la crea el comando `store:seed-reviewer` descrito en `docs/tiendas/checklist.md`. Correo `revisor.tiendas@situ.test`, usuario `revisor_tiendas`, adulto, correo ya confirmado, sin segundo factor. La contraseña se imprime una sola vez en la consola.
 
-Para ver un reporte no hace falta estar en la calle. La cuenta puede publicar desde el mapa. La ubicación se pide solo con la app abierta. No hay inicio de sesión con Apple, Google ni Facebook. No hay anuncios ni compras. La transmisión en vivo no está en esta versión.
+Para ver un reporte no hace falta estar en la calle. La cuenta puede publicar desde el mapa. La ubicación se pide solo con la app abierta. Compartir ubicación con amigos y salir en el mapa general son optativos, nacen apagados y usan un punto aproximado. No hay ubicación en segundo plano. No hay inicio de sesión con Apple, Google ni Facebook. No hay anuncios ni compras. La transmisión en vivo no está en esta versión.
 
-Amigos está en el menú: búsqueda por usuario exacto, solicitudes e invitación por correo. Visibilidad de mi perfil explica el consentimiento. Un menor no puede hacerse público. Un adulto y un menor no quedan como amigos.
+Amigos está en el menú: búsqueda por usuario exacto, solicitudes e invitación por correo. Visibilidad de mi perfil explica el consentimiento. Compartir mi ubicación pide otro consentimiento, deja elegir amigos, duración, modo invisible y zonas de casa o trabajo. Un menor no puede hacerse público ni salir en el mapa general, y solo comparte con amigos si su representante ya autorizó la ubicación. Un adulto y un menor no quedan como amigos.
 
 La eliminación de la cuenta está en Mi cuenta. También está en `https://app.DOMINIO/cuenta/eliminar`.
 

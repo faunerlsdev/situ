@@ -6,7 +6,7 @@ export { errorMessages, apiMessages, messageFor } from './core/http/errorMessage
 export { createHttpClient } from './core/http/client';
 export type { HttpClient, HttpRequest } from './core/http/client';
 export { createServices } from './core/http/services';
-export type { InboxNotification, InterestCities, NotificationPage, NotificationSettings, SessionDevice } from './core/http/services';
+export type { InboxNotification, InterestCities, LocationSharing, LocationSharingUpdate, MapPerson, NotificationPage, NotificationSettings, PrivacyZone, SessionDevice } from './core/http/services';
 export { toAppError, shouldRetry } from './core/http/normalize';
 export { readApiUrl, httpTimeouts } from './core/config/env';
 export { sessionEvents } from './core/feedback/sessionEvents';

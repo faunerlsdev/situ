@@ -11,6 +11,7 @@ public sealed class PrivacyZoneConfiguration : IEntityTypeConfiguration<PrivacyZ
     public void Configure(EntityTypeBuilder<PrivacyZone> builder)
     {
         builder.Property(e => e.Name).HasMaxLength(60);
+        builder.Property(e => e.Mode).HasDefaultValue(PrivacyZoneMode.Hidden);
         builder.Required<PrivacyZone, User>(e => e.UserId);
     }
 }

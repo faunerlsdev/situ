@@ -136,8 +136,9 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
   const router = useRouter();
   const { signOut } = useSession();
   const insets = useSafeAreaInsets();
+  const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: visible });
 
-  function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
+  function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/ubicacion' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
     onClose();
     router.push(href);
   }
@@ -156,6 +157,9 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => go('/visibilidad')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Visibilidad de mi perfil</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Compartir mi ubicación" onPress={() => go('/ubicacion')} style={styles.drawerRow}>
+            <Text style={styles.drawerLabel}>{sharing.data?.enabled && !sharing.data.ghost ? 'Compartir mi ubicación · activo' : 'Compartir mi ubicación'}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Mis reportes" onPress={() => go('/reportes')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Mis reportes</Text>

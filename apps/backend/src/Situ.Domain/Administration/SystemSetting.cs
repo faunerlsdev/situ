@@ -105,6 +105,19 @@ public static class SystemSettingKeys
     public const string FriendsSearchPerMinute = "friends.search_per_minute";
     public const string ProfilePublicConsentVersion = "profile.public_consent_version";
     public const string ProfilePublicConsentText = "profile.public_consent_text";
+    public const string LocationFriendPrecisionMeters = "location.friend_precision_meters";
+    public const string LocationPublicPrecisionMeters = "location.public_precision_meters";
+    public const string LocationTtlMinutes = "location.ttl_minutes";
+    public const string LocationPostsPerMinute = "location.posts_per_minute";
+    public const string LocationMaxAccuracyMeters = "location.max_accuracy_meters";
+    public const string LocationMaxReadingAgeSeconds = "location.max_reading_age_seconds";
+    public const string LocationEmitIntervalSeconds = "location.emit_interval_seconds";
+    public const string LocationFriendConsentVersion = "location.friend_consent_version";
+    public const string LocationFriendConsentText = "location.friend_consent_text";
+    public const string LocationPublicConsentVersion = "location.public_consent_version";
+    public const string LocationPublicConsentText = "location.public_consent_text";
+    public const string LocationMinorReminderDays = "location.minor_reminder_days";
+    public const string LocationLastSeenRoundMinutes = "location.last_seen_round_minutes";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -175,5 +188,18 @@ public static class SystemSettingKeys
         [FriendsSearchPerMinute] = "10",
         [ProfilePublicConsentVersion] = "2026-10-27",
         [ProfilePublicConsentText] = "Si haces público tu perfil, cualquier persona con cuenta puede ver tu nombre visible, tu usuario, tu foto, tu biografía y los reportes que publicas con tu nombre. Tu ubicación en el mapa puede mostrarse si dejas activa la ubicación en tiempo real. Puedes volver a privado cuando quieras. Un menor de edad no puede tener perfil público.",
+        [LocationFriendPrecisionMeters] = "25",
+        [LocationPublicPrecisionMeters] = "300",
+        [LocationTtlMinutes] = "15",
+        [LocationPostsPerMinute] = "4",
+        [LocationMaxAccuracyMeters] = "200",
+        [LocationMaxReadingAgeSeconds] = "120",
+        [LocationEmitIntervalSeconds] = "20",
+        [LocationFriendConsentVersion] = "2026-10-27",
+        [LocationFriendConsentText] = "Si compartes tu ubicación, tus amigos aceptados verán un punto aproximado mientras la app esté abierta. No se envía en segundo plano. Puedes apagarlo, elegir amigos, poner una duración o una zona donde no se comparte. Un menor necesita la autorización de su representante.",
+        [LocationPublicConsentVersion] = "2026-10-27",
+        [LocationPublicConsentText] = "Si muestras tu ubicación en el mapa general, cualquier persona con cuenta puede ver un punto aproximado, mucho menos preciso que el de tus amigos. Puedes ocultarla cuando quieras. Un menor no aparece en el mapa general.",
+        [LocationMinorReminderDays] = "7",
+        [LocationLastSeenRoundMinutes] = "5",
     };
 }

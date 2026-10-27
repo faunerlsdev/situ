@@ -189,8 +189,8 @@ internal static class InteractionAccess
 
         // The pair stops here: the friendship is no longer accepted and these rows are gone.
         // The global "share with friends" switch stays on so other friends are not cut off.
-        // The next location channel must read accepted friendships and these rows, and stop
-        // pushing this pair as soon as they disappear. There is no live channel yet.
+        // The caller pushes locationRemoved to this pair. The subject's last position stays
+        // for the friends who are still allowed to see it.
     }
 }
 

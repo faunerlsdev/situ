@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Interaction;
+using Situ.Application.Features.Location;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
@@ -233,7 +234,7 @@ public sealed record CancelFriendRequest(Guid UserId, Guid RequestId);
 
 public sealed record RemoveFriendRequest(Guid UserId, Guid FriendUserId);
 
-public sealed class RemoveFriendHandler(IApplicationDbContext db, IClock clock)
+public sealed class RemoveFriendHandler(IApplicationDbContext db, IClock clock, IFriendLocationPublisher? locations = null)
     : IHandler<RemoveFriendRequest, Result>
 {
     public async Task<Result> Handle(RemoveFriendRequest request, CancellationToken cancellationToken)
@@ -251,6 +252,7 @@ public sealed class RemoveFriendHandler(IApplicationDbContext db, IClock clock)
         var now = clock.UtcNow;
         await InteractionAccess.SeverRelationshipAsync(db, request.UserId, request.FriendUserId, now, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        await LocationRules.ForgetPairAsync(locations, request.UserId, request.FriendUserId, cancellationToken);
         return Result.Success();
     }
 }

@@ -1028,6 +1028,110 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Texto del consentimiento para hacer público el perfil.",
                             Key = "profile.public_consent_text",
                             Value = "Si haces público tu perfil, cualquier persona con cuenta puede ver tu nombre visible, tu usuario, tu foto, tu biografía y los reportes que publicas con tu nombre. Tu ubicación en el mapa puede mostrarse si dejas activa la ubicación en tiempo real. Puedes volver a privado cuando quieras. Un menor de edad no puede tener perfil público."
+                        },
+                        new
+                        {
+                            Id = new Guid("e2fe6175-a0c7-0905-07d6-c5fc1798af43"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Precisión, en metros, del punto que ven los amigos.",
+                            Key = "location.friend_precision_meters",
+                            Value = "25"
+                        },
+                        new
+                        {
+                            Id = new Guid("128d7838-6ee6-c49e-2acb-fdeff732d8d7"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Precisión, en metros, del punto del mapa general.",
+                            Key = "location.public_precision_meters",
+                            Value = "300"
+                        },
+                        new
+                        {
+                            Id = new Guid("88215097-9201-639d-da29-9daebaabcd71"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos que vive una ubicación compartida sin una lectura nueva.",
+                            Key = "location.ttl_minutes",
+                            Value = "15"
+                        },
+                        new
+                        {
+                            Id = new Guid("2e33c43c-469d-bb33-4401-781532709dbc"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Lecturas de ubicación que una persona puede enviar en un minuto.",
+                            Key = "location.posts_per_minute",
+                            Value = "4"
+                        },
+                        new
+                        {
+                            Id = new Guid("eef6fec6-9551-671c-80be-ede41e354976"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Precisión máxima, en metros, que se acepta de una lectura.",
+                            Key = "location.max_accuracy_meters",
+                            Value = "200"
+                        },
+                        new
+                        {
+                            Id = new Guid("20173fba-cf21-cdbd-46ca-9620bd2a013c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Antigüedad máxima, en segundos, de una lectura.",
+                            Key = "location.max_reading_age_seconds",
+                            Value = "120"
+                        },
+                        new
+                        {
+                            Id = new Guid("cc22dbcf-c640-cf29-9e9e-e052a3019eda"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Segundos entre lecturas mientras la app está en primer plano.",
+                            Key = "location.emit_interval_seconds",
+                            Value = "20"
+                        },
+                        new
+                        {
+                            Id = new Guid("d82023c8-a0d5-c240-13e7-9d8f665b2d6a"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión del texto para compartir ubicación con amigos.",
+                            Key = "location.friend_consent_version",
+                            Value = "2026-10-27"
+                        },
+                        new
+                        {
+                            Id = new Guid("4ee1bcf5-a2cf-11c2-f9af-a13819a96ba6"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto del consentimiento para compartir ubicación con amigos.",
+                            Key = "location.friend_consent_text",
+                            Value = "Si compartes tu ubicación, tus amigos aceptados verán un punto aproximado mientras la app esté abierta. No se envía en segundo plano. Puedes apagarlo, elegir amigos, poner una duración o una zona donde no se comparte. Un menor necesita la autorización de su representante."
+                        },
+                        new
+                        {
+                            Id = new Guid("06eb53a8-94ab-1ec5-acee-5b3e4178a0a0"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Versión del texto para mostrar ubicación en el mapa general.",
+                            Key = "location.public_consent_version",
+                            Value = "2026-10-27"
+                        },
+                        new
+                        {
+                            Id = new Guid("909fff72-8081-bb22-08c5-ad615bf3de43"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto del consentimiento para mostrar ubicación en el mapa general.",
+                            Key = "location.public_consent_text",
+                            Value = "Si muestras tu ubicación en el mapa general, cualquier persona con cuenta puede ver un punto aproximado, mucho menos preciso que el de tus amigos. Puedes ocultarla cuando quieras. Un menor no aparece en el mapa general."
+                        },
+                        new
+                        {
+                            Id = new Guid("b6b7bbd4-bff5-e1a5-140a-46537a6662d9"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Días entre recordatorios de que un menor comparte ubicación con amigos.",
+                            Key = "location.minor_reminder_days",
+                            Value = "7"
+                        },
+                        new
+                        {
+                            Id = new Guid("3f813616-1157-1b19-db0b-3f6b38330a3f"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos a los que se redondea la hora de última vez visto.",
+                            Key = "location.last_seen_round_minutes",
+                            Value = "5"
                         });
                 });
 
@@ -4894,6 +4998,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasDefaultValue("Hidden")
+                        .HasColumnName("mode");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(60)
@@ -4939,6 +5051,20 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("CityId")
                         .HasColumnType("uuid")
                         .HasColumnName("city_id");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<bool>("IsLive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_live");
+
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
 
                     b.Property<Point>("Point")
                         .IsRequired()
@@ -5009,6 +5135,19 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(60)")
                         .HasColumnName("display_name");
 
+                    b.Property<string>("FriendLocationConsentVersion")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("friend_location_consent_version");
+
+                    b.Property<DateTimeOffset?>("FriendLocationConsentedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("friend_location_consented_at");
+
+                    b.Property<DateTimeOffset?>("FriendLocationRemindedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("friend_location_reminded_at");
+
                     b.Property<DateTimeOffset?>("FriendLocationSharingEndsAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("friend_location_sharing_ends_at");
@@ -5036,6 +5175,23 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("prefer_anonymous_reports");
+
+                    b.Property<string>("PublicLocationConsentVersion")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("public_location_consent_version");
+
+                    b.Property<DateTimeOffset?>("PublicLocationConsentedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("public_location_consented_at");
+
+                    b.Property<string>("PublicLocationMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasDefaultValue("Hidden")
+                        .HasColumnName("public_location_mode");
 
                     b.Property<string>("PublicProfileConsentVersion")
                         .HasMaxLength(40)

@@ -37,7 +37,8 @@ public sealed record GetAppConfigResponse(
     FeatureFlagsView Features,
     WebSessionView WebSession,
     bool PhoneRequiredForMinors,
-    CaptchaPublicView Captcha);
+    CaptchaPublicView Captcha,
+    int LocationEmitIntervalSeconds);
 
 public sealed class GetAppConfigHandler(IApplicationDbContext db, CaptchaPublicView? captcha = null)
     : IHandler<GetAppConfigRequest, Result<GetAppConfigResponse>>
@@ -74,7 +75,8 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db, CaptchaPublicV
                 ReportSettings.Int(settings, SystemSettingKeys.WebSessionRefreshDays, 30),
                 ReportSettings.Int(settings, SystemSettingKeys.WebSessionRememberDays, 90)),
             !string.Equals(settings.GetValueOrDefault(SystemSettingKeys.PhoneRequiredForMinors), "false", StringComparison.OrdinalIgnoreCase),
-            captcha ?? new CaptchaPublicView("Turnstile", "")));
+            captcha ?? new CaptchaPublicView("Turnstile", ""),
+            ReportSettings.Int(settings, SystemSettingKeys.LocationEmitIntervalSeconds, 20)));
     }
 
     private static string Text(IReadOnlyDictionary<string, string> settings, string key, string fallback)

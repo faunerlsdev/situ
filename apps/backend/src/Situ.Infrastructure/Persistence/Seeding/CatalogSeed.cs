@@ -280,6 +280,19 @@ internal static class CatalogSeed
         [SystemSettingKeys.FriendsSearchPerMinute] = "Búsquedas de usuario que una persona puede hacer en un minuto.",
         [SystemSettingKeys.ProfilePublicConsentVersion] = "Versión del texto que hay que aceptar para hacer público el perfil.",
         [SystemSettingKeys.ProfilePublicConsentText] = "Texto del consentimiento para hacer público el perfil.",
+        [SystemSettingKeys.LocationFriendPrecisionMeters] = "Precisión, en metros, del punto que ven los amigos.",
+        [SystemSettingKeys.LocationPublicPrecisionMeters] = "Precisión, en metros, del punto del mapa general.",
+        [SystemSettingKeys.LocationTtlMinutes] = "Minutos que vive una ubicación compartida sin una lectura nueva.",
+        [SystemSettingKeys.LocationPostsPerMinute] = "Lecturas de ubicación que una persona puede enviar en un minuto.",
+        [SystemSettingKeys.LocationMaxAccuracyMeters] = "Precisión máxima, en metros, que se acepta de una lectura.",
+        [SystemSettingKeys.LocationMaxReadingAgeSeconds] = "Antigüedad máxima, en segundos, de una lectura.",
+        [SystemSettingKeys.LocationEmitIntervalSeconds] = "Segundos entre lecturas mientras la app está en primer plano.",
+        [SystemSettingKeys.LocationFriendConsentVersion] = "Versión del texto para compartir ubicación con amigos.",
+        [SystemSettingKeys.LocationFriendConsentText] = "Texto del consentimiento para compartir ubicación con amigos.",
+        [SystemSettingKeys.LocationPublicConsentVersion] = "Versión del texto para mostrar ubicación en el mapa general.",
+        [SystemSettingKeys.LocationPublicConsentText] = "Texto del consentimiento para mostrar ubicación en el mapa general.",
+        [SystemSettingKeys.LocationMinorReminderDays] = "Días entre recordatorios de que un menor comparte ubicación con amigos.",
+        [SystemSettingKeys.LocationLastSeenRoundMinutes] = "Minutos a los que se redondea la hora de última vez visto.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)

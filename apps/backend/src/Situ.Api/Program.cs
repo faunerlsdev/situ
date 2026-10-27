@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
@@ -15,6 +16,7 @@ using Situ.Api.Configuration;
 using Situ.Infrastructure.Reports;
 using Situ.Api.Endpoints;
 using Situ.Api.Guardianship;
+using Situ.Api.Locations;
 using Situ.Api.Notifications;
 using Situ.Api.Realtime;
 using Situ.Api.Reports;
@@ -263,6 +265,24 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("location-post", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 8,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.AddPolicy("location-read", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
     options.AddPolicy("reports-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
@@ -275,8 +295,10 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, SubUserIdProvider>();
 builder.Services.AddSingleton<MapSubscriptionBook>();
 builder.Services.AddSingleton<IMapZonePublisher, SignalRMapZonePublisher>();
+builder.Services.AddSingleton<IFriendLocationPublisher, SignalRFriendLocationPublisher>();
 builder.Services.AddHostedService<MapZoneDispatchService>();
 builder.Services.AddHostedService<GuardianConsentExpiryService>();
 builder.Services.AddHostedService<ExpireReportsService>();
@@ -285,6 +307,7 @@ builder.Services.AddHostedService<RetainReportsService>();
 builder.Services.AddHostedService<CompleteAccountDeletionsService>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<PurgeAlertLocationsService>();
+builder.Services.AddHostedService<PurgeUserLocationsService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database", tags: ["ready"])
@@ -338,6 +361,7 @@ app.MapOpenApi();
 app.MapScalarApiReference();
 app.MapSituEndpoints();
 app.MapHub<MapHub>(MapHubAuth.HubPath);
+app.MapHub<FriendsHub>(MapHubAuth.FriendsHubPath);
 
 app.Run();
 return 0;

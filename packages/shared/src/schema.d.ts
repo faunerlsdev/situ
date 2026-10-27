@@ -1002,6 +1002,134 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PostMyLocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/location/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["PauseMyLocation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/location-sharing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetLocationSharing"];
+        put: operations["SetLocationSharing"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/location-sharing/reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AcknowledgeLocationReminder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/public-location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetPublicLocation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/privacy-zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPrivacyZones"];
+        put?: never;
+        post: operations["CreatePrivacyZone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/privacy-zones/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UpdatePrivacyZone"];
+        post?: never;
+        delete: operations["DeletePrivacyZone"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/map/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMapPeople"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/notification-settings": {
         parameters: {
             query?: never;
@@ -2779,6 +2907,11 @@ export interface components {
             webSession: components["schemas"]["WebSessionView"];
             phoneRequiredForMinors: boolean;
             captcha: components["schemas"]["CaptchaPublicView"];
+            /** Format: int32 */
+            locationEmitIntervalSeconds: number | string;
+        };
+        GetMapPeopleResponse: {
+            people: components["schemas"]["MapPersonView"][];
         };
         GetPublicReportMapResponse: {
             items: components["schemas"]["PublicMapPin"][];
@@ -2943,6 +3076,9 @@ export interface components {
             notifications: components["schemas"]["NotificationItemResponse"][];
             nextCursor: null | string;
         };
+        ListPrivacyZonesResponse: {
+            zones: components["schemas"]["PrivacyZoneView"][];
+        };
         ListRegionsResponse: {
             regions: components["schemas"]["RegionItem"][];
         };
@@ -2953,6 +3089,32 @@ export interface components {
             longitude: number | string;
             /** Format: double */
             accuracyMeters: null | number | string;
+            /** Format: date-time */
+            capturedAt: null | string;
+        };
+        LocationSharingView: {
+            enabled: boolean;
+            mode: string;
+            /** Format: date-time */
+            endsAt: null | string;
+            friendIds: string[];
+            consentGranted: boolean;
+            requiredConsentVersion: string;
+            consentText: string;
+            ghost: boolean;
+            /** Format: date-time */
+            ghostUntil: null | string;
+            isMinor: boolean;
+            guardianAllows: boolean;
+            reminderDue: boolean;
+            hiddenBecauseAnonymous: boolean;
+            publicMode: string;
+            publicConsentGranted: boolean;
+            publicConsentVersion: string;
+            publicConsentText: string;
+            profilePublic: boolean;
+            /** Format: int32 */
+            emitIntervalSeconds: number | string;
         };
         LoginBody: {
             email: string;
@@ -2986,6 +3148,20 @@ export interface components {
             isAnonymous: boolean;
             hideAuthorOnMap: boolean;
             isMine: boolean;
+        };
+        MapPersonView: {
+            /** Format: uuid */
+            userId: string;
+            userName: string;
+            displayName: string;
+            avatarUrl: null | string;
+            /** Format: double */
+            latitude: number | string;
+            /** Format: double */
+            longitude: number | string;
+            live: boolean;
+            /** Format: date-time */
+            lastSeenAt: null | string;
         };
         MapRealtimeView: {
             /** Format: double */
@@ -3058,6 +3234,11 @@ export interface components {
         PasswordBody: {
             password: string;
         };
+        PauseLocationResponse: {
+            live: boolean;
+            /** Format: date-time */
+            lastSeenAt: null | string;
+        };
         PlaceHoldBody: {
             targetType: string;
             /** Format: uuid */
@@ -3068,6 +3249,23 @@ export interface components {
             minSupported: string;
             latest: string;
         };
+        PostLocationResponse: {
+            live: boolean;
+            hiddenBecauseAnonymous: boolean;
+            hiddenByZone: boolean;
+        };
+        PrivacyZoneView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: double */
+            latitude: number | string;
+            /** Format: double */
+            longitude: number | string;
+            /** Format: int32 */
+            radiusMeters: number | string;
+            mode: string;
+        };
         ProfileVisibilityView: {
             public: boolean;
             consentVersion: null | string;
@@ -3077,6 +3275,10 @@ export interface components {
             showReports: boolean;
             strangerPreview: null | components["schemas"]["PublicProfileView"];
             friendPreview: components["schemas"]["PublicProfileView"];
+        };
+        PublicLocationBody: {
+            mode: string;
+            consentVersion: null | string;
         };
         PublicMapPin: {
             categoryCode: string;
@@ -3396,6 +3598,14 @@ export interface components {
             secret: string;
             otpauthUri: string;
         };
+        SharingBody: {
+            enabled: boolean;
+            mode: null | string;
+            duration: null | string;
+            friendIds: null | string[];
+            consentVersion: null | string;
+            ghost: null | string;
+        };
         SignInRequest: {
             login: string;
             password: string;
@@ -3558,6 +3768,16 @@ export interface components {
             refreshDays: number | string;
             /** Format: int32 */
             rememberDays: number | string;
+        };
+        ZoneBody: {
+            name: string;
+            /** Format: double */
+            latitude: number | string;
+            /** Format: double */
+            longitude: number | string;
+            /** Format: int32 */
+            radiusMeters: number | string;
+            mode: string;
         };
     };
     responses: never;
@@ -5136,6 +5356,253 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListLegalDocumentsResponse"];
+                };
+            };
+        };
+    };
+    PostMyLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocationBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostLocationResponse"];
+                };
+            };
+        };
+    };
+    PauseMyLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PauseLocationResponse"];
+                };
+            };
+        };
+    };
+    GetLocationSharing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationSharingView"];
+                };
+            };
+        };
+    };
+    SetLocationSharing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SharingBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationSharingView"];
+                };
+            };
+        };
+    };
+    AcknowledgeLocationReminder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationSharingView"];
+                };
+            };
+        };
+    };
+    SetPublicLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicLocationBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocationSharingView"];
+                };
+            };
+        };
+    };
+    ListPrivacyZones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListPrivacyZonesResponse"];
+                };
+            };
+        };
+    };
+    CreatePrivacyZone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyZoneView"];
+                };
+            };
+        };
+    };
+    UpdatePrivacyZone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyZoneView"];
+                };
+            };
+        };
+    };
+    DeletePrivacyZone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetMapPeople: {
+        parameters: {
+            query: {
+                minLat: number | string;
+                minLon: number | string;
+                maxLat: number | string;
+                maxLon: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetMapPeopleResponse"];
                 };
             };
         };

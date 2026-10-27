@@ -3,8 +3,8 @@ using Situ.Domain.Common;
 namespace Situ.Domain.Profiles;
 
 /// <summary>
-/// Last known position of a user, written by the mobile app (RF-UBI-07).
-/// This row is the durable record for nearby users and 1 km alerts.
+/// Last rounded position shared with friends or the public map.
+/// The raw GPS reading is never stored. Proximity alerts use <c>DeviceAlertLocation</c>.
 /// </summary>
 public sealed class UserLocation : Entity
 {
@@ -17,6 +17,9 @@ public sealed class UserLocation : Entity
     public double? AccuracyMeters { get; private set; }
     public Guid? CityId { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTimeOffset? ExpiresAt { get; private set; }
+    public DateTimeOffset? LastSeenAt { get; private set; }
+    public bool IsLive { get; private set; }
 
     public static UserLocation Create(Guid userId, GeoPoint point, double? accuracyMeters, Guid? cityId, DateTimeOffset now) => new()
     {
@@ -33,6 +36,24 @@ public sealed class UserLocation : Entity
         AccuracyMeters = accuracyMeters;
         CityId = cityId;
         UpdatedAt = now;
+    }
+
+    public void Publish(GeoPoint point, double? accuracyMeters, Guid? cityId, DateTimeOffset expiresAt, DateTimeOffset now)
+    {
+        Point = point;
+        AccuracyMeters = accuracyMeters;
+        CityId = cityId;
+        UpdatedAt = now;
+        ExpiresAt = expiresAt;
+        IsLive = true;
+        LastSeenAt = null;
+    }
+
+    public void MarkLastSeen(DateTimeOffset seenAt, DateTimeOffset expiresAt)
+    {
+        IsLive = false;
+        LastSeenAt = seenAt;
+        ExpiresAt = expiresAt;
     }
 
     /// <summary>"Last seen X ago" instead of a moving dot when the signal is stale (RF-UBI-08).</summary>

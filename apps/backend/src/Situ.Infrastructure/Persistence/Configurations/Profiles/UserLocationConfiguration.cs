@@ -11,6 +11,7 @@ public sealed class UserLocationConfiguration : IEntityTypeConfiguration<UserLoc
 {
     public void Configure(EntityTypeBuilder<UserLocation> builder)
     {
+        builder.Property(e => e.IsLive).HasDefaultValue(false);
         builder.Required<UserLocation, User>(e => e.UserId);
         builder.Optional<UserLocation, City>(e => e.CityId);
         builder.HasIndex(e => e.UserId).IsUnique().AreNullsDistinct(false);

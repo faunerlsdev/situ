@@ -245,6 +245,15 @@ public class FriendsPrivacyTests
         var friendsOnly = await map.Handle(new GetReportMapRequest(friend.Id, 4.5, -74.3, 4.9, -73.9, 16, [], null, "friends", null, null), CancellationToken.None);
         Assert.Contains(friendsOnly.Value!.Items, item => item.IsMine == false && item.Author?.UserId == owner.Id);
         Assert.DoesNotContain(friendsOnly.Value.Items, item => item.Author?.UserId == outsider.Id);
+
+        var anonymous = Report.Create(owner.Id, Guid.NewGuid(), owner.CityId, new GeoPoint(4.715, -74.076), "Anónimo de un amigo.", true, false, TimeSpan.FromHours(2), Now);
+        var friendsAnonymous = Report.Create(owner.Id, Guid.NewGuid(), owner.CityId, new GeoPoint(4.716, -74.077), "Anónimo solo para amigos.", true, false, TimeSpan.FromHours(2), Now, visibility: ContentVisibility.FriendsOnly);
+        db.Reports.AddRange(anonymous, friendsAnonymous);
+        await db.SaveChangesAsync();
+        var hiddenAnonymous = await map.Handle(new GetReportMapRequest(friend.Id, 4.5, -74.3, 4.9, -73.9, 16, [], null, "friends", null, null), CancellationToken.None);
+        Assert.DoesNotContain(hiddenAnonymous.Value!.Items, item => item.Id == anonymous.Id || item.Id == friendsAnonymous.Id);
+        var ownAnonymous = await map.Handle(new GetReportMapRequest(owner.Id, 4.5, -74.3, 4.9, -73.9, 16, [], null, "friends", null, null), CancellationToken.None);
+        Assert.Contains(ownAnonymous.Value!.Items, item => item.Id == anonymous.Id && item.IsMine && item.IsAnonymous);
     }
 
     [Fact]

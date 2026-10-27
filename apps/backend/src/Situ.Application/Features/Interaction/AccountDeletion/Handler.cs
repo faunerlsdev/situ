@@ -2,7 +2,9 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Location;
 using Situ.Domain.Administration;
+using Situ.Domain.Social;
 using Situ.Domain.Common;
 using Situ.Domain.Identity;
 using Situ.Domain.Reports;
@@ -120,7 +122,7 @@ public sealed record CompleteAccountDeletionsRequest;
 
 public sealed record CompleteAccountDeletionsResponse(int Completed, int BlockedByLegalHold);
 
-public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IClock clock, IFileStorage files)
+public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IClock clock, IFileStorage files, IFriendLocationPublisher? locations = null)
     : IHandler<CompleteAccountDeletionsRequest, Result<CompleteAccountDeletionsResponse>>
 {
     public async Task<Result<CompleteAccountDeletionsResponse>> Handle(CompleteAccountDeletionsRequest request, CancellationToken cancellationToken)
@@ -148,7 +150,12 @@ public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IC
                 continue;
             }
 
+            var ties = await db.Friendships
+                .Where(item => item.Status == FriendshipStatus.Accepted && (item.RequesterId == deletion.UserId || item.AddresseeId == deletion.UserId))
+                .ToListAsync(cancellationToken);
+            var friendIds = ties.Select(item => item.OtherParty(deletion.UserId)).ToArray();
             await EraseAsync(deletion.UserId, now, cancellationToken);
+            await LocationRules.RemoveFromAsync(locations, friendIds, deletion.UserId, cancellationToken);
             deletion.Complete(now);
             Audit.Write(db, null, "account_deletion.completed", "User", deletion.UserId, null, now);
             completed++;

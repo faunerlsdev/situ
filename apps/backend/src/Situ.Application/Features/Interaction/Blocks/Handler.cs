@@ -4,6 +4,7 @@ using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Domain.Common;
 using Situ.Domain.Social;
+using Situ.Application.Features.Location;
 
 namespace Situ.Application.Features.Interaction.Blocks;
 
@@ -11,7 +12,7 @@ public sealed record BlockUserRequest(Guid UserId, Guid BlockedUserId);
 
 public sealed record BlockUserResponse(bool Blocked);
 
-public sealed class BlockUserHandler(IApplicationDbContext db, IClock clock)
+public sealed class BlockUserHandler(IApplicationDbContext db, IClock clock, IFriendLocationPublisher? locations = null)
     : IHandler<BlockUserRequest, Result<BlockUserResponse>>
 {
     public async Task<Result<BlockUserResponse>> Handle(BlockUserRequest request, CancellationToken cancellationToken)
@@ -29,6 +30,7 @@ public sealed class BlockUserHandler(IApplicationDbContext db, IClock clock)
 
         await EnsureFullAsync(db, request.UserId, request.BlockedUserId, clock.UtcNow, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        await LocationRules.ForgetPairAsync(locations, request.UserId, request.BlockedUserId, cancellationToken);
         return Result<BlockUserResponse>.Success(new BlockUserResponse(true));
     }
 

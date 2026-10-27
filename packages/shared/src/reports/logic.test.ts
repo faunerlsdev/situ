@@ -161,6 +161,7 @@ describe('app config', () => {
     webSession: { refreshDays: 30, rememberDays: 90 },
     phoneRequiredForMinors: true,
     captcha: { provider: 'Turnstile', siteKey: '' },
+    locationEmitIntervalSeconds: 20,
   } satisfies AppConfig;
 
   it('uses the response when the network answers and the cache when it does not', () => {
