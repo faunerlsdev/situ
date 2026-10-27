@@ -86,6 +86,7 @@ Si falta algo, el proceso no arranca. El mensaje es uno de estos:
 - `Jwt:Secret debe tener al menos 32 caracteres.`
 - `Falta la cadena de conexión ConnectionStrings:Default. En desarrollo configúrala con dotnet user-secrets. En producción define la variable de entorno ConnectionStrings__Default.`
 - `Falta GuardianConsent:SigningKey. Defínela con la variable de entorno GuardianConsent__SigningKey`
+- En Production también se rechazan placeholders, las claves de desarrollo (`situ-dev-guardian-consent-signing-key` y `situ-development-media-signing-key`) y un secreto repetido entre JWT, consentimiento y medios. Hacen falta `FileStorage__SigningKey`, `FileStorage__Root`, `Notifications__ExpoAccessToken`, `Captcha__SecretKey`, SMTP real, `PublicBaseUrl` https y `Cors__AllowedOrigins`. El detalle está en `docs/deploy.md`.
 
 ## Arranque rápido
 

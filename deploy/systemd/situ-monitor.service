@@ -1,0 +1,7 @@
+[Unit]
+Description=SITU disk, service and certificate monitor
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/situ/bin/monitor.sh

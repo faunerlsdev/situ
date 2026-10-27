@@ -22,6 +22,11 @@ export function SiteFooter() {
                 Retiro de contenido
               </a>
             </li>
+            <li>
+              <a href="/cuenta/eliminar" className="font-semibold text-app-text underline-offset-2 hover:underline">
+                Eliminar cuenta
+              </a>
+            </li>
           </ul>
         </nav>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { notify, presentError } from '@situ/shared';
+import { emailSpamHint, notify, presentError } from '@situ/shared';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -56,6 +56,7 @@ export function ConfirmEmailForm() {
       ) : null}
       {!token ? (
         <form onSubmit={(event) => void resend(event)} className="flex w-[80%] max-w-[360px] flex-col gap-3" noValidate>
+          <p className="text-center font-sans text-sm text-app-muted">{emailSpamHint}</p>
           <label className="font-sans text-body font-bold text-app-text italic" htmlFor="confirm-email">
             Correo
             <input

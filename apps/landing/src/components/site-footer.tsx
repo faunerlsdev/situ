@@ -1,6 +1,16 @@
-import { sites } from '@situ/shared';
+import { publicSiteUrls } from '@/lib/legal-document';
 
 export function SiteFooter() {
+  const sites = publicSiteUrls();
+  const links = [
+    { href: '/privacidad', label: 'Privacidad' },
+    { href: '/terminos', label: 'Términos' },
+    { href: '/politica-de-tratamiento-de-datos', label: 'Política de tratamiento de datos' },
+    { href: '/contenido-y-moderacion', label: 'Contenido y moderación' },
+    { href: sites.supportUrl, label: 'Soporte' },
+    { href: sites.deleteAccountUrl, label: 'Eliminar cuenta' },
+  ];
+
   return (
     <footer className="border-t border-gray200 bg-ink text-white">
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-10 sm:grid-cols-[1.4fr_1fr]">
@@ -12,26 +22,13 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Legal">
           <ul className="space-y-2 text-sm">
-            <li>
-              <a href="/privacidad" className="underline-offset-2 hover:underline">
-                Privacidad
-              </a>
-            </li>
-            <li>
-              <a href="/terminos" className="underline-offset-2 hover:underline">
-                Términos
-              </a>
-            </li>
-            <li>
-              <a href={`${sites.support}/solicitudes`} className="underline-offset-2 hover:underline">
-                Habeas data y retiro de contenido
-              </a>
-            </li>
-            <li>
-              <a href={`${sites.support}/contacto`} className="underline-offset-2 hover:underline">
-                Contacto
-              </a>
-            </li>
+            {links.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} className="underline-offset-2 hover:underline">
+                  {link.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
       </div>

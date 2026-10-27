@@ -1,4 +1,4 @@
-import { messageFromUnknown, notify } from '@situ/shared';
+import { emailSpamHint, messageFromUnknown, notify } from '@situ/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -52,6 +52,7 @@ export default function ConfirmEmailScreen() {
           Tu correo todavía no está confirmado. Escribe el correo de la cuenta y te enviamos el enlace de nuevo.
         </Text>
       )}
+      {token ? null : <Text style={styles.hint}>{emailSpamHint}</Text>}
       {token ? (
         <PrimaryButton label="Confirmar mi correo" pendingLabel="Confirmando…" pending={pending} onPress={() => void confirm()} />
       ) : (
@@ -109,6 +110,13 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.sans,
     fontSize: 16,
     lineHeight: 22,
+    textAlign: 'center',
+  },
+  hint: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fontFamily.sans,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
   },
   form: {

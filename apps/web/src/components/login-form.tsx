@@ -4,8 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AppError, loginSchema, notify } from '@situ/shared';
 import type { LoginValues } from '@situ/shared';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { safeReturnPath } from '@/features/account/deletion-copy';
 import { useForm } from 'react-hook-form';
 import { InlineAlert } from '@/components/feedback/inline';
 import { SituLoader } from '@/components/feedback/situ-loader';
@@ -15,6 +16,7 @@ import { useLockoutLabel } from './use-lockout';
 
 export function LoginForm() {
   const router = useRouter();
+  const nextPath = safeReturnPath(useSearchParams().get('next'));
   const [retryAfter, setRetryAfter] = useState<string | null>(null);
   const [remember, setRemember] = useState(false);
   const lockout = useLockoutLabel(retryAfter);
@@ -29,7 +31,7 @@ export function LoginForm() {
 
     try {
       await postBff('/api/auth/login', { ...values, rememberMe: remember });
-      router.push('/mapa');
+      router.push(nextPath);
     } catch (cause) {
       if (cause instanceof AppError && cause.apiCode === 'auth.guardian_consent_required') {
         router.push('/representante');

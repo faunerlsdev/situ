@@ -146,6 +146,11 @@ public class NetworkKnownProxiesTests
             ["Jwt:Secret"] = new string('j', 32),
             ["GuardianConsent:SigningKey"] = new string('k', 32),
         };
+        if (environment == Environments.Production)
+        {
+            ProductionTestConfiguration.Apply(values);
+        }
+
         if (proxies is not null)
         {
             for (var index = 0; index < proxies.Length; index++)

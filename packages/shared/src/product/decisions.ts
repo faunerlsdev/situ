@@ -11,6 +11,9 @@ export const callingCodes = [
 export const phonePurpose =
   'Lo usamos para seguridad de tu cuenta y, más adelante, verificación en dos pasos. No lo mostramos a otros usuarios.';
 
+export const emailSpamHint =
+  'Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado.';
+
 const e164 = /^\+[1-9]\d{7,14}$/;
 
 export function composePhone(callingCode: string, national: string) {

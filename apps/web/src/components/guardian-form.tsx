@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { GuardianConsentReview, GuardianDocumentType } from '@situ/shared';
-import { guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
+import { emailSpamHint, guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { GuardianDataValues } from '@situ/shared';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -190,6 +190,7 @@ export function GuardianForm() {
       {step === 'code' ? (
         <section className="flex flex-col gap-3 font-sans">
           <p>Te enviamos un código de 6 dígitos. Vence en 10 minutos.</p>
+          <p className="text-sm text-[#6B675F]">{emailSpamHint}</p>
           <input inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} aria-label="Código de verificación" className="h-12 rounded-[8px] border border-[#D5D0C8] bg-white px-3 tracking-[0.3em]" />
           <button type="button" disabled={pending} onClick={() => void verify()} className="rounded-[8px] bg-[#1C1C1C] px-4 py-3 font-bold text-white disabled:opacity-60">Verificar correo</button>
           <button type="button" disabled={pending} onClick={() => void api.resendGuardianEmailCode(token).catch((cause: unknown) => setError(messageFromUnknown(cause)))} className="font-bold text-[#FF6400]">Reenviar código</button>

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { messageFromUnknown, notify, passwordResetRequestSchema } from '@situ/shared';
+import { emailSpamHint, messageFromUnknown, notify, passwordResetRequestSchema } from '@situ/shared';
 import type { PasswordResetRequestValues } from '@situ/shared';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -31,6 +31,7 @@ export default function RecoverScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Recuperar</Text>
         <Text style={styles.lede}>Escribe el correo de tu cuenta. Si está registrado, te enviaremos un enlace.</Text>
+        <Text style={styles.hint}>{emailSpamHint}</Text>
         <Controller
           control={form.control}
           name="email"
@@ -89,6 +90,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
+    textAlign: 'center',
+  },
+  hint: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fontFamily.sans,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
   },
   link: {

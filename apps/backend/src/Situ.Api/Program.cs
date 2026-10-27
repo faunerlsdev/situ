@@ -104,10 +104,12 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization(AuthorizationPolicies.Add);
 
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var allowDevelopmentOrigins = builder.Environment.IsDevelopment();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CorsPolicies.Clients, policy =>
-        policy.SetIsOriginAllowed(CorsPolicies.IsAllowedOrigin)
+        policy.SetIsOriginAllowed(origin => CorsPolicies.IsAllowedOrigin(origin, corsOrigins, allowDevelopmentOrigins))
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -276,9 +278,15 @@ builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<PurgeAlertLocationsService>();
 
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>("database");
+    .AddDbContextCheck<AppDbContext>("database", tags: ["ready"])
+    .AddCheck<StorageHealthCheck>("storage", tags: ["ready"]);
 
 var app = builder.Build();
+
+if (app.Environment.IsProduction() && !ProductionSecretRules.TryValidate(app.Configuration, out var productionError))
+{
+    throw new InvalidOperationException(productionError);
+}
 
 if (ConsoleCommands.IsRequested(args))
 {
@@ -301,8 +309,19 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = static _ => false,
+    ResponseWriter = HealthResponses.WriteAsync,
+}).AllowAnonymous();
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = static check => check.Tags.Contains("ready"),
+    ResponseWriter = HealthResponses.WriteAsync,
+}).AllowAnonymous();
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
+    Predicate = static check => check.Tags.Contains("ready"),
     ResponseWriter = HealthResponses.WriteAsync,
 }).AllowAnonymous();
 

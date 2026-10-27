@@ -1,0 +1,27 @@
+[Unit]
+Description=SITU admin
+After=network-online.target situ-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=situ
+Group=situ
+WorkingDirectory=/opt/situ/current/admin
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=HOSTNAME=127.0.0.1
+EnvironmentFile=/etc/situ/admin.env
+ExecStart=/opt/situ/bin/start-next.sh admin
+Restart=on-failure
+RestartSec=5
+MemoryMax=384M
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+ReadWritePaths=/var/lib/situ
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

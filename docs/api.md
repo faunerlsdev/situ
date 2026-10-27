@@ -242,7 +242,15 @@ Dispositivos. `GET /api/v1/me/devices` y `DELETE /api/v1/me/devices/{id}` acepta
 }
 ```
 
-El dominio sigue rechazando una descripción de más de 1000 caracteres aunque el ajuste diga otra cosa. `legal` sale de `legal.terms_url`, `legal.privacy_url` y `legal.support_url`. Esas direcciones son marcadores hasta que exista la web.
+El dominio sigue rechazando una descripción de más de 1000 caracteres aunque el ajuste diga otra cosa. `legal` sale de `legal.terms_url`, `legal.privacy_url` y `legal.support_url`. En producción, con la variable `DOMAIN_ROOT` (por defecto `somossitu.com`, sin protocolo):
+
+| Clave | URL |
+| --- | --- |
+| `legal.terms_url` | `https://DOMAIN_ROOT/terminos` |
+| `legal.privacy_url` | `https://DOMAIN_ROOT/privacidad` |
+| `legal.support_url` | `https://ayuda.DOMAIN_ROOT/contacto` |
+
+La página de eliminación que pide Google Play es `https://app.DOMAIN_ROOT/cuenta/eliminar`. La semilla actual del backend sigue en `https://somossitu.com/terminos`, `https://somossitu.com/privacidad` y `https://somossitu.com/soporte` hasta que esas tres claves se actualicen en el panel. Este cambio no modifica el backend. Mientras `legal.support_url` siga en `https://somossitu.com/soporte`, la página de eliminación usa `https://ayuda.somossitu.com/contacto`. Cualquier otro valor de esa clave se muestra tal cual. El correo de esa página es `soporte@somossitu.com`: app-config no tiene una clave de correo.
 
 ## Confirmación
 

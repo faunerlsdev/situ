@@ -194,6 +194,7 @@ function ComplaintForm({ targetId }: { targetId: string }) {
 }
 
 async function confirm(id: string, type: 'StillThere' | 'GoneNow', here: { lat: number; lng: number } | null, queryClient: ReturnType<typeof useQueryClient>) {
+  // eslint-disable-next-line no-alert -- aviso breve antes de pedir la ubicación del navegador
   if (typeof window !== 'undefined' && !window.confirm('Usamos tu ubicación solo para medir la distancia. No la guardamos.')) {
     return;
   }

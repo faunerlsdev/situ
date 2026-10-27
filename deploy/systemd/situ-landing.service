@@ -1,0 +1,27 @@
+[Unit]
+Description=SITU landing
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=situ
+Group=situ
+WorkingDirectory=/opt/situ/current/landing
+Environment=NODE_ENV=production
+Environment=PORT=3003
+Environment=HOSTNAME=127.0.0.1
+EnvironmentFile=/etc/situ/landing.env
+ExecStart=/opt/situ/bin/start-next.sh landing
+Restart=on-failure
+RestartSec=5
+MemoryMax=320M
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+ReadWritePaths=/var/lib/situ
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

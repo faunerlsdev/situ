@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { notify, passwordResetRequestSchema, presentError } from '@situ/shared';
+import { emailSpamHint, notify, passwordResetRequestSchema, presentError } from '@situ/shared';
 import type { PasswordResetRequestValues } from '@situ/shared';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -38,6 +38,7 @@ export function ResetForm() {
       <p className="w-[80%] max-w-[360px] text-center font-sans text-body font-bold text-app-text">
         Escribe el correo de tu cuenta. Si está registrado, te enviaremos un enlace.
       </p>
+      <p className="w-[80%] max-w-[360px] text-center font-sans text-sm text-app-muted">{emailSpamHint}</p>
       <FormStatus error={formError} notice={notice} />
       <div className="w-[80%] max-w-[360px]">
         <input

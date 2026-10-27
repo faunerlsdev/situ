@@ -8,6 +8,11 @@ public sealed class FileStorageOptions
 {
     public const string SectionName = "FileStorage";
 
+    public const string DevelopmentSigningKey = "situ-development-media-signing-key";
+
+    public const string MissingSigningKeyMessage =
+        "Falta FileStorage:SigningKey. En producción define FileStorage__SigningKey. La clave de desarrollo no sirve fuera de Development.";
+
     public string Root { get; set; } = "";
 
     public string SigningKey { get; set; } = "";

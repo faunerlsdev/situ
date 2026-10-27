@@ -1,5 +1,5 @@
 import type { GuardianConsentStatus } from '@situ/shared';
-import { AppError, confirm, messageFromUnknown, notify } from '@situ/shared';
+import { AppError, confirm, emailSpamHint, messageFromUnknown, notify } from '@situ/shared';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -174,6 +174,7 @@ export default function GuardianAuthorizationScreen() {
           <Text style={styles.body}>
             Enviamos la solicitud a {status?.maskedEmail ?? 'tu representante'}. Tu representante tiene {daysLeft(status?.expiresAt ?? null)} para responder.
           </Text>
+          <Text style={styles.help}>{emailSpamHint}</Text>
           <LogoAction label="Reenviar correo" pendingLabel="Enviando…" pending={pending} disabled={blocked} onPress={() => void run(() => api.resendGuardianConsent())} />
           {changing ? (
             <TextInput

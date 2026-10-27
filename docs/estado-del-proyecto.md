@@ -1,6 +1,6 @@
 # Estado del proyecto frente a requisitos v2
 
-Auditoría de solo lectura del 27 de octubre de 2026 contra `docs/requisitos-v2.md.md`. Cada ID se contrastó con código, pantallas y pruebas. No se reejecutó la suite.
+Auditoría del 27 de octubre de 2026 contra `docs/requisitos-v2.md.md`, actualizada el mismo día con las decisiones posteriores a la v2. Cada ID se contrastó con código, pantallas y pruebas.
 
 Estados: COMPLETO, PARCIAL, SOLO BACKEND, NO INICIADO, DIFERIDO CONSCIENTE. No hubo requisitos que quedaran solo en móvil o solo en el panel, ni alguno cuyo estado entero sea no verificable. La revisión de un abogado sí es no verificable y va en las secciones 4 y 7.
 
@@ -10,20 +10,20 @@ Se analizaron **147** requisitos (RF-XXX-NN).
 
 | Estado | Cantidad | % |
 | --- | ---: | ---: |
-| COMPLETO | 10 | 6,8 % |
-| PARCIAL | 70 | 47,6 % |
-| SOLO BACKEND | 45 | 30,6 % |
+| COMPLETO | 11 | 7,5 % |
+| PARCIAL | 69 | 46,9 % |
+| SOLO BACKEND | 36 | 24,5 % |
 | NO INICIADO | 20 | 13,6 % |
-| DIFERIDO CONSCIENTE | 2 | 1,4 % |
+| DIFERIDO CONSCIENTE | 11 | 7,5 % |
 
 Por fase del documento (cada ID en una sola fase):
 
 | Fase | IDs | Completo | Parcial | Solo backend | No iniciado | Diferido |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1. MVP | 92 | 10 (10,9 %) | 66 (71,7 %) | 2 (2,2 %) | 13 (14,1 %) | 1 (1,1 %) |
+| 1. MVP | 92 | 11 (12,0 %) | 65 (70,7 %) | 2 (2,2 %) | 13 (14,1 %) | 1 (1,1 %) |
 | 2. Social y vivo | 37 | 0 | 3 (8,1 %) | 27 (73,0 %) | 6 (16,2 %) | 1 (2,7 %) |
-| 3. Monetización | 10 | 0 | 1 (10 %) | 8 (80 %) | 1 (10 %) | 0 |
-| 4. Empresas | 8 | 0 | 0 | 8 (100 %) | 0 | 0 |
+| 3. Monetización | 10 | 0 | 1 (10 %) | 7 (70 %) | 1 (10 %) | 1 (10 %) |
+| 4. Empresas | 8 | 0 | 0 | 0 | 0 | 8 (100 %) |
 | 5. Web live | 0 | — | — | — | — | — |
 
 La fase 5 no tiene ID propio: queda cubierta por RF-LIV-02 y RF-WEB-02 (hoy la web no transmite; transmitir desde el navegador es futuro).
@@ -46,16 +46,16 @@ Por sección:
 | Amigos (AMI) | 4 | 0 | 0 | 4 | 0 | 0 |
 | Notificaciones (NOT) | 7 | 0 | 7 | 0 | 0 | 0 |
 | Publicidad (MON) | 3 | 0 | 0 | 1 | 2 | 0 |
-| Suscripciones (SUS) | 4 | 0 | 1 | 2 | 1 | 0 |
+| Suscripciones (SUS) | 4 | 0 | 1 | 1 | 1 | 1 |
 | Algoritmo (ALG) | 6 | 0 | 0 | 6 | 0 | 0 |
-| Dashboard (AVA) | 8 | 0 | 0 | 8 | 0 | 0 |
+| Dashboard (AVA) | 8 | 0 | 0 | 0 | 0 | 8 |
 | Admin (ADM) | 5 | 1 | 3 | 0 | 1 | 0 |
-| Moderación (MOD) | 3 | 0 | 3 | 0 | 0 | 0 |
+| Moderación (MOD) | 3 | 1 | 2 | 0 | 0 | 0 |
 | Global (GLO) | 7 | 0 | 5 | 1 | 1 | 0 |
 | Web (WEB) | 6 | 0 | 4 | 0 | 2 | 0 |
 | Retención (RET) | 6 | 0 | 5 | 0 | 1 | 0 |
 
-El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuenta, menores, mapa de reportes, anonimato y notificaciones por ciudad y cercanía, y el panel modera, pero la web no crea reportes ni tiene perfil, el visitante no ve el mapa, no hay prueba de punta a punta en un teléfono, y faltan el formulario público de retiro, la revisión legal y la operación de producción.
+El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuenta, menores, mapa de reportes, anonimato y notificaciones por ciudad y cercanía, y el panel modera. La web no crea reportes ni tiene perfil. El visitante ya tiene un mapa limitado y existe el formulario público de retiro. Siguen sin prueba de punta a punta en un teléfono, la revisión legal y la operación de producción.
 
 ## 2. Tabla por sección
 
@@ -85,7 +85,7 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | RF-MIN-03 | Prueba: fecha, versión, documento, correo verificado y firma interna | PARCIAL | `AuthorizeGuardianConsent/Handler.cs` (`signer.Sign`), `GuardianConsent.cs` | Un abogado debe decir si esa firma basta (Ley 527) |
 | RF-MIN-04 | Perfil privado obligatorio; no salen en el mapa general | SOLO BACKEND | `UserProfile.MakePublic` rechaza edad 17 en `UserProfilePresenceTests.cs` | No hay API ni pantalla para volver público un perfil, así que la regla no se ejerce en la app |
 | RF-MIN-05 | Ubicación con amigos apagada; prenderla pide permiso del representante y recordatorio | PARCIAL | Checkbox en `tutor/autorizar.tsx`; `ShareLocationWithFriends` nace en falso | No hay interruptor usable ni recordatorio |
-| RF-MIN-06 | Minimización, sin publicidad personalizada ni contenido adulto | PARCIAL | No hay red de anuncios | El registro exige teléfono; no hay exclusión de categorías adultas |
+| RF-MIN-06 | Minimización, sin publicidad personalizada ni contenido adulto | PARCIAL | No hay red de anuncios. `registration.phone_required_for_minors` nace en true | Sigue abierta para el abogado si el teléfono del menor debe ser opcional (`docs/legal/paquete-abogado.md`). No hay exclusión de categorías adultas |
 | RF-MIN-07 | El representante consulta, rectifica, revoca y pide supresión | PARCIAL | `revoke`, `review` y `apps/web/src/app/tutor/gestionar/page.tsx`; borrado de cuenta | Rectificar datos del menor no tiene flujo; el soporte es un enlace |
 | RF-MIN-08 | A los 7 días sin respuesta se borran los datos del menor | COMPLETO | `ExpireGuardianConsents/Handler.cs` llama `ErasePendingRegistration`, `GuardianConsentExpiryService.cs` | — |
 | RF-MIN-09 | El menor solo transmite a amigos, puede ir anónimo, y bajo 16 necesita permiso | SOLO BACKEND | `LiveStream.Start` y `LiveStreamStartTests.cs`; el permiso está en el formulario del tutor | No hay transmisión |
@@ -119,7 +119,7 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 
 | ID | Resumen | Estado | Evidencia | Qué falta |
 | --- | --- | --- | --- | --- |
-| RF-MAP-01 | Mapa centrado en el usuario, con permiso de GPS | PARCIAL | `apps/mobile/features/reports/map-screen.tsx`; web `features/map/map-screen.tsx` | La web no centra sola; el visitante no carga reportes (`MapReports` exige usuario) |
+| RF-MAP-01 | Mapa centrado en el usuario, con permiso de GPS | PARCIAL | `apps/mobile/features/reports/map-screen.tsx`; web `features/map/map-screen.tsx`; visitante en `GET /public/reports/map` | La web no centra sola. El visitante ve pines limitados de las últimas 24 horas, sin ficha |
 | RF-MAP-02 | Botón "¿Dónde estoy?" y seguimiento | PARCIAL | Botón de ubicación en el mapa móvil y en la web | No se comprobó seguimiento continuo |
 | RF-MAP-03 | Reportes por zona, ícono de categoría y clustering | PARCIAL | `GET /reports/map`, `ReportMapReader.cs` agrupa si zoom &lt; 15, pines en móvil y web | La prueba PostGIS se omite sin `situ_test` |
 | RF-MAP-04 | Tarjeta con categoría, hora, distancia, autor, "Sigue ahí", comentar, compartir y denunciar | PARCIAL | Tarjeta móvil y `apps/web/src/features/reports/report-panel.tsx` | Sin prueba en dispositivo ni E2E con sesión |
@@ -196,9 +196,9 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | RF-MON-02 | Pines patrocinados | SOLO BACKEND | `SponsoredPin.cs` | Sin API ni mapa |
 | RF-MON-03 | Consentimiento de anuncios personalizados; nada en vivos, alertas críticas ni menores | NO INICIADO | — | Todo |
 | RF-SUS-01 | Compra, renovación, cancelación, cambio y recuperar compras | SOLO BACKEND | `Subscription.cs` | Sin flujo de compra |
-| RF-SUS-02 | Compras de Apple y Google, y pasarela web | NO INICIADO | No hay StoreKit, Play Billing, Wompi, PayU ni Stripe | Todo. El modelo `Payment` no se usa |
+| RF-SUS-02 | Compras de Apple y Google, y pasarela web | NO INICIADO | No hay StoreKit, Play Billing, Wompi, PayU ni Stripe | Todo. Cuando exista, las compras se prueban en sandbox. El modelo `Payment` no se usa |
 | RF-SUS-03 | Planes y precios por país, editables en el admin | PARCIAL | `ListAdminPlans` es solo lectura; `PlanPrice.cs`; el límite de dispositivos lee el plan | No se editan precios ni beneficios |
-| RF-SUS-04 | Factura electrónica e IVA | SOLO BACKEND | No hay emisor de factura | Todo lo legal y operativo |
+| RF-SUS-04 | Factura electrónica e IVA | DIFERIDO CONSCIENTE | No hay emisor de factura | Después de producción (decisión 2026-10-27) |
 | RF-ALG-01 | Puntaje de importancia | SOLO BACKEND | `ImportanceScoringConfig.cs`, `ImportanceScoringConfigTests.cs` | Nadie calcula puntajes de reportes |
 | RF-ALG-02 | Umbral para pasar a "Noticia importante" | SOLO BACKEND | `PromotionThreshold`, `NewsItem.cs` | Sin job |
 | RF-ALG-03 | Primicia para Pro y retraso para el resto | SOLO BACKEND | — | Sin audiencia de planes |
@@ -210,14 +210,14 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 
 | ID | Resumen | Estado | Evidencia | Qué falta |
 | --- | --- | --- | --- | --- |
-| RF-AVA-01 | Mapa en tiempo real para la empresa, solo ver | SOLO BACKEND | `Organization.cs` | No hay app de dashboard |
-| RF-AVA-02 | Filtros por zona, categoría, tiempo e importancia | SOLO BACKEND | — | — |
-| RF-AVA-03 | Alertas por zona, categoría o palabras | SOLO BACKEND | `AlertRule.cs` | Sin evaluación |
-| RF-AVA-04 | Vista de noticias importantes | SOLO BACKEND | `NewsItem.cs` | — |
-| RF-AVA-05 | Estadísticas y exportar CSV o PDF | SOLO BACKEND | — | — |
-| RF-AVA-06 | Cuentas multiusuario y roles de organización | SOLO BACKEND | `OrganizationMember.cs` | — |
-| RF-AVA-07 | API y webhooks para terceros | SOLO BACKEND | Permiso `organizations.verify` | Sin API pública de empresas |
-| RF-AVA-08 | No revela anónimos ni ubicación de personas | SOLO BACKEND | — | No hay superficie que pueda filtrar |
+| RF-AVA-01 | Mapa en tiempo real para la empresa, solo ver | DIFERIDO CONSCIENTE | `Organization.cs` | Fuera del plan hasta que haya tracción |
+| RF-AVA-02 | Filtros por zona, categoría, tiempo e importancia | DIFERIDO CONSCIENTE | — | Fuera del plan hasta que haya tracción |
+| RF-AVA-03 | Alertas por zona, categoría o palabras | DIFERIDO CONSCIENTE | `AlertRule.cs` | Fuera del plan hasta que haya tracción |
+| RF-AVA-04 | Vista de noticias importantes | DIFERIDO CONSCIENTE | `NewsItem.cs` | Fuera del plan hasta que haya tracción |
+| RF-AVA-05 | Estadísticas y exportar CSV o PDF | DIFERIDO CONSCIENTE | — | Fuera del plan hasta que haya tracción |
+| RF-AVA-06 | Cuentas multiusuario y roles de organización | DIFERIDO CONSCIENTE | `OrganizationMember.cs` | Fuera del plan hasta que haya tracción |
+| RF-AVA-07 | API y webhooks para terceros | DIFERIDO CONSCIENTE | Permiso `organizations.verify` | Fuera del plan hasta que haya tracción |
+| RF-AVA-08 | No revela anónimos ni ubicación de personas | DIFERIDO CONSCIENTE | — | Fuera del plan hasta que haya tracción |
 | RF-ADM-01 | Categorías, avatares, geografía, planes, textos y enlaces legales | PARCIAL | Categorías, avatares, settings y edad mínima | Geografía y planes no se editan; los legales son URLs en settings |
 | RF-ADM-02 | Radio, intentos, bloqueo, dispositivos, edad, TTL, umbrales y retención | PARCIAL | `configuracion/page.tsx` edita `SystemSetting`; retención en `retencion/page.tsx` | Los pesos del algoritmo no están en esa pantalla |
 | RF-ADM-03 | RBAC y bitácora | COMPLETO | `Staff/Handler.cs`, `Audit/Handler.cs`, `bitacora/page.tsx`, `personal/page.tsx`, pruebas del panel | El 2FA del personal es adicional al documento |
@@ -225,7 +225,7 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 | RF-ADM-05 | Preclasificación de desnudez, violencia u ofensas | NO INICIADO | — | Todo |
 | RF-MOD-01 | Cola de denuncias y sanciones | PARCIAL | `denuncias/page.tsx`, `Complaints/Handler.cs`, warn/suspend/ban en `AdminEndpoints.cs` | No hay transmisiones que moderar |
 | RF-MOD-02 | Ver la identidad anónima con permiso y bitácora | PARCIAL | `anonymous-identity/reveal`, `AnonymousIdentityAccessLog`, `GET /admin/anonymous-identity-access-logs` | Hace falta confirmar el botón en la ficha de denuncia |
-| RF-MOD-03 | Retiro por aviso de un tercero | PARCIAL | `POST /takedown-requests`, `retiros/page.tsx`, `AdminPanelFlowTests.cs` | No hay formulario en la web pública ni en la app |
+| RF-MOD-03 | Retiro por aviso de un tercero | COMPLETO | `POST /takedown-requests`, `apps/web/src/app/retiro-de-contenido/page.tsx`, enlace en la ficha web y en la tarjeta móvil, `retiros/page.tsx`, `ProductDecisionTests.cs` | — |
 
 ### Alcance global, web y retención
 
@@ -264,10 +264,10 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 ## 4. Brechas críticas para lanzar el MVP
 
 - **Web incompleta.** La fase 1 pide la web sin transmisión. Hoy no se crea un reporte, no hay perfil, no hay dispositivos y no se elimina la cuenta (`RF-WEB-01`, `RF-AUT-10`, `RF-AUT-11`).
-- **Visitante.** La sección 2 dice que ve el mapa de forma limitada. `MapReports` responde 401 sin usuario. Sin sesión el mapa web no trae reportes.
+- **Visitante.** Sin sesión, la web usa `GET /api/v1/public/reports/map`: públicos de adultos, últimas 24 horas, máximo 50 pines, sin autor ni texto. Falta verlo con la clave de Google Maps.
 - **Menores.** El flujo del representante está construido, pero la escucha del menor es una casilla, el registro pide teléfono y la firma interna no tiene dictamen (Ley 527 de 1999, sección 13 del documento).
 - **Habeas Data.** Hay registro de aceptación, revocación, supresión de la cuenta y borrado a los 7 días si el representante no responde. Faltan rectificación clara, descarga previa (`RF-RET-05`) y la política publicada y revisada.
-- **Terceros en un chisme.** La API pública de retiro y la cola del panel existen. No hay formulario visible en la web ni en la app (`RF-MOD-03`).
+- **Terceros en un chisme.** El formulario público, la cola del panel y el enlace desde la ficha ya existen (`RF-MOD-03`).
 - **Tiendas.** Bloquear y denunciar está en el móvil, no en la web. Eliminar la cuenta está en el móvil, no en la web. No hay ficha de privacidad ni de contenido generado lista para App Store o Play.
 - **Moderación.** Hay cola, sanciones y revelado de anónimos con bitácora. No hay preclasificación automática (`RF-ADM-05`) ni revisión humana demostrada sobre un caso real.
 - **Retención.** El job borra reportes vencidos y respeta bloqueos legales. No avisa al autor ni ofrece descarga.
@@ -275,10 +275,8 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 ## 5. Desviaciones
 
 - Un reporte público de un menor se publica como anónimo (`CreateReport/Handler.cs` y el texto del formulario). El documento exige perfil privado y reglas de transmisión; no dice que el reporte público cambie solo a anónimo.
-- El anonimato de reportes nace encendido (`PreferAnonymousReports = true`). El documento pide el interruptor, no ese valor inicial.
-- El registro exige teléfono. El RF-AUT-01 no lo incluye.
+- El teléfono obligatorio, el anonimato encendido al nacer y las pestañas Mensajes y Chisme ocultas quedaron decididos el 2026-10-27. Ya no son desviaciones abiertas.
 - El doble factor es obligatorio para el personal del panel y no existe para el usuario. El documento solo sugiere 2FA de usuario.
-- Hay pestañas móviles Mensajes y Chisme vacías (`mensajes.tsx`, `chisme.tsx`). El documento no las pide.
 - El mapa agrupa en el servidor cuando el zoom es menor a 15, no en el cliente.
 - Existen tablas de amigos, vivos, planes, noticias, organizaciones y pines patrocinados sin producto que las use.
 - La web usa un ticket de un solo uso para el hub y cookies `httpOnly`. El documento no lo pide; es una medida de más, no un recorte.
@@ -299,14 +297,14 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 
 ## 7. Pendientes que no son de código
 
-- Dominio, DNS, certificados y hosting de API, web, landing y panel.
+- Dominio, DNS, certificados y hosting de API, web, landing y panel. `situ.red` no está adquirido. Los enlaces compartidos usan `app.<dominio>/r/{id}`.
 - Cuentas de Apple y Google, ficha de privacidad, eliminación de cuenta y política de contenido generado.
 - Clave de Google Maps para web, distinta de Android e iOS, con restricción por referrer.
 - Captcha de un proveedor real.
 - Correo transaccional con dominio propio (SPF, DKIM, DMARC).
 - Abogado de Habeas Data: firma interna y Ley 527 de 1999, flujo de menores, transmisiones anónimas de menores, retención y proyectos de ley de edad (sección 13).
 - Textos de la política de tratamiento y de los términos, por país, y marca ante la SIC si aplica.
-- Pasarela, facturación electrónica e IVA, cuando llegue la fase 3.
+- Pasarela cuando llegue el cobro. La facturación electrónica y el IVA quedan para después de producción. Las compras se prueban en sandbox.
 - Proveedor de video, cuando llegue la fase 2.
 
 ## 8. Hoja de ruta
@@ -314,7 +312,7 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 ### Necesario para lanzar el MVP
 
 1. **Paridad web mínima.** Alcance: crear reporte con medios, perfil básico, mis dispositivos, eliminar cuenta y menú. Cierra RF-WEB-01, RF-WEB-03, RF-WEB-06, RF-AUT-10, RF-AUT-11, RF-REP-01, RF-REP-05, RF-PER-01, RF-PER-02. Depende del almacenamiento de medios. Esfuerzo: L.
-2. **Mapa para quien no tiene cuenta y formulario de retiro.** Alcance: vista limitada sin sesión y formulario público de takedown, más denunciar y bloquear desde la web. Cierra el rol Visitante, RF-MOD-03 y la parte web de RF-PER-05. Esfuerzo: M.
+2. **Denunciar y bloquear desde la web.** El mapa limitado del visitante y el formulario público de retiro ya están (RF-MOD-03). Falta denunciar y bloquear personas desde la web (RF-PER-05). Esfuerzo: S.
 3. **Menores y datos, cierre legal-técnico.** Alcance: pantalla de escucha, dejar de pedir datos de más, y empaquetar la prueba de autorización para el abogado. Cierra RF-MIN-02, RF-MIN-03 y RF-MIN-06. Depende del dictamen. Esfuerzo: M.
 4. **Verificación real.** Alcance: correr PostGIS con `situ_test`, un teléfono iOS y uno Android (foto, mapa, push, borrado) y un E2E web con usuario. No cierra un ID nuevo; sostiene los que ya están en parcial. Esfuerzo: M.
 5. **Operación.** Alcance: secretos fuera del repo, correo de dominio, captcha, respaldos, salud con alerta. Cierra requisitos no funcionales de la sección 12. Esfuerzo: L.
@@ -325,25 +323,25 @@ El proyecto no está cerca de abrirse a usuarios reales. El móvil ya cubre cuen
 7. **Amigos.** Alcance: buscar, invitar, aceptar y listar. Cierra RF-AMI-01 a 04. Esfuerzo: L.
 8. **Perfil público y ubicación.** Alcance: consentimiento, interruptores, emisión solo desde el móvil y avatares en el mapa. Cierra RF-PER-03, RF-PER-04, RF-PER-06, RF-UBI-01 a 08 y RF-MAP-06. Esfuerzo: L.
 9. **Transmisión.** Alcance: proveedor de video, ícono en el mapa, ver desde la web, retención de 2 meses. Cierra RF-LIV-01 a 12, RF-MAP-05, RF-MIN-09 y RF-WEB-02. Esfuerzo: L.
-10. **Planes y noticias.** Alcance: cobro móvil y web, factura, puntaje y primicia. Cierra RF-SUS-01 a 04, RF-MON-01, RF-MON-03 y RF-ALG-01 a 06. Esfuerzo: L.
+10. **Planes y noticias.** Alcance: cobro móvil y web, puntaje y primicia. La factura electrónica queda para después de producción. Cierra RF-SUS-01 a 03, RF-MON-01, RF-MON-03 y RF-ALG-01 a 06. Esfuerzo: L.
 
-El dashboard de empresas (RF-AVA-01 a 08) queda detrás de esos diez bloques.
+El dashboard de empresas (RF-AVA-01 a 08) queda fuera del plan actual hasta que haya tracción.
 
 ## 9. Preguntas abiertas
 
 1. ¿Un menor puede publicar un reporte público si queda anónimo, o el reporte público debe rechazarse?
-2. ¿El teléfono es obligatorio en el registro?
-3. ¿El anonimato debe venir encendido para todas las cuentas?
-4. ¿El visitante ve pines reales sin cuenta, o el mapa vacío hasta que ingresa? Hoy la API exige sesión.
+2. ¿El teléfono es obligatorio en el registro? Cerrada el 2026-10-27: sí, en E.164. Para menores sigue abierta la minimización (RF-MIN-06).
+3. ¿El anonimato debe venir encendido para todas las cuentas? Cerrada el 2026-10-27: sí, sin pisar cuentas que ya eligieron.
+4. ¿El visitante ve pines reales sin cuenta, o el mapa vacío hasta que ingresa? Cerrada el 2026-10-27: ve un mapa limitado, sin ficha.
 5. ¿La web tiene que crear reportes antes del primer lanzamiento, o el primer corte es solo móvil?
 6. ¿La firma interna del correo de constancia alcanza como prueba (Ley 527 de 1999) o hace falta otro medio?
 7. ¿Seguimos en 14 años aunque avancen los proyectos de ley de 14 y de 16?
 8. ¿Google Maps queda como proveedor definitivo de la web y del móvil?
-9. ¿Las pestañas Mensajes y Chisme se eliminan o tienen un alcance que el documento no escribió?
+9. ¿Las pestañas Mensajes y Chisme se eliminan o tienen un alcance que el documento no escribió? Cerrada el 2026-10-27: se ocultan con `features.social_tabs` y el código se conserva.
 10. ¿La descarga del contenido antes de purgarlo (RF-RET-05, sugerido) entra al MVP?
 
 ## Conteo
 
 IDs en el documento: AUT 12, MIN 12, PER 6, UBI 11, MAP 10, MEN 2, PAN 4, CAT 4, REP 6, ANO 9, LIV 12, AMI 4, NOT 7, MON 3, SUS 4, ALG 6, AVA 8, ADM 5, MOD 3, GLO 7, WEB 6, RET 6. Suma **147**.
 
-Estados de esta auditoría: 10 + 70 + 45 + 20 + 2 = **147**.
+Estados de esta auditoría, con la actualización del 2026-10-27: 11 + 69 + 36 + 20 + 11 = **147**.

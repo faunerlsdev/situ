@@ -1,7 +1,7 @@
 'use client';
 
 import type { GuardianConsentStatus } from '@situ/shared';
-import { AppError, confirm, messageFromUnknown, notify } from '@situ/shared';
+import { AppError, confirm, emailSpamHint, messageFromUnknown, notify } from '@situ/shared';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { SituLoader } from '@/components/feedback/situ-loader';
@@ -150,6 +150,7 @@ export function GuardianWait() {
       {!loading && waiting ? (
         <section className="flex flex-col gap-3 text-center">
           <p className="font-sans text-body text-app-text">Enviamos la solicitud a {status?.maskedEmail ?? 'tu representante'}. Tu representante tiene {daysLeft(status?.expiresAt ?? null, now)} para responder.</p>
+          <p className="font-sans text-sm text-app-muted">{emailSpamHint}</p>
           <button type="button" disabled={pending || blocked} onClick={() => void run(() => api.resendGuardianConsent())} className="rounded-[8px] bg-primary px-4 py-3 font-sans font-bold text-app-on disabled:opacity-60">Reenviar correo</button>
           {changing ? <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Nuevo correo" className="h-[52px] rounded-[8px] border border-app-border bg-app-input px-3 text-app-text" /> : null}
           <button type="button" disabled={pending || blocked} onClick={() => (changing ? void run(() => api.changeGuardianEmail(email.trim())) : setChanging(true))} className="font-sans font-bold text-primary">Cambiar correo del representante</button>

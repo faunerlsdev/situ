@@ -4,9 +4,20 @@ public static class CorsPolicies
 {
     public const string Clients = "Clients";
 
-    public static bool IsAllowedOrigin(string origin)
+    public static bool IsAllowedOrigin(string origin, IReadOnlyList<string>? configured, bool isDevelopment)
     {
-        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+        if (configured is not null)
+        {
+            foreach (var allowed in configured)
+            {
+                if (string.Equals(allowed.Trim().TrimEnd('/'), origin.Trim().TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (!isDevelopment || !Uri.TryCreate(origin, UriKind.Absolute, out var uri))
         {
             return false;
         }

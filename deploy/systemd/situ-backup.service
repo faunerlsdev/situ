@@ -1,0 +1,10 @@
+[Unit]
+Description=SITU database and media backup
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/opt/situ/bin/backup.sh
+Nice=10
+IOSchedulingClass=idle

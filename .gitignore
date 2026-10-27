@@ -30,6 +30,7 @@ TestResults/
 .env.*
 !.env.example
 secrets.json
+deploy/env/*.env
 
 # Credenciales de Firebase y push. Nunca versionar.
 google-services.json

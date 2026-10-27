@@ -1,0 +1,27 @@
+[Unit]
+Description=SITU support
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=situ
+Group=situ
+WorkingDirectory=/opt/situ/current/support
+Environment=NODE_ENV=production
+Environment=PORT=3004
+Environment=HOSTNAME=127.0.0.1
+EnvironmentFile=/etc/situ/support.env
+ExecStart=/opt/situ/bin/start-next.sh support
+Restart=on-failure
+RestartSec=5
+MemoryMax=320M
+NoNewPrivileges=true
+ProtectSystem=full
+PrivateTmp=true
+ReadWritePaths=/var/lib/situ
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

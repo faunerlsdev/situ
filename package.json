@@ -16,6 +16,7 @@
     "dev:mobile": "pnpm --filter @situ/mobile start",
     "api:build": "dotnet build apps/backend/Situ.slnx",
     "api:test": "dotnet test apps/backend/Situ.slnx",
+    "legal:check": "pnpm --filter @situ/landing legal:check",
     "openapi": "pnpm --filter @situ/shared openapi",
     "openapi:check": "pnpm --filter @situ/shared openapi:check",
     "build": "turbo run build",

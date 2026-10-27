@@ -421,3 +421,8 @@ Fecha: 2026-10-27.
 - **Pestañas Mensajes y Chisme ocultas.** La bandera `features.social_tabs` nace apagada. Las pantallas siguen en el código y no aparecen en la navegación.
 - **Mapa limitado para visitantes.** Sin cuenta, la web usa `GET /api/v1/public/reports/map`: solo reportes públicos de adultos de las últimas 24 horas, máximo 50 pines, sin autor, texto, medios ni conteos. La ubicación se redondea a 3 decimales de grado, unos 111 metros. Un token no amplía esa respuesta.
 - **Formulario público de retiro.** La página `/retiro-de-contenido` usa `POST /api/v1/takedown-requests`, con captcha Cloudflare Turnstile verificado en el servidor. Si el verificador no responde, no se guarda nada. La respuesta es neutra, con número de seguimiento y plazo de 15 días.
+- **Dashboard de empresas.** RF-AVA-01 a RF-AVA-08 quedan fuera del plan actual hasta que haya tracción.
+- **Facturación electrónica.** Se hace después de producción.
+- **Compras.** Cuando existan, se prueban con el sandbox de la tienda o de la pasarela, no con cobros reales.
+- **Dominio corto.** `situ.red` no está adquirido. Los enlaces compartidos usan `app.<dominio>/r/{id}`.
+- **Correo y spam.** En confirmación de cuenta, autorización del acudiente y recuperación de contraseña se muestra: "Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado."

@@ -21,6 +21,7 @@ export {
   anonymityStatus,
   callingCodes,
   composePhone,
+  emailSpamHint,
   isE164,
   phonePurpose,
   refreshCookieMaxAge,

@@ -74,6 +74,11 @@ public class GuardianConsentSigningKeyTests
             ["Jwt:Secret"] = new string('j', 32),
             ["Network:KnownProxies:0"] = "10.0.0.8",
         };
+        if (environment == Environments.Production)
+        {
+            ProductionTestConfiguration.Apply(values);
+        }
+
         if (signingKey is not null)
         {
             values["GuardianConsent:SigningKey"] = signingKey;

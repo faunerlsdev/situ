@@ -81,9 +81,19 @@ public static class DependencyInjection
         }
 
         var signingKey = configuration["FileStorage:SigningKey"];
+        var development = string.Equals(environmentName, "Development", StringComparison.OrdinalIgnoreCase);
         if (string.IsNullOrWhiteSpace(signingKey))
         {
-            signingKey = "situ-development-media-signing-key";
+            if (!development)
+            {
+                throw new InvalidOperationException(FileStorageOptions.MissingSigningKeyMessage);
+            }
+
+            signingKey = FileStorageOptions.DevelopmentSigningKey;
+        }
+        else if (!development && string.Equals(signingKey, FileStorageOptions.DevelopmentSigningKey, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(FileStorageOptions.MissingSigningKeyMessage);
         }
 
         var storageOptions = new FileStorageOptions { Root = storageRoot, SigningKey = signingKey };

@@ -52,6 +52,8 @@ public static class SituConfigurationExtensions
                 GuardianConsentOptions.MissingSigningKeyMessage)
             .ValidateOnStart();
 
+        services.AddSingleton<IValidateOptions<ProductionGate>, ProductionGateValidator>();
+        services.AddOptions<ProductionGate>().ValidateOnStart();
         services.AddSingleton<IValidateOptions<NetworkOptions>, NetworkOptionsValidator>();
         services.AddOptions<NetworkOptions>()
             .Bind(configuration.GetSection(NetworkOptions.SectionName))

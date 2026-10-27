@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { GuardianDocumentType } from '@situ/shared';
-import { guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
+import { emailSpamHint, guardianDataSchema, messageFromUnknown, notify } from '@situ/shared';
 import type { GuardianDataValues } from '@situ/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
@@ -117,6 +117,7 @@ export default function GuardianScreen() {
       ) : null}
       {token && step === 'authorize' ? (
         <View style={styles.form}>
+          <Text style={styles.hint}>{emailSpamHint}</Text>
           <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: live }} onPress={() => setLive((value) => !value)}>
             <Text style={styles.label}>{live ? '☑' : '☐'} Autorizo que el menor transmita en vivo.</Text>
           </Pressable>
@@ -229,6 +230,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sansBold,
     fontSize: 16,
+    textAlign: 'center',
+  },
+  hint: {
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fontFamily.sans,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
   },
   fieldError: {

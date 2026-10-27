@@ -55,11 +55,25 @@ export const brandRadius = {
   button: 4,
 } as const;
 
+function configuredRoot() {
+  const value = process.env.NEXT_PUBLIC_DOMAIN_ROOT || process.env.DOMAIN_ROOT || '';
+  return value.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+
+function siteOrigin(subdomain: string | null, port: string) {
+  const root = configuredRoot();
+  if (!root) {
+    return `http://localhost:${port}`;
+  }
+
+  return `https://${subdomain ? `${subdomain}.${root}` : root}`;
+}
+
 export const sites = {
-  web: 'http://localhost:3002',
-  landing: 'http://localhost:3003',
-  support: 'http://localhost:3004',
-  admin: 'http://localhost:3001',
+  web: siteOrigin('app', '3002'),
+  landing: siteOrigin(null, '3003'),
+  support: siteOrigin('ayuda', '3004'),
+  admin: siteOrigin('admin', '3001'),
 } as const;
 
 export const defaultApiUrl = 'http://localhost:5080';
