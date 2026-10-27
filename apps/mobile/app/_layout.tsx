@@ -110,6 +110,7 @@ function RootNavigator() {
       <Stack.Protected guard={isSignedIn && me.data?.status === 'DeletionRequested'}>
         <Stack.Screen name="eliminacion" />
       </Stack.Protected>
+      <Stack.Screen name="r/[id]" options={{ animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="adios" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="confirmar-correo" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />
       <Stack.Screen name="restablecer" options={{ gestureEnabled: false, animation: 'fade', contentStyle: { backgroundColor: theme.colors.bg } }} />

@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Profiles;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Anonymity;
 using Situ.Domain.Common;
@@ -80,6 +81,12 @@ public sealed class AddCommentHandler(IApplicationDbContext db, IClock clock)
             }
 
             index = await AnonymousIndexAllocator.AssignAsync(db, ContentTargetType.Report, report.Id, user.Id, now, cancellationToken);
+        }
+
+        var publicationSettings = await ReportSettings.LoadAsync(db, cancellationToken);
+        if (ProfileRules.ContainsBlocked(request.Text, ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms)))
+        {
+            return Result<AddCommentResponse>.Failure(ProfileRules.PublicationRejected());
         }
 
         var comment = Comment.Create(
@@ -227,6 +234,12 @@ public sealed class EditCommentHandler(IApplicationDbContext db, IClock clock)
         if (comment.AuthorId != request.UserId)
         {
             return Result<EditCommentResponse>.Failure(InteractionErrors.NotAuthor());
+        }
+
+        var publicationSettings = await ReportSettings.LoadAsync(db, cancellationToken);
+        if (ProfileRules.ContainsBlocked(request.Text, ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms)))
+        {
+            return Result<EditCommentResponse>.Failure(ProfileRules.PublicationRejected());
         }
 
         try

@@ -496,6 +496,21 @@ public class InteractionFlowTests
         Assert.Contains(db.AuditLogs, item => item.Action == "account_deletion.blocked_by_legal_hold");
     }
 
+    [Fact]
+    public async Task Rejects_a_comment_that_uses_a_blocked_term()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var author = await UserAsync(db, clock, 30, "author@situ.test", "author");
+        var report = await ReportAsync(db, author, ContentVisibility.Public, false);
+
+        var result = await new AddCommentHandler(db, clock).Handle(
+            new AddCommentRequest(author.Id, report.Id, "Esto es una mierda.", false, null),
+            CancellationToken.None);
+
+        Assert.Equal("content.not_allowed", result.Error!.Code);
+    }
+
     private static async Task GrantAsync(IdentityTestDb db, User user, params string[] permissions)
     {
         var role = StaffRole.Create("Moderator", "Modera contenido.", true, Now);

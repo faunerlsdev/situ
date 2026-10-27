@@ -153,6 +153,7 @@ describe('app config', () => {
       termsUrl: 'https://somossitu.com/terminos',
       privacyPolicyUrl: 'https://somossitu.com/privacidad',
       supportUrl: 'https://somossitu.com/soporte',
+      responseCommitment: 'Revisamos cada denuncia.',
     },
     panelCopyByCountry: [],
     mapRealtime: { cellDegrees: 0.05, maxCells: 16, coalesceIntervalMilliseconds: 1000, subscribeCallsPerMinute: 20 },

@@ -3,7 +3,7 @@ namespace Situ.Api.Administration;
 public static class ConsoleCommands
 {
     public static bool IsRequested(string[] args) =>
-        args.Length > 0 && args[0] is "admin:grant" or "admin:reset-2fa" or "dev:seed" or "migrate" or "mail:test";
+        args.Length > 0 && args[0] is "admin:grant" or "admin:reset-2fa" or "dev:seed" or "migrate" or "mail:test" or "store:seed-reviewer";
 
     public static Task<int> ExecuteAsync(WebApplication app, string[] args) => args[0] switch
     {
@@ -12,6 +12,7 @@ public static class ConsoleCommands
         "dev:seed" => DevSeedCommand.ExecuteAsync(app.Services, app.Environment, args),
         "migrate" => MigrateCommand.ExecuteAsync(app.Services),
         "mail:test" => MailTestCommand.ExecuteAsync(app.Services, args),
+        "store:seed-reviewer" => StoreReviewerCommand.ExecuteAsync(app.Services),
         _ => Task.FromResult(1),
     };
 }

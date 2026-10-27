@@ -16,7 +16,7 @@ public sealed record PlatformVersionView(string MinSupported, string Latest);
 
 public sealed record AppVersionsView(PlatformVersionView Ios, PlatformVersionView Android, PlatformVersionView Web);
 
-public sealed record LegalLinksView(string TermsUrl, string PrivacyPolicyUrl, string SupportUrl);
+public sealed record LegalLinksView(string TermsUrl, string PrivacyPolicyUrl, string SupportUrl, string ResponseCommitment);
 
 public sealed record FeatureFlagsView(bool SocialTabs);
 
@@ -65,7 +65,8 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db, CaptchaPublicV
             new LegalLinksView(
                 Text(settings, SystemSettingKeys.LegalTermsUrl, "https://somossitu.com/terminos"),
                 Text(settings, SystemSettingKeys.LegalPrivacyUrl, "https://somossitu.com/privacidad"),
-                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte")),
+                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte"),
+                Text(settings, SystemSettingKeys.ModerationResponseCommitment, SystemSettingKeys.Defaults[SystemSettingKeys.ModerationResponseCommitment])),
             PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry)),
             GetMapRealtimeConfigHandler.Read(settings),
             new FeatureFlagsView(string.Equals(settings.GetValueOrDefault(SystemSettingKeys.SocialTabsEnabled), "true", StringComparison.OrdinalIgnoreCase)),

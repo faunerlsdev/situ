@@ -339,7 +339,7 @@ export default function RegisterScreen() {
           </Text>
         ))}
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} onPress={() => form.setValue('accepted', !accepted, { shouldValidate: true })}>
-          <Text style={styles.legal}>{accepted ? '☑' : '☐'} Acepto los documentos legales vigentes.</Text>
+          <Text style={styles.legal}>{accepted ? '☑' : '☐'} Acepto los términos de uso y la política de privacidad.</Text>
         </Pressable>
         {form.formState.errors.accepted?.message ? <Text style={styles.fieldError}>{form.formState.errors.accepted.message}</Text> : null}
         {minor ? (

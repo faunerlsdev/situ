@@ -88,6 +88,7 @@ public static class SystemSettingKeys
     public const string LegalTermsUrl = "legal.terms_url";
     public const string LegalPrivacyUrl = "legal.privacy_url";
     public const string LegalSupportUrl = "legal.support_url";
+    public const string ModerationResponseCommitment = "moderation.response_commitment";
     public const string PanelCopyByCountry = "panel.copy_by_country";
     public const string MapCellDegrees = "map.cell_degrees";
     public const string MapMaxCells = "map.max_cells";
@@ -150,6 +151,7 @@ public static class SystemSettingKeys
         [LegalTermsUrl] = "https://somossitu.com/terminos",
         [LegalPrivacyUrl] = "https://somossitu.com/privacidad",
         [LegalSupportUrl] = "https://somossitu.com/soporte",
+        [ModerationResponseCommitment] = "Revisamos cada denuncia. Si el contenido afecta a un menor, lo ocultamos de inmediato. El resto lo atendemos en menos de 24 horas.",
         [PanelCopyByCountry] = "[]",
         [MapCellDegrees] = "0.05",
         [MapMaxCells] = "16",

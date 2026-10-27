@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Profiles;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Guardianship;
@@ -131,6 +132,11 @@ public sealed class CreateReportHandler(IApplicationDbContext db, IClock clock, 
             {
                 return Result<CreateReportResponse>.Failure(ReportErrors.AnonymousDailyLimit(tomorrow));
             }
+        }
+
+        if (ProfileRules.ContainsBlocked(request.Description, ProfileRules.List(settings, SystemSettingKeys.ProfileBlockedTerms)))
+        {
+            return Result<CreateReportResponse>.Failure(ProfileRules.PublicationRejected());
         }
 
         GeoPoint location;

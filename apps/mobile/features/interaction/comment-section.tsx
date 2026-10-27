@@ -24,13 +24,17 @@ import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
 import { AccessibilityInfo, Dimensions, Image, Keyboard, LayoutAnimation, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { api } from '@/lib/api';
-import { theme } from '@/theme/theme';
+import { useAppConfig } from '@/features/reports/use-app-config';
 import { useMe } from '@/features/reports/use-me';
+import { api } from '@/lib/api';
+import { supportFallbackUrl } from '@/lib/store-links';
+import { theme } from '@/theme/theme';
 
 import { blockContent } from './block-content';
 import { CommentComposer } from './comment-composer';
 import { ComplaintSheet } from './complaint-sheet';
+import type { ComplaintTarget } from './complaint-sheet';
+import { responseCommitment } from './support-copy';
 import { ReactionBar } from './reaction-bar';
 
 const avatar = require('../../assets/images/brand/situ-isotipo-naranja-claro.png');
@@ -56,7 +60,8 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
   const [retryAt, setRetryAt] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [pending, setPending] = useState(false);
-  const [complaintId, setComplaintId] = useState<string | null>(null);
+  const config = useAppConfig();
+  const [complaint, setComplaint] = useState<ComplaintTarget | null>(null);
   const [complaintPending, setComplaintPending] = useState(false);
   const [duplicate, setDuplicate] = useState<string | null>(null);
 
@@ -209,13 +214,13 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
   }
 
   async function submitComplaint(reason: Parameters<typeof api.submitComplaint>[0]['reason'], details: string) {
-    if (!complaintId) {
+    if (!complaint) {
       return;
     }
     setComplaintPending(true);
     try {
-      await api.submitComplaint({ targetType: 'Comment', targetId: complaintId, reason, details: details || null });
-      setComplaintId(null);
+      await api.submitComplaint({ targetType: complaint.type, targetId: complaint.id, reason, details: details || null });
+      setComplaint(null);
       setDuplicate(null);
       notify.success(feedbackMessages.complaintThanks);
     } catch (error) {
@@ -257,7 +262,14 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
           onReply={(item) => { setReplyTo(item); setEditing(null); }}
           onEdit={(item) => { setEditing(item); setText(item.text); setReplyTo(null); }}
           onDelete={(item) => void remove(item)}
-          onComplain={(item) => { setDuplicate(null); setComplaintId(item.id); }}
+          onComplain={(item) => { setDuplicate(null); setComplaint({ type: 'Comment', id: item.id }); }}
+          onComplainUser={(item) => {
+            if (!item.author.userId) {
+              return;
+            }
+            setDuplicate(null);
+            setComplaint({ type: 'User', id: item.author.userId });
+          }}
           onBlock={(item) => void blockContent(queryClient, { anonymous: item.author.isAnonymous, reportId, commentId: item.id, userId: item.author.userId })}
           onReact={(item, type) => void react(item, type)}
         />
@@ -299,10 +311,12 @@ export function CommentSection({ reportId, visibility, header, focusComments = f
         onSend={() => void (editing ? saveEdit() : send())}
       />
       <ComplaintSheet
-        visible={complaintId !== null}
+        visible={complaint !== null}
         pending={complaintPending}
         duplicateMessage={duplicate}
-        onClose={() => { setComplaintId(null); setDuplicate(null); }}
+        commitment={responseCommitment(config.data?.legal.responseCommitment)}
+        supportUrl={config.data?.legal.supportUrl || supportFallbackUrl()}
+        onClose={() => { setComplaint(null); setDuplicate(null); }}
         onSubmit={(reason, details) => void submitComplaint(reason, details)}
       />
     </View>
@@ -316,6 +330,7 @@ function CommentRow({
   onEdit,
   onDelete,
   onComplain,
+  onComplainUser,
   onBlock,
   onReact,
 }: {
@@ -325,6 +340,7 @@ function CommentRow({
   onEdit: (item: CommentItem) => void;
   onDelete: (item: CommentItem) => void;
   onComplain: (item: CommentItem) => void;
+  onComplainUser: (item: CommentItem) => void;
   onBlock: (item: CommentItem) => void;
   onReact: (item: CommentItem, type: string) => void;
 }) {
@@ -360,6 +376,11 @@ function CommentRow({
             <Pressable accessibilityRole="button" accessibilityLabel="Denunciar comentario" onPress={() => onComplain(comment)} style={styles.action}>
               <Text style={styles.link}>Denunciar</Text>
             </Pressable>
+            {!author.anonymous && comment.author.userId ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Denunciar usuario" onPress={() => onComplainUser(comment)} style={styles.action}>
+                <Text style={styles.link}>Denunciar usuario</Text>
+              </Pressable>
+            ) : null}
             <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => onBlock(comment)} style={styles.action}>
               <Text style={styles.danger}>Bloquear</Text>
             </Pressable>
@@ -375,6 +396,7 @@ function CommentRow({
           onEdit={onEdit}
           onDelete={onDelete}
           onComplain={onComplain}
+          onComplainUser={onComplainUser}
           onBlock={onBlock}
           onReact={onReact}
         />

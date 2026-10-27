@@ -47,8 +47,11 @@ import type { Region } from 'react-native-maps';
 
 import { blockContent } from '@/features/interaction/block-content';
 import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
+import type { ComplaintTarget } from '@/features/interaction/complaint-sheet';
+import { responseCommitment } from '@/features/interaction/support-copy';
 import { ReactionBar } from '@/features/interaction/reaction-bar';
 import { api } from '@/lib/api';
+import { supportFallbackUrl } from '@/lib/store-links';
 import { theme } from '@/theme/theme';
 
 import { setMapFilters, useMapFilters } from './filters';
@@ -108,7 +111,7 @@ export function MapScreen() {
   const [parentId, setParentId] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [mapAttempt, setMapAttempt] = useState(0);
-  const [complaintId, setComplaintId] = useState<string | null>(null);
+  const [complaint, setComplaint] = useState<ComplaintTarget | null>(null);
   const [complaintPending, setComplaintPending] = useState(false);
   const [duplicate, setDuplicate] = useState<string | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -374,13 +377,13 @@ export function MapScreen() {
   }
 
   async function submitComplaint(reason: Parameters<typeof api.submitComplaint>[0]['reason'], details: string) {
-    if (!complaintId) {
+    if (!complaint) {
       return;
     }
     setComplaintPending(true);
     try {
-      await api.submitComplaint({ targetType: 'Report', targetId: complaintId, reason, details: details || null });
-      setComplaintId(null);
+      await api.submitComplaint({ targetType: complaint.type, targetId: complaint.id, reason, details: details || null });
+      setComplaint(null);
       setDuplicate(null);
       notify.success(feedbackMessages.complaintThanks);
     } catch (error) {
@@ -508,24 +511,31 @@ export function MapScreen() {
             <View accessibilityLabel="Compartir, próximamente" style={[styles.iconAction, styles.iconSoon]}>
               <SymbolView name={shareIcon} tintColor={theme.colors.textSecondary} size={22} />
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaintId(selectedPoint.id); }} style={styles.iconAction}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaint({ type: 'Report', id: selectedPoint.id }); }} style={styles.iconAction}>
               <SymbolView name={flagIcon} tintColor={theme.colors.textPrimary} size={22} />
             </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => void blockContent(queryClient, { anonymous: selectedPoint.isAnonymous, reportId: selectedPoint.id, userId: detail.data?.report.author.userId })} style={styles.iconAction}>
               <SymbolView name={blockIcon} tintColor={theme.colors.danger} size={22} />
             </Pressable>
           </View>
+          {!selectedPoint.isAnonymous && detail.data?.report.author.userId ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar usuario" onPress={() => { setDuplicate(null); setComplaint({ type: 'User', id: detail.data?.report.author.userId ?? '' }); }}>
+              <Text style={styles.cardMeta}>Denunciar usuario</Text>
+            </Pressable>
+          ) : null}
           <Pressable accessibilityRole="link" accessibilityLabel="¿Apareces en este chisme?" onPress={() => void Linking.openURL(`${sites.web}/retiro-de-contenido?reporte=${selectedPoint.id}`)}>
             <Text style={styles.cardMeta}>¿Apareces en este chisme?</Text>
           </Pressable>
         </View>
       ) : null}
       <ComplaintSheet
-        visible={complaintId !== null}
+        visible={complaint !== null}
         pending={complaintPending}
         duplicateMessage={duplicate}
+        commitment={responseCommitment(appConfig.data?.legal.responseCommitment)}
+        supportUrl={appConfig.data?.legal.supportUrl || supportFallbackUrl()}
         animationType={reduceMotion ? 'none' : 'slide'}
-        onClose={() => { setComplaintId(null); setDuplicate(null); }}
+        onClose={() => { setComplaint(null); setDuplicate(null); }}
         onSubmit={(reason, details) => void submitComplaint(reason, details)}
       />
       <Pressable accessibilityRole="button" accessibilityLabel="¿Dónde estoy?" onPress={() => void centerOnUser()} style={styles.locate}>

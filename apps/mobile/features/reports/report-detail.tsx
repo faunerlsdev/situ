@@ -22,8 +22,12 @@ import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import { blockContent } from '@/features/interaction/block-content';
 import { CommentSection } from '@/features/interaction/comment-section';
 import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
+import type { ComplaintTarget } from '@/features/interaction/complaint-sheet';
+import { responseCommitment } from '@/features/interaction/support-copy';
 import { ReactionBar } from '@/features/interaction/reaction-bar';
+import { useAppConfig } from '@/features/reports/use-app-config';
 import { api } from '@/lib/api';
+import { supportFallbackUrl } from '@/lib/store-links';
 import { theme } from '@/theme/theme';
 
 const avatar = require('../../assets/images/brand/situ-isotipo-naranja-claro.png');
@@ -31,8 +35,9 @@ const apiBase = readApiUrl(process.env.EXPO_PUBLIC_API_URL, defaultApiUrl);
 
 export function ReportDetail({ id, focusComments = false }: { id: string; focusComments?: boolean }) {
   const queryClient = useQueryClient();
+  const config = useAppConfig();
   const query = useQuery({ queryKey: ['report', id], queryFn: () => api.report(id) });
-  const [complaintOpen, setComplaintOpen] = useState(false);
+  const [complaint, setComplaint] = useState<ComplaintTarget | null>(null);
   const [complaintPending, setComplaintPending] = useState(false);
   const [duplicate, setDuplicate] = useState<string | null>(null);
 
@@ -75,10 +80,13 @@ export function ReportDetail({ id, focusComments = false }: { id: string; focusC
   }
 
   async function submitComplaint(reason: Parameters<typeof api.submitComplaint>[0]['reason'], details: string) {
+    if (!complaint) {
+      return;
+    }
     setComplaintPending(true);
     try {
-      await api.submitComplaint({ targetType: 'Report', targetId: id, reason, details: details || null });
-      setComplaintOpen(false);
+      await api.submitComplaint({ targetType: complaint.type, targetId: complaint.id, reason, details: details || null });
+      setComplaint(null);
       setDuplicate(null);
       notify.success(feedbackMessages.complaintThanks);
     } catch (error) {
@@ -123,9 +131,14 @@ export function ReportDetail({ id, focusComments = false }: { id: string; focusC
               onToggle={(type) => void react(type)}
             />
             <View style={styles.row}>
-              <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaintOpen(true); }} style={styles.action}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaint({ type: 'Report', id }); }} style={styles.action}>
                 <Text style={styles.link}>Denunciar</Text>
               </Pressable>
+              {!report.author.isAnonymous && report.author.userId ? (
+                <Pressable accessibilityRole="button" accessibilityLabel="Denunciar usuario" onPress={() => { setDuplicate(null); setComplaint({ type: 'User', id: report.author.userId ?? '' }); }} style={styles.action}>
+                  <Text style={styles.link}>Denunciar usuario</Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Bloquear"
@@ -142,10 +155,12 @@ export function ReportDetail({ id, focusComments = false }: { id: string; focusC
         )}
       />
       <ComplaintSheet
-        visible={complaintOpen}
+        visible={complaint !== null}
         pending={complaintPending}
         duplicateMessage={duplicate}
-        onClose={() => { setComplaintOpen(false); setDuplicate(null); }}
+        commitment={responseCommitment(config.data?.legal.responseCommitment)}
+        supportUrl={config.data?.legal.supportUrl || supportFallbackUrl()}
+        onClose={() => { setComplaint(null); setDuplicate(null); }}
         onSubmit={(reason, details) => void submitComplaint(reason, details)}
       />
     </View>

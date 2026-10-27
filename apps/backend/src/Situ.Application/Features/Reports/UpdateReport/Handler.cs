@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Profiles;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Moderation;
@@ -31,6 +32,12 @@ public sealed class UpdateReportHandler(IApplicationDbContext db, IClock clock)
         if (report is null || report.AuthorId != request.UserId)
         {
             return Result.Failure(report is null ? ReportErrors.NotFound() : ReportErrors.NotAuthor());
+        }
+
+        var settings = await ReportSettings.LoadAsync(db, cancellationToken);
+        if (ProfileRules.ContainsBlocked(request.Description, ProfileRules.List(settings, SystemSettingKeys.ProfileBlockedTerms)))
+        {
+            return Result.Failure(ProfileRules.PublicationRejected());
         }
 
         try

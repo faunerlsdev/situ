@@ -5,9 +5,11 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } fro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { displayEmail } from '@/features/account/logic';
+import { responseCommitment } from '@/features/interaction/support-copy';
 import { useAppConfig } from '@/features/reports/use-app-config';
 import { useMe } from '@/features/reports/use-me';
 import { api } from '@/lib/api';
+import { dataDeletionUrl, supportFallbackUrl } from '@/lib/store-links';
 import { useSession } from '@/providers/session-provider';
 import { theme } from '@/theme/theme';
 
@@ -15,6 +17,7 @@ const fallbackLegal = {
   termsUrl: 'https://somossitu.com/terminos',
   privacyPolicyUrl: 'https://somossitu.com/privacidad',
   supportUrl: 'https://somossitu.com/soporte',
+  responseCommitment: '',
 };
 
 export default function CuentaScreen() {
@@ -24,6 +27,8 @@ export default function CuentaScreen() {
   const me = useMe();
   const config = useAppConfig();
   const legal = config.data?.legal ?? fallbackLegal;
+  const supportUrl = legal.supportUrl || supportFallbackUrl();
+  const deletionUrl = dataDeletionUrl();
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
 
@@ -81,11 +86,16 @@ export default function CuentaScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.privacyPolicy} onPress={() => void Linking.openURL(legal.privacyPolicyUrl)} style={styles.row}>
         <Text style={styles.label}>{profileMessages.privacyPolicy}</Text>
       </Pressable>
+      <Pressable accessibilityRole="link" accessibilityLabel="Contactar soporte" onPress={() => void Linking.openURL(supportUrl)} style={styles.row}>
+        <Text style={styles.label}>Contactar soporte</Text>
+      </Pressable>
+      <Text style={styles.body}>{responseCommitment(legal.responseCommitment)}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.signOut} onPress={() => void signOut()} style={styles.row}>
         <Text style={styles.label}>{profileMessages.signOut}</Text>
       </Pressable>
       <Text style={styles.heading}>{feedbackMessages.deleteAccountTitle}</Text>
       <Text style={styles.body}>{feedbackMessages.deleteAccountBody}</Text>
+      {deletionUrl ? <Text style={styles.body}>{`También puedes pedir la eliminación en ${deletionUrl}`}</Text> : null}
       <TextInput
         value={password}
         onChangeText={setPassword}

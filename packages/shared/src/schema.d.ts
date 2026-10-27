@@ -2690,6 +2690,7 @@ export interface components {
             termsUrl: string;
             privacyPolicyUrl: string;
             supportUrl: string;
+            responseCommitment: string;
         };
         ListAdminCategoriesResponse: {
             categories: components["schemas"]["AdminCategoryView"][];

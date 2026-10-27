@@ -75,6 +75,9 @@ internal static class ProfileRules
     public static Error ContentRejected() =>
         Error.Validation("profile.content_not_allowed", "Ese texto no se puede usar en el perfil.");
 
+    public static Error PublicationRejected() =>
+        Error.Validation("content.not_allowed", "Ese texto no se puede publicar.");
+
     public static Error UserNameCoolingDown(DateTimeOffset availableAt) =>
         Error.RateLimited(
             "profile.username_change_limited",

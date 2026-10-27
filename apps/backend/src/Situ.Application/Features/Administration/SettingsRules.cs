@@ -68,6 +68,7 @@ internal static partial class SettingsRules
             [SystemSettingKeys.PanelCopyByCountry] = Copies,
             [SystemSettingKeys.ProfileReservedUserNames] = value => Text(value, 1000),
             [SystemSettingKeys.ProfileBlockedTerms] = value => Text(value, 1000),
+            [SystemSettingKeys.ModerationResponseCommitment] = value => Text(value, 280),
             [SystemSettingKeys.PhoneRequiredForMinors] = Bool,
             [SystemSettingKeys.SocialTabsEnabled] = Bool,
             [SystemSettingKeys.WebSessionRefreshDays] = value => Int(value, 1, 365),

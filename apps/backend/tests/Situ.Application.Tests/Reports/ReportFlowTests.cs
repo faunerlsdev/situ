@@ -44,6 +44,18 @@ public class ReportFlowTests
     }
 
     [Fact]
+    public async Task Rejects_a_report_that_uses_a_blocked_term()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var (user, category, _) = await SeedAsync(db, clock, 30, reportsPerDay: 10);
+
+        var result = await Create(db, clock).Handle(Request(user, category.Id, "Esto es porn y no se publica."), CancellationToken.None);
+
+        Assert.Equal("content.not_allowed", result.Error!.Code);
+    }
+
+    [Fact]
     public async Task Hides_adult_categories_from_minors_and_blocks_unconfirmed_accounts()
     {
         await using var db = IdentityTestDb.Create();

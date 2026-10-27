@@ -1,20 +1,37 @@
 import { complaintReasons, feedbackMessages } from '@situ/shared';
 import type { ComplaintReasonCode } from '@situ/shared';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { fallbackResponseCommitment } from '@/features/interaction/support-copy';
 import { theme } from '@/theme/theme';
+
+export type ComplaintTarget = {
+  type: 'Report' | 'Comment' | 'User';
+  id: string;
+};
 
 export type ComplaintSheetProps = {
   visible: boolean;
   pending: boolean;
   duplicateMessage: string | null;
+  commitment?: string;
+  supportUrl?: string | null;
   animationType?: 'none' | 'slide' | 'fade';
   onClose: () => void;
   onSubmit: (reason: ComplaintReasonCode, details: string) => void;
 };
 
-export function ComplaintSheet({ visible, pending, duplicateMessage, animationType = 'slide', onClose, onSubmit }: ComplaintSheetProps) {
+export function ComplaintSheet({
+  visible,
+  pending,
+  duplicateMessage,
+  commitment = fallbackResponseCommitment,
+  supportUrl = null,
+  animationType = 'slide',
+  onClose,
+  onSubmit,
+}: ComplaintSheetProps) {
   const [reason, setReason] = useState<ComplaintReasonCode>('FalseInformation');
   const [details, setDetails] = useState('');
 
@@ -50,6 +67,12 @@ export function ComplaintSheet({ visible, pending, duplicateMessage, animationTy
             maxLength={1000}
             style={styles.input}
           />
+          <Text style={styles.commitment}>{commitment}</Text>
+          {supportUrl ? (
+            <Pressable accessibilityRole="link" accessibilityLabel="Contactar soporte" onPress={() => void Linking.openURL(supportUrl)}>
+              <Text style={styles.support}>Contactar soporte</Text>
+            </Pressable>
+          ) : null}
           {duplicateMessage ? <Text style={styles.error}>{duplicateMessage}</Text> : null}
           <Pressable
             accessibilityRole="button"
@@ -76,6 +99,8 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.55)' },
   sheet: { gap: 4, padding: 16, paddingBottom: 28, borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: theme.colors.surface },
   title: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 20, marginBottom: 8 },
+  commitment: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 14, lineHeight: 20, marginTop: 8 },
+  support: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 16, minHeight: 44, lineHeight: 44 },
   reason: { minHeight: 44, justifyContent: 'center' },
   reasonLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sans, fontSize: 16 },
   reasonOn: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold },

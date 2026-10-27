@@ -857,7 +857,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("4907ff6e-2b6b-e914-9bd2-b22d60e80acd"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Términos que no pueden aparecer en el nombre, el usuario o la bio.",
+                            Description = "Términos que no pueden aparecer en el perfil, en un reporte ni en un comentario.",
                             Key = "profile.blocked_terms",
                             Value = "odio,nazi,porn,xxx,puta,mierda"
                         },
@@ -892,6 +892,14 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "URL de soporte.",
                             Key = "legal.support_url",
                             Value = "https://somossitu.com/soporte"
+                        },
+                        new
+                        {
+                            Id = new Guid("18634da0-f44e-56b0-4222-534855194abc"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Texto visible en la app sobre el plazo para atender una denuncia.",
+                            Key = "moderation.response_commitment",
+                            Value = "Revisamos cada denuncia. Si el contenido afecta a un menor, lo ocultamos de inmediato. El resto lo atendemos en menos de 24 horas."
                         },
                         new
                         {

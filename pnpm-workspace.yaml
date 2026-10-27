@@ -5,5 +5,12 @@ packages:
 onlyBuiltDependencies:
   - sharp
 
+# Una sola copia para la app. El SDK 58 pide react 19.3.0 y react-native 0.88.0.
+# Sin esto, el linker hoisted deja react 19.3.1 junto a paquetes que también usa la web.
+overrides:
+  react: 19.3.0
+  react-dom: 19.3.0
+  react-native: 0.88.0
+
 patchedDependencies:
   '@gorhom/bottom-sheet@5.2.14': patches/@gorhom__bottom-sheet@5.2.14.patch
