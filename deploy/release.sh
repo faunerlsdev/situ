@@ -27,7 +27,12 @@ if [[ -f "${SCRIPT_DIR}/env/build.env" ]]; then
   set +a
 fi
 
-: "${DOMAIN_ROOT:?Define DOMAIN_ROOT}"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/lib/ports.sh"
+situ_load_ports
+situ_apply_domain
+
+: "${DOMAIN_ROOT:?Define SITU_DOMAIN_ROOT en deploy/ports.env}"
 : "${DEPLOY_HOST:?Define DEPLOY_HOST}"
 : "${DEPLOY_USER:?Define DEPLOY_USER}"
 : "${NEXT_PUBLIC_GOOGLE_MAPS_KEY:?Define NEXT_PUBLIC_GOOGLE_MAPS_KEY}"

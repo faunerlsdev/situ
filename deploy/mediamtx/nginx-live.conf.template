@@ -1,0 +1,62 @@
+# Public HLS for live.__DOMAIN_ROOT__. MediaMTX itself stays on localhost.
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name __LIVE_HOST__;
+    ssl_certificate     /etc/letsencrypt/live/__LIVE_HOST__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__LIVE_HOST__/privkey.pem;
+    client_max_body_size 1m;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/lib/situ/acme;
+        default_type text/plain;
+    }
+
+    location = /_live_token {
+        internal;
+        proxy_pass http://127.0.0.1:__SITU_LIVE_AUTH_PORT__/hls-token;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-Uri $request_uri;
+        proxy_set_header X-Live-Token $arg_token;
+        proxy_set_header Cookie $http_cookie;
+    }
+
+    location /hls/ {
+        limit_conn situ_live 12;
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin "https://app.__DOMAIN_ROOT__" always;
+            add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Range" always;
+            add_header Access-Control-Max-Age 600 always;
+            return 204;
+        }
+        auth_request /_live_token;
+        auth_request_set $live_cookie $upstream_http_x_live_cookie;
+        proxy_pass http://127.0.0.1:__SITU_HLS_PORT__/;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_read_timeout 20s;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "";
+        proxy_set_header Authorization "Bearer __HLS_CDN_SECRET__";
+        proxy_set_header X-Forwarded-For $remote_addr;
+        add_header Set-Cookie $live_cookie always;
+        add_header Cache-Control "no-store" always;
+        add_header Access-Control-Allow-Origin "https://app.__DOMAIN_ROOT__" always;
+        add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+    }
+
+    location / {
+        return 404;
+    }
+}

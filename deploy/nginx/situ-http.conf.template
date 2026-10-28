@@ -1,0 +1,15 @@
+# HTTP solo para los nombres de SITU. No es default_server.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name __DOMAIN_ROOT__ www.__DOMAIN_ROOT__ app.__DOMAIN_ROOT__ admin.__DOMAIN_ROOT__ ayuda.__DOMAIN_ROOT__ api.__DOMAIN_ROOT__;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/lib/situ/acme;
+        default_type text/plain;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

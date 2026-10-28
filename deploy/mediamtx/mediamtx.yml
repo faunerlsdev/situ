@@ -1,0 +1,61 @@
+# Production config rendered by install.sh. Do not point this file at a public interface.
+# MediaMTX v1.21.3. RTMPS only. HLS and the control API stay on localhost.
+
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512
+
+authMethod: http
+authHTTPAddress: __LIVE_AUTH_URL__
+# The control API is bound to localhost. Publish and read still go through the auth URL.
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+api: true
+apiAddress: 127.0.0.1:__SITU_MTX_API_PORT__
+apiEncryption: false
+
+metrics: false
+pprof: false
+playback: false
+
+rtsp: false
+srt: false
+webrtc: false
+moq: false
+
+# strict does not open the plain RTMP port. 11935 is unused and is not 1935.
+rtmp: true
+rtmpEncryption: "strict"
+rtmpAddress: 127.0.0.1:11935
+rtmpsAddress: :__SITU_RTMPS_PORT__
+rtmpServerKey: /etc/mediamtx/tls/privkey.pem
+rtmpServerCert: /etc/mediamtx/tls/fullchain.pem
+
+hls: true
+hlsAddress: 127.0.0.1:__SITU_HLS_PORT__
+hlsEncryption: false
+hlsAllowOrigins: []
+# Do not trust X-Forwarded-For. Read auth allows 127.0.0.1 only; nginx is the public gate.
+hlsTrustedProxies: []
+hlsAlwaysRemux: false
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsMuxerCloseAfter: 60s
+hlsCDNSecret: "__HLS_CDN_SECRET__"
+
+pathDefaults:
+  record: true
+  recordPath: /var/lib/situ/live/%path/%Y-%m-%d_%H-%M-%S-%f_%z
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 0s
+  overridePublisher: false

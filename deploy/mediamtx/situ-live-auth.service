@@ -1,0 +1,22 @@
+[Unit]
+Description=SITU temporary live auth (replace with the API)
+After=network-online.target
+
+[Service]
+Type=simple
+User=mediamtx
+Group=mediamtx
+EnvironmentFile=/etc/situ/live.env
+ExecStart=/usr/bin/python3 /opt/situ/bin/situ-live-auth.py
+Restart=on-failure
+RestartSec=3
+MemoryMax=64M
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

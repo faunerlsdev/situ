@@ -21,6 +21,7 @@ const envKeys = [
   'EXPO_PUBLIC_API_URL',
   'EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_ANDROID',
   'EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS',
+  'EXPO_PUBLIC_LIVE_POC',
 ];
 
 type ExpoConfig = {
@@ -34,6 +35,7 @@ type ExpoConfig = {
     package: string;
     permissions: string[];
     blockedPermissions: string[];
+    usesCleartextTraffic?: boolean;
     intentFilters?: { autoVerify?: boolean; data?: { host?: string; pathPrefix?: string }[] }[];
   };
   updates?: { url?: string };
@@ -81,6 +83,7 @@ describe('store config', () => {
     expect(expo.android.permissions).toEqual(contract.androidPermissions);
     expect(expo.android.blockedPermissions).toEqual(contract.blockedPermissions);
     expect(expo.android.blockedPermissions).toContain('android.permission.ACCESS_BACKGROUND_LOCATION');
+    expect(expo.android.usesCleartextTraffic).toBeUndefined();
     expect(expo.android.blockedPermissions).not.toContain('android.permission.CAMERA');
     expect(expo.android.blockedPermissions).not.toContain('android.permission.RECORD_AUDIO');
     expect(expo.android.blockedPermissions).not.toContain('android.permission.ACCESS_FINE_LOCATION');
@@ -109,6 +112,11 @@ describe('store config', () => {
       host: 'app.example.test',
       pathPrefix: '/r/',
     });
+  });
+
+  it('allows cleartext only for the local live proof', () => {
+    const enabled = loadExpoConfig({ EXPO_PUBLIC_LIVE_POC: '1' });
+    expect(enabled.expo.android.usesCleartextTraffic).toBe(true);
   });
 
   it('reads API_BASE_URL when the public API variable is absent', () => {

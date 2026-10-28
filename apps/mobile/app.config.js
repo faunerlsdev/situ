@@ -82,6 +82,12 @@ module.exports = ({ config } = {}) => ({
           microphonePermission: contract.microphone,
         },
       ],
+      [
+        'react-native-nitro-rtmp-publisher',
+        {
+          android: { disableForegroundService: true },
+        },
+      ],
     ],
     ios: {
       ...expo.ios,
@@ -117,6 +123,7 @@ module.exports = ({ config } = {}) => ({
           }
         : {}),
       ...(androidMapsKey ? { config: { ...expo.android.config, googleMaps: { apiKey: androidMapsKey } } } : {}),
+      ...(process.env.EXPO_PUBLIC_LIVE_POC === '1' ? { usesCleartextTraffic: true } : {}),
       ...(googleServicesFile ? { googleServicesFile } : {}),
     },
 });

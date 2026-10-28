@@ -1,0 +1,47 @@
+# Local proof of concept on a Mac. No TLS and no authentication.
+# Do not copy this file to the server.
+
+logLevel: info
+logDestinations: [stdout]
+
+authMethod: internal
+authInternalUsers:
+  - user: any
+    pass:
+    ips: []
+    permissions:
+      - action: publish
+      - action: read
+  - user: any
+    pass:
+    ips: ["127.0.0.1", "::1"]
+    permissions:
+      - action: api
+
+api: true
+apiAddress: 127.0.0.1:9997
+metrics: false
+pprof: false
+playback: false
+
+rtsp: false
+srt: false
+webrtc: false
+moq: false
+
+rtmp: true
+rtmpEncryption: "no"
+rtmpAddress: :1935
+
+hls: true
+hlsAddress: :8888
+hlsEncryption: false
+hlsAllowOrigins: ["*"]
+hlsVariant: lowLatency
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsCDNSecret: ""
+
+pathDefaults:
+  record: false
+  overridePublisher: true

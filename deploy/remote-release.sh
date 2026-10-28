@@ -59,9 +59,14 @@ fi
 systemctl enable "${services[@]}"
 systemctl restart "${services[@]}"
 
+set -a
+# shellcheck disable=SC1091
+source /opt/situ/ports.env
+set +a
+
 ready=0
 for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
-  if curl -fsS --max-time 5 http://127.0.0.1:5080/health/ready >/dev/null; then
+  if curl -fsS --max-time 5 "http://127.0.0.1:${SITU_API_PORT}/health/ready" >/dev/null; then
     ready=1
     break
   fi

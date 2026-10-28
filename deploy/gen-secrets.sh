@@ -6,19 +6,24 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/lib/ports.sh"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/lib/layout.sh"
 
 require_root
 umask 077
+situ_load_ports
+situ_apply_domain
+situ_install_layout
 
 FORCE=0
 if [[ "${1:-}" == "--force" ]]; then
   FORCE=1
 fi
 
-: "${DOMAIN_ROOT:?Define DOMAIN_ROOT}"
+: "${DOMAIN_ROOT:?Define SITU_DOMAIN_ROOT en ports.env}"
 valid_hostname "${DOMAIN_ROOT}" || die "DOMAIN_ROOT no es un nombre de host."
-
-install -d -m 700 /etc/situ
 
 new_secret() {
   openssl rand -base64 48 | tr -d '\n'
@@ -90,10 +95,15 @@ fill_if_placeholder /etc/situ/api.env FileStorage__SigningKey "$media"
 
 app_password=$(current_value /etc/situ/postgres.env APP_PASSWORD)
 migrator_password=$(current_value /etc/situ/postgres.env MIGRATOR_PASSWORD)
-fill_if_placeholder /etc/situ/api.env ConnectionStrings__Default \
-  "Host=127.0.0.1;Port=5432;Database=situ;Username=situ_app;Password=${app_password}"
-fill_if_placeholder /etc/situ/migrate.env ConnectionStrings__Default \
-  "Host=127.0.0.1;Port=5432;Database=situ;Username=situ_migrator;Password=${migrator_password}"
+if [[ -n "${SITU_POSTGRES_PORT}" ]]; then
+  app_connection="Host=127.0.0.1;Port=${SITU_POSTGRES_PORT};Database=situ;Username=situ_app;Password=${app_password}"
+  migrator_connection="Host=127.0.0.1;Port=${SITU_POSTGRES_PORT};Database=situ;Username=situ_migrator;Password=${migrator_password}"
+else
+  app_connection="Host=${SITU_POSTGRES_HOST};Database=situ;Username=situ_app;Password=${app_password}"
+  migrator_connection="Host=${SITU_POSTGRES_HOST};Database=situ;Username=situ_migrator;Password=${migrator_password}"
+fi
+fill_if_placeholder /etc/situ/api.env ConnectionStrings__Default "$app_connection"
+fill_if_placeholder /etc/situ/migrate.env ConnectionStrings__Default "$migrator_connection"
 
 if [[ ! -f /etc/situ/age.key ]]; then
   public_key=$(age-keygen -o /etc/situ/age.key | sed -n 's/^# public key: //p')

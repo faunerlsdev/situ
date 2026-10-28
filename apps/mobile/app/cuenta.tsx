@@ -89,6 +89,11 @@ export default function CuentaScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="Compartir mi ubicación" onPress={() => router.push('/ubicacion')} style={styles.row}>
         <Text style={styles.label}>Compartir mi ubicación</Text>
       </Pressable>
+      {__DEV__ ? (
+        <Pressable accessibilityRole="button" accessibilityLabel="Prueba de transmisión" onPress={() => router.push('/vivo-poc')} style={styles.row}>
+          <Text style={styles.label}>Prueba de transmisión</Text>
+        </Pressable>
+      ) : null}
       <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.terms} onPress={() => void Linking.openURL(legal.termsUrl)} style={styles.row}>
         <Text style={styles.label}>{profileMessages.terms}</Text>
       </Pressable>

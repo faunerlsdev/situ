@@ -9,13 +9,14 @@ User=situ
 Group=situ
 WorkingDirectory=/opt/situ/current/admin
 Environment=NODE_ENV=production
-Environment=PORT=3001
 Environment=HOSTNAME=127.0.0.1
 EnvironmentFile=/etc/situ/admin.env
 ExecStart=/opt/situ/bin/start-next.sh admin
 Restart=on-failure
 RestartSec=5
-MemoryMax=384M
+MemoryHigh=192M
+MemoryMax=256M
+CPUQuota=20%
 NoNewPrivileges=true
 ProtectSystem=full
 PrivateTmp=true

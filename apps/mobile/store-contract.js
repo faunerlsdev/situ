@@ -9,10 +9,10 @@ const photos =
   'SITU accede a tus fotos y videos solo cuando eliges uno para publicarlo en un reporte o en tu foto de perfil.';
 
 const camera =
-  'SITU usa la cámara cuando tú tomas una foto o grabas un video para un reporte.';
+  'SITU usa la cámara cuando tú tomas una foto o grabas un video para un reporte, o cuando tú inicias una transmisión en vivo.';
 
 const microphone =
-  'SITU usa el micrófono solo si grabas un video para un reporte. No graba audio por su cuenta.';
+  'SITU usa el micrófono cuando grabas un video para un reporte o cuando tú inicias una transmisión en vivo. No graba audio por su cuenta.';
 
 const faceId = 'SITU usa Face ID para desbloquear tu sesión en este dispositivo.';
 

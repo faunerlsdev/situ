@@ -9,15 +9,16 @@ User=situ
 Group=situ
 WorkingDirectory=/opt/situ/current/api
 Environment=ASPNETCORE_ENVIRONMENT=Production
-Environment=ASPNETCORE_URLS=http://127.0.0.1:5080
 Environment=HOME=/var/lib/situ
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 EnvironmentFile=/etc/situ/api.env
-ExecStart=/usr/bin/dotnet /opt/situ/current/api/Situ.Api.dll
+ExecStart=/opt/situ/bin/start-api.sh
 Restart=on-failure
 RestartSec=5
 TimeoutStartSec=90
-MemoryMax=768M
+MemoryHigh=384M
+MemoryMax=512M
+CPUQuota=80%
 LimitNOFILE=65535
 NoNewPrivileges=true
 ProtectSystem=strict

@@ -45,6 +45,8 @@
     "react-native": "0.88.0",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-maps": "1.29.11",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-nitro-rtmp-publisher": "1.0.1",
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
@@ -55,7 +57,9 @@
   "expo": {
     "doctor": {
       "_comment": "Única verificación ignorada: NOT_SQUARE. El isotipo assets/images/brand/situ-isotipo-naranja-claro.png mide 83×110 y no se redibuja. expo-doctor 1.21.5 no puede omitir solo ese error; apps/mobile/scripts/patch-expo-doctor.mjs lo filtra cuando este código está en la lista. El resto del schema sigue activo. Ver docs/tiendas/ficha.md.",
-      "ignoreAssetErrorCodes": ["NOT_SQUARE"]
+      "ignoreAssetErrorCodes": [
+        "NOT_SQUARE"
+      ]
     }
   },
   "devDependencies": {

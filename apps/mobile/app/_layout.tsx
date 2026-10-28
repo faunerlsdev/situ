@@ -106,6 +106,7 @@ function RootNavigator() {
         <Stack.Screen name="cuenta" />
         <Stack.Screen name="visibilidad" />
         <Stack.Screen name="ubicacion" />
+        <Stack.Screen name="vivo-poc" />
         <Stack.Screen name="usuario/[userName]" />
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="cambiar-contrasena" />

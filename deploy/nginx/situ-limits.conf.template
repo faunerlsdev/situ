@@ -1,0 +1,10 @@
+# Zonas y el mapa del WebSocket. Solo nombres situ_.
+# No lleva gzip ni limit_req_status: eso cambiaría el resto de los sitios.
+
+map $http_upgrade $situ_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+limit_req_zone $binary_remote_addr zone=situ_auth:10m rate=10r/s;
+limit_conn_zone $binary_remote_addr zone=situ_live:10m;

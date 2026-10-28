@@ -3,7 +3,26 @@
 # beyond status codes and header names.
 set -euo pipefail
 
-: "${DOMAIN_ROOT:?Define DOMAIN_ROOT}"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+if [[ -f "${SCRIPT_DIR}/lib/ports.sh" ]]; then
+  # shellcheck disable=SC1091
+  source "${SCRIPT_DIR}/lib/ports.sh"
+  situ_load_ports
+  situ_apply_domain
+elif [[ -f /opt/situ/ports.env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source /opt/situ/ports.env
+  set +a
+  if [[ -z "${DOMAIN_ROOT:-}" || "${DOMAIN_ROOT}" == *CHANGE_ME* ]]; then
+    DOMAIN_ROOT="${SITU_DOMAIN_ROOT:?Falta SITU_DOMAIN_ROOT}"
+  fi
+else
+  printf 'Falta ports.env\n' >&2
+  exit 1
+fi
+
+: "${DOMAIN_ROOT:?Define SITU_DOMAIN_ROOT en ports.env}"
 
 fail=0
 note() { printf '%s\n' "$*"; }

@@ -31,7 +31,7 @@ ensure_package() {
     log "Ya está instalado: ${package}"
     return 0
   fi
-  DEBIAN_FRONTEND=noninteractive apt-get install -y "$package"
+  die "Falta el paquete ${package}. Este servidor es compartido: no instalo paquetes del sistema."
 }
 
 valid_hostname() {

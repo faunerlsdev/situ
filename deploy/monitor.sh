@@ -68,6 +68,27 @@ for service in situ-api situ-web situ-admin situ-landing situ-support; do
   fi
 done
 
+if [[ -f /etc/systemd/system/situ-mediamtx.service ]]; then
+  if systemctl is-active --quiet situ-mediamtx; then
+    clear_mark down-situ-mediamtx
+  else
+    send_once down-situ-mediamtx "SITU MediaMTX caído" "situ-mediamtx no está activo."
+  fi
+fi
+
+live_dir=/var/lib/situ/live
+if [[ -d "$live_dir" ]]; then
+  live_used=$(df -P "$live_dir" | awk 'NR == 2 { gsub("%", "", $5); print $5 }')
+  if [[ "$live_used" -ge "$DISK_CRIT" ]]; then
+    send_once live-disk-crit "SITU grabaciones de vivo críticas" "El disco de las grabaciones está al ${live_used}%."
+  elif [[ "$live_used" -ge "$DISK_WARN" ]]; then
+    send_once live-disk-warn "SITU grabaciones de vivo altas" "El disco de las grabaciones está al ${live_used}%."
+  else
+    clear_mark live-disk-crit
+    clear_mark live-disk-warn
+  fi
+fi
+
 newest=$(find /var/backups/situ/db/daily -name '*.dump.age' -printf '%T@\n' 2>/dev/null | sort -nr | head -n 1 || true)
 now=$(date +%s)
 if [[ -z "$newest" ]]; then
