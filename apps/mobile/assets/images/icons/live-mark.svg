@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" role="img" aria-label="Transmisión en vivo">
+  <circle cx="22" cy="22" r="20" fill="none" stroke="#DE0506" stroke-width="2"/>
+  <circle cx="22" cy="22" r="15" fill="#FFFFFF"/>
+  <g fill="none" stroke="#DE0506" stroke-width="2" stroke-linecap="round">
+    <path d="M8 16c2 2 2 10 0 12"/>
+    <path d="M5 13c3.2 3 3.2 15 0 18"/>
+    <path d="M36 16c-2 2-2 10 0 12"/>
+    <path d="M39 13c-3.2 3-3.2 15 0 18"/>
+  </g>
+  <text x="22" y="27" text-anchor="middle" font-family="Montserrat, Arial, sans-serif" font-size="16" font-weight="800" fill="#1C1C1C">S</text>
+</svg>

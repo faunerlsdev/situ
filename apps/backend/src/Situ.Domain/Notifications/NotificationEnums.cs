@@ -5,6 +5,7 @@ public enum NotificationType
     NearbyReport,
     FriendReport,
     FriendLiveStarted,
+    FriendLiveEnded,
     ImportantNews,
     FriendRequest,
     FriendAccepted,
@@ -16,6 +17,7 @@ public enum NotificationType
     Subscription,
     OrganizationAlert,
     System,
+    NearbyLiveStarted,
 }
 
 public enum NotificationChannel

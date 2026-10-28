@@ -2,7 +2,7 @@ import { emailSpamHint, messageFromUnknown, notify } from '@situ/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PrimaryButton } from '@/components/primary-button';
 import { api } from '@/lib/api';
@@ -44,54 +44,59 @@ export default function ConfirmEmailScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Image source={logo} resizeMode="contain" accessibilityLabel="SITU" style={styles.logo} />
-      <Text style={styles.title}>{token ? 'Confirmar correo' : 'Reenviar enlace'}</Text>
-      {token ? null : (
-        <Text style={styles.lede}>
-          Tu correo todavía no está confirmado. Escribe el correo de la cuenta y te enviamos el enlace de nuevo.
-        </Text>
-      )}
-      {token ? null : <Text style={styles.hint}>{emailSpamHint}</Text>}
-      {token ? (
-        <PrimaryButton label="Confirmar mi correo" pendingLabel="Confirmando…" pending={pending} onPress={() => void confirm()} />
-      ) : (
-        <View style={styles.form}>
-          <TextInput
-            keyboardAppearance="dark"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Correo"
-            placeholderTextColor={theme.colors.textPlaceholder}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            accessibilityLabel="Correo"
-            style={styles.input}
-          />
-          <PrimaryButton
-            label="Reenviar enlace"
-            pendingLabel="Enviando…"
-            pending={pending}
-            disabled={email.trim().length === 0}
-            onPress={() => void resend()}
-          />
-        </View>
-      )}
-      <Link href="/login" replace style={styles.link}>
-        Volver a ingresar
-      </Link>
-    </ScrollView>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Image source={logo} resizeMode="contain" accessibilityLabel="SITU" style={styles.logo} />
+        <Text style={styles.title}>{token ? 'Confirmar correo' : 'Reenviar enlace'}</Text>
+        {token ? null : (
+          <Text style={styles.lede}>
+            Tu correo todavía no está confirmado. Escribe el correo de la cuenta y te enviamos el enlace de nuevo.
+          </Text>
+        )}
+        {token ? null : <Text style={styles.hint}>{emailSpamHint}</Text>}
+        {token ? (
+          <PrimaryButton label="Confirmar mi correo" pendingLabel="Confirmando…" pending={pending} onPress={() => void confirm()} />
+        ) : (
+          <View style={styles.form}>
+            <TextInput
+              keyboardAppearance="dark"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Correo"
+              placeholderTextColor={theme.colors.textPlaceholder}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              accessibilityLabel="Correo"
+              style={styles.input}
+            />
+            <PrimaryButton
+              label="Reenviar enlace"
+              pendingLabel="Enviando…"
+              pending={pending}
+              disabled={email.trim().length === 0}
+              onPress={() => void resend()}
+            />
+          </View>
+        )}
+        <Link href="/login" replace style={styles.link}>
+          Volver a ingresar
+        </Link>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
   content: {
     flexGrow: 1,
     justifyContent: 'center',
     gap: 16,
     padding: 24,
-    backgroundColor: theme.colors.bg,
   },
   logo: {
     alignSelf: 'center',

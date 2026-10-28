@@ -19,6 +19,8 @@ import { useEffect } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { LiveRoster } from '@/features/live/roster';
+import { LiveSignal } from '@/features/live/signal';
 import { NotificationRuntime } from '@/features/notifications/push-runtime';
 import { LocationEmitter } from '@/features/location/emitter';
 import { useMe } from '@/features/reports/use-me';
@@ -87,6 +89,8 @@ function RootNavigator() {
     <StatusBar style="light" />
     {isSignedIn ? <NotificationRuntime /> : null}
     {isSignedIn ? <LocationEmitter /> : null}
+    {isSignedIn ? <LiveSignal /> : null}
+    {isSignedIn ? <LiveRoster /> : null}
     <Stack
       screenOptions={{
         headerShown: false,
@@ -107,6 +111,7 @@ function RootNavigator() {
         <Stack.Screen name="visibilidad" />
         <Stack.Screen name="ubicacion" />
         <Stack.Screen name="vivo-poc" />
+        <Stack.Screen name="en-vivo" />
         <Stack.Screen name="usuario/[userName]" />
         <Stack.Screen name="editar-perfil" />
         <Stack.Screen name="cambiar-contrasena" />

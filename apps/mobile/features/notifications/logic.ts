@@ -86,6 +86,7 @@ export function pushRegistrationPlan(input: {
 
 export type NotificationOpen =
   | { kind: 'report'; reportId: string; focusComments: boolean; notificationId: string | null }
+  | { kind: 'live'; publicId: string; notificationId: string | null }
   | { kind: 'unavailable' }
   | { kind: 'inbox'; notificationId: string | null };
 
@@ -93,10 +94,18 @@ export function notificationOpenTarget(input: {
   available: boolean;
   reportId: string | null;
   targetType: string | null;
+  liveId?: string | null;
   notificationId?: string | null;
 }): NotificationOpen {
   if (!input.available) {
     return { kind: 'unavailable' };
+  }
+
+  if (input.targetType === 'LiveStream') {
+    if (!input.liveId) {
+      return { kind: 'inbox', notificationId: input.notificationId ?? null };
+    }
+    return { kind: 'live', publicId: input.liveId, notificationId: input.notificationId ?? null };
   }
 
   if (!input.reportId) {
@@ -120,6 +129,13 @@ export function pushDataTarget(data: Record<string, unknown> | null | undefined)
   const type = text(data.type);
   const reportId = text(data.reportId);
   const targetType = text(data.targetType);
+  if (type === 'FriendLiveStarted' || type === 'FriendLiveEnded' || type === 'NearbyLiveStarted' || targetType === 'LiveStream') {
+    const publicId = text(data.targetId);
+    if (!publicId) {
+      return { kind: 'inbox', notificationId };
+    }
+    return { kind: 'live', publicId, notificationId };
+  }
   if (type === 'Summary' || !reportId) {
     return { kind: 'inbox', notificationId };
   }

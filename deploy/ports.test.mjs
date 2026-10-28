@@ -10,6 +10,25 @@ function read(path) {
   return readFileSync(join(root, path), 'utf8');
 }
 
+test('the live site reads the HLS token from the original URI', () => {
+  const site = read('nginx/situ-live.conf');
+  assert.match(site, /map \$request_uri \$live_token/);
+  assert.match(site, /proxy_set_header X-Live-Token \$live_token;/);
+  assert.doesNotMatch(site, /X-Live-Token \$arg_token/);
+  assert.match(site, /rewrite "\^\/hls\/\(\[a-f0-9\]\{32\}\)\/\[0-9\]\+\\\.\[0-9a-f\]\{64\}\/\(\.\*\)\$"/);
+  assert.match(site, /log_format situ_live/);
+  assert.doesNotMatch(site, /Set-Cookie/);
+  assert.doesNotMatch(site, /Cookie \$http_cookie/);
+});
+
+test('the live HLS variant is muxed MPEG-TS', () => {
+  const yml = read('mediamtx/mediamtx.yml');
+  assert.match(yml, /hlsVariant: mpegts/);
+  assert.match(yml, /hlsSegmentDuration: 2s/);
+  assert.doesNotMatch(yml, /hlsVariant: lowLatency/);
+  assert.doesNotMatch(yml, /hlsVariant: fmp4/);
+});
+
 test('ports.env keeps the shared server defaults', () => {
   const ports = read('ports.env');
   for (const line of [
@@ -105,4 +124,33 @@ test('nginx zones stay prefixed and out of the other vhosts', () => {
   assert.match(read('mediamtx/situ-mediamtx.service'), /CPUQuota=100%/);
   assert.doesNotMatch(read('mediamtx/situ-mediamtx.service'), /CPUQuota=300%/);
   assert.match(read('mediamtx/situ-live-auth.service'), /MemoryMax=64M/);
+});
+
+test('mediamtx accepts only the opaque path and still authorizes it', () => {
+  const yml = read('mediamtx/mediamtx.yml');
+  const dev = read('mediamtx/mediamtx.dev.yml');
+  const install = read('mediamtx/install.sh');
+  assert.match(yml, /authMethod: http/);
+  assert.match(yml, /authHTTPAddress: __LIVE_AUTH_URL__/);
+  assert.match(yml, /action: api/);
+  assert.doesNotMatch(yml, /action: publish/);
+  assert.doesNotMatch(yml, /action: read/);
+  assert.doesNotMatch(yml, /action: playback/);
+  assert.match(yml, /"~\^\[a-f0-9\]\{32\}\$":\n    source: publisher/);
+  assert.doesNotMatch(yml, /^\s*all_others:\s*$/m);
+  assert.doesNotMatch(yml, /^\s*all:\s*$/m);
+  assert.doesNotMatch(yml, /~\^\.\*/);
+  assert.doesNotMatch(yml, /~\^\.\+/);
+  assert.doesNotMatch(yml, /^\s*poc:\s*$/m);
+  assert.match(dev, /^\s*poc:\n\s*source: publisher/m);
+  assert.doesNotMatch(dev, /a-f0-9/);
+  assert.match(install, /\[\[ ! -f "\$ENV_FILE" \]\]/);
+  assert.match(install, /Se conserva \$\{ENV_FILE\}\./);
+  assert.match(install, /MainPID/);
+  assert.match(install, /situ_port_listening/);
+  const control = readFileSync(join(root, '../apps/backend/src/Situ.Api/Live/MediaMtxControl.cs'), 'utf8');
+  assert.match(control, /\/v3\/rtmps\/conns\/list/);
+  assert.match(control, /\/v3\/rtmps\/conns\/kick\//);
+  assert.match(control, /connection\.Id/);
+  assert.match(control, /connection\.Path/);
 });

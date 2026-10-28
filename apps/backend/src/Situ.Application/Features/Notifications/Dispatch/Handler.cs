@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Live;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
+using Situ.Domain.Live;
 using Situ.Domain.Notifications;
 using Situ.Domain.Reports;
 using Situ.Domain.Social;
@@ -49,6 +51,10 @@ public sealed class ProcessNotificationJobsHandler(
                 {
                     await FanOutCommentAsync(job.SubjectId, now, pushLimit, pushBatch, cancellationToken);
                 }
+                else if (job.Kind is NotificationJob.LiveStarted or NotificationJob.LiveEnded)
+                {
+                    await FanOutLiveAsync(job.SubjectId, job.Kind == NotificationJob.LiveStarted, now, pushLimit, pushBatch, cancellationToken);
+                }
 
                 job.Complete(now);
                 await db.SaveChangesAsync(cancellationToken);
@@ -76,6 +82,135 @@ public sealed class ProcessNotificationJobsHandler(
     }
 
     private const int ExpoBatchLimit = 100;
+
+    private async Task FanOutLiveAsync(Guid streamId, bool started, DateTimeOffset now, int pushLimit, int pushBatch, CancellationToken cancellationToken)
+    {
+        var stream = await db.LiveStreams.FirstOrDefaultAsync(item => item.Id == streamId, cancellationToken);
+        if (stream is null || string.IsNullOrWhiteSpace(stream.PublicPath))
+        {
+            return;
+        }
+
+        if (started && stream.Status != LiveStreamStatus.Live)
+        {
+            return;
+        }
+
+        if (!started && stream.Status is not (LiveStreamStatus.Ended or LiveStreamStatus.Cut))
+        {
+            return;
+        }
+
+        var streamer = await db.Users.FirstOrDefaultAsync(item => item.Id == stream.StreamerId, cancellationToken);
+        if (streamer is null)
+        {
+            return;
+        }
+
+        var settings = await ReportSettings.LoadAsync(db, cancellationToken);
+        var minorsCanStream = string.Equals(settings.GetValueOrDefault(SystemSettingKeys.LiveMinorsCanStream), "true", StringComparison.OrdinalIgnoreCase);
+        var allowAdultMinor = string.Equals(settings.GetValueOrDefault(SystemSettingKeys.FriendsAllowAdultMinor), "true", StringComparison.OrdinalIgnoreCase);
+        var radius = Math.Clamp(ReportSettings.Int(settings, SystemSettingKeys.LiveNotifyRadiusMeters, 1000), 100, 10_000);
+        var audience = new Dictionary<Guid, bool>();
+        if (stream.Visibility == ContentVisibility.FriendsOnly)
+        {
+            var friendIds = await db.Friendships
+                .Where(item => item.Status == FriendshipStatus.Accepted && (item.RequesterId == streamer.Id || item.AddresseeId == streamer.Id))
+                .Select(item => item.RequesterId == streamer.Id ? item.AddresseeId : item.RequesterId)
+                .ToListAsync(cancellationToken);
+            foreach (var friendId in friendIds.Where(item => item != streamer.Id))
+            {
+                audience[friendId] = true;
+            }
+        }
+        else if (started && stream.Location is { } location)
+        {
+            var nearby = await proximity.MatchWithinAsync(location, radius, now, cancellationToken);
+            foreach (var match in nearby.Where(item => item.UserId != streamer.Id))
+            {
+                audience[match.UserId] = false;
+            }
+
+            if (stream.CityId is { } cityId)
+            {
+                var interested = await db.UserInterestCities
+                    .Where(item => item.CityId == cityId && item.UserId != streamer.Id)
+                    .Select(item => item.UserId)
+                    .ToListAsync(cancellationToken);
+                foreach (var userId in interested)
+                {
+                    audience.TryAdd(userId, false);
+                }
+            }
+        }
+
+        if (audience.Count == 0)
+        {
+            return;
+        }
+
+        var ids = audience.Keys.ToArray();
+        var users = await db.Users.Where(item => ids.Contains(item.Id)).ToDictionaryAsync(item => item.Id, cancellationToken);
+        var preferences = await db.NotificationSettings.Where(item => ids.Contains(item.UserId)).ToDictionaryAsync(item => item.UserId, cancellationToken);
+        var devices = await db.UserDevices.Where(item => ids.Contains(item.UserId) && item.RevokedAt == null && item.PushToken != null).ToListAsync(cancellationToken);
+        var pushes = new List<(NotificationDelivery Delivery, PushNote Note)>();
+        foreach (var (userId, friendCopy) in audience)
+        {
+            if (!users.TryGetValue(userId, out var viewer) || IsClosed(viewer.Status))
+            {
+                continue;
+            }
+
+            preferences.TryGetValue(viewer.Id, out var preference);
+            if (friendCopy && preference is { NotifyFriendLives: false })
+            {
+                continue;
+            }
+
+            if (!friendCopy && preference is { NotifyNearbyLives: false })
+            {
+                continue;
+            }
+
+            var type = friendCopy
+                ? started ? NotificationType.FriendLiveStarted : NotificationType.FriendLiveEnded
+                : NotificationType.NearbyLiveStarted;
+            var muted = await db.NotificationPreferences.AnyAsync(
+                item => item.UserId == viewer.Id && item.Type == type && item.Channel == NotificationChannel.InApp && !item.IsEnabled,
+                cancellationToken);
+            if (muted)
+            {
+                continue;
+            }
+
+            var blocked = await db.UserBlocks.AnyAsync(
+                item => (item.Scope == UserBlockScope.Full
+                        && ((item.BlockerId == viewer.Id && item.BlockedUserId == streamer.Id) || (item.BlockerId == streamer.Id && item.BlockedUserId == viewer.Id)))
+                    || (item.Scope == UserBlockScope.AnonymousContentOnly && item.BlockerId == viewer.Id && item.BlockedUserId == streamer.Id),
+                cancellationToken);
+            if (!LiveAudience.CanWatch(viewer, streamer, stream, friendCopy, blocked, minorsCanStream, allowAdultMinor, now))
+            {
+                continue;
+            }
+
+            var already = await db.Notifications.AnyAsync(
+                item => item.RecipientId == viewer.Id && item.Type == type && item.TargetType == ContentTargetType.LiveStream && item.TargetId == stream.Id,
+                cancellationToken);
+            if (already)
+            {
+                continue;
+            }
+
+            var body = friendCopy
+                ? started ? "Un amigo está en vivo." : "La transmisión de un amigo terminó."
+                : "Hay una transmisión en vivo cerca de ti.";
+            var notification = Notification.Create(viewer.Id, type, "En vivo", body, ContentTargetType.LiveStream, stream.Id, now);
+            db.Notifications.Add(notification);
+            await QueuePushAsync(viewer, preference, notification, null, devices, pushes, now, pushLimit, cancellationToken, stream.PublicPath);
+        }
+
+        await FinishPushAsync(pushes, devices, pushBatch, cancellationToken);
+    }
 
     private async Task FanOutReportAsync(Guid reportId, DateTimeOffset now, int pushLimit, int pushBatch, CancellationToken cancellationToken)
     {
@@ -262,7 +397,8 @@ public sealed class ProcessNotificationJobsHandler(
         List<(NotificationDelivery Delivery, PushNote Note)> pushes,
         DateTimeOffset now,
         int pushLimit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? livePublicId = null)
     {
         var pushOn = preference?.PushEnabled ?? true;
         if (!pushOn)
@@ -292,6 +428,10 @@ public sealed class ProcessNotificationJobsHandler(
 
         var badge = await UnreadBadgeAsync(user.Id, cancellationToken);
         var payload = PushPayload.For(notification.Id, notification.Type.ToString(), notification.TargetType?.ToString(), notification.TargetId, reportId);
+        if (!string.IsNullOrWhiteSpace(livePublicId))
+        {
+            payload = payload with { TargetId = livePublicId };
+        }
         foreach (var device in devices.Where(item => item.UserId == user.Id && !string.IsNullOrWhiteSpace(item.PushToken)))
         {
             var delivery = NotificationDelivery.Create(notification.Id, NotificationChannel.Push, device.Id, now);

@@ -279,6 +279,11 @@ async function followPush(
     }
   }
 
+  if (target.kind === 'live') {
+    router.push({ pathname: '/en-vivo/[id]', params: { id: target.publicId } });
+    return;
+  }
+
   if (target.kind !== 'report') {
     router.navigate('/notificaciones');
     return;

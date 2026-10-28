@@ -118,6 +118,11 @@ public static class SystemSettingKeys
     public const string LocationPublicConsentText = "location.public_consent_text";
     public const string LocationMinorReminderDays = "location.minor_reminder_days";
     public const string LocationLastSeenRoundMinutes = "location.last_seen_round_minutes";
+    public const string LiveMinorsCanStream = "live.minors_can_stream";
+    public const string LiveMaxConcurrent = "live.max_concurrent";
+    public const string LiveMaxViewers = "live.max_viewers";
+    public const string LiveMaxMinutes = "live.max_minutes";
+    public const string LiveNotifyRadiusMeters = "live.notify_radius_m";
 
     public static readonly IReadOnlyDictionary<string, string> Defaults = new Dictionary<string, string>
     {
@@ -201,5 +206,10 @@ public static class SystemSettingKeys
         [LocationPublicConsentText] = "Si muestras tu ubicación en el mapa general, cualquier persona con cuenta puede ver un punto aproximado, mucho menos preciso que el de tus amigos. Puedes ocultarla cuando quieras. Un menor no aparece en el mapa general.",
         [LocationMinorReminderDays] = "7",
         [LocationLastSeenRoundMinutes] = "5",
+        [LiveMinorsCanStream] = "false",
+        [LiveMaxConcurrent] = "2",
+        [LiveMaxViewers] = "50",
+        [LiveMaxMinutes] = "30",
+        [LiveNotifyRadiusMeters] = "1000",
     };
 }

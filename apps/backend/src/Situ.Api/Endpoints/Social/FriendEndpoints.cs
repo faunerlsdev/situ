@@ -63,6 +63,12 @@ public sealed class FriendEndpoints : IEndpoint
             .Produces<ListFriendsResponse>()
             .RequireAuthorization(AuthorizationPolicies.User);
 
+        group.MapGet("/friends/history", History)
+            .WithName("ListFriendHistory")
+            .WithTags("Friends")
+            .Produces<ListFriendHistoryResponse>()
+            .RequireAuthorization(AuthorizationPolicies.User);
+
         group.MapGet("/friends/requests", Requests)
             .WithName("ListFriendRequests")
             .WithTags("Friends")
@@ -163,6 +169,16 @@ public sealed class FriendEndpoints : IEndpoint
         }
 
         return (await handler.Handle(new ListFriendsRequest(userId), cancellationToken)).ToHttpResult();
+    }
+
+    private static async Task<IResult> History(string? status, ICurrentUser current, IHandler<ListFriendHistoryRequest, Result<ListFriendHistoryResponse>> handler, CancellationToken cancellationToken)
+    {
+        if (current.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        return (await handler.Handle(new ListFriendHistoryRequest(userId, status ?? ""), cancellationToken)).ToHttpResult();
     }
 
     private static async Task<IResult> Requests(ICurrentUser current, IHandler<ListFriendRequestsRequest, Result<ListFriendRequestsResponse>> handler, CancellationToken cancellationToken)

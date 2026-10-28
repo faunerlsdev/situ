@@ -72,6 +72,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<LiveViewer> LiveViewers => Set<LiveViewer>();
 
+    public DbSet<LiveViewerSession> LiveViewerSessions => Set<LiveViewerSession>();
+
     public DbSet<AnonymousIdentityAccessLog> AnonymousIdentityAccessLogs => Set<AnonymousIdentityAccessLog>();
 
     public DbSet<Complaint> Complaints => Set<Complaint>();

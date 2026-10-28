@@ -24,5 +24,7 @@ internal static class ProductionTestConfiguration
         values["Cors:AllowedOrigins:0"] = "https://app.example.test";
         values["Cors:AllowedOrigins:1"] = "https://admin.example.test";
         values["Cors:AllowedOrigins:2"] = "https://ayuda.example.test";
+        values["Live:IngestSecret"] = "live-ingest-secret-for-tests-32b";
+        values["Live:HlsSecret"] = "live-hls-secret-for-tests-32chars";
     }
 }

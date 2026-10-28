@@ -57,6 +57,7 @@ export type UserCard = {
   userName: string;
   displayName: string;
   avatarUrl: string | null;
+  relation?: string;
 };
 
 export type UserSearchResponse = { users: UserCard[] };
@@ -68,6 +69,10 @@ export type FriendListResponse = { friends: FriendListItem[] };
 export type FriendRequestItem = UserCard & { requestId: string; direction: string };
 
 export type FriendRequestsResponse = { incoming: FriendRequestItem[]; outgoing: FriendRequestItem[] };
+
+export type FriendHistoryItem = UserCard & { requestId: string; status: string; at: string };
+
+export type FriendHistoryResponse = { items: FriendHistoryItem[] };
 
 export type FriendActionResponse = { status: string };
 
@@ -673,6 +678,42 @@ export function createServices(http: HttpClient) {
         requiresAuth: true,
       });
     },
+    listLive() {
+      return http.request<{ streams: LiveCard[] }>({ url: '/api/v1/live', requiresAuth: true });
+    },
+    live(id: string) {
+      return http.request<LiveCard>({ url: `/api/v1/live/${encodeURIComponent(id)}`, requiresAuth: true });
+    },
+    createLive(body: { visibility: 'Public' | 'Friends'; title: string; latitude?: number | null; longitude?: number | null }) {
+      return http.request<LivePublish>({
+        method: 'POST',
+        url: '/api/v1/live',
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    endLive(id: string) {
+      return http.request<void>({
+        method: 'POST',
+        url: `/api/v1/live/${encodeURIComponent(id)}/end`,
+        requiresAuth: true,
+      });
+    },
+    watchLive(id: string) {
+      return http.request<LiveWatch>({
+        method: 'POST',
+        url: `/api/v1/live/${encodeURIComponent(id)}/watch`,
+        requiresAuth: true,
+      });
+    },
+    reportLive(id: string, body: { reason: string; details?: string | null }) {
+      return http.request<{ id: string; status: string; isPriority: boolean }>({
+        method: 'POST',
+        url: `/api/v1/live/${encodeURIComponent(id)}/report`,
+        data: body,
+        requiresAuth: true,
+      });
+    },
     blocks() {
       return http.request<{ blocks: BlockListItem[] }>({
         method: 'GET',
@@ -697,6 +738,12 @@ export function createServices(http: HttpClient) {
     },
     friendRequests() {
       return http.request<FriendRequestsResponse>({ url: '/api/v1/friends/requests', requiresAuth: true });
+    },
+    friendHistory(status: 'Pending' | 'Accepted' | 'Declined') {
+      return http.request<FriendHistoryResponse>({
+        url: `/api/v1/friends/history?status=${encodeURIComponent(status)}`,
+        requiresAuth: true,
+      });
     },
     sendFriendRequest(userId: string) {
       return http.request<FriendActionResponse>({
@@ -921,6 +968,7 @@ export type NotificationSettings = {
   notifyNearbyReports: boolean;
   notifyFriendReports: boolean;
   notifyFriendLives: boolean;
+  notifyNearbyLives: boolean;
   notifyImportantNews: boolean;
   quietHoursStart: string | null;
   quietHoursEnd: string | null;
@@ -932,6 +980,31 @@ export type InterestCities = {
   maximum: number;
 };
 
+export type LiveCard = {
+  id: string;
+  title: string;
+  categoryId: string | null;
+  visibility: string;
+  displayName: string;
+  latitude: number | null;
+  longitude: number | null;
+  startedAt: string;
+  viewers: number;
+  status: string;
+};
+
+export type LivePublish = {
+  id: string;
+  publishUrl: string;
+  publishKey: string;
+  publishKeyExpiresAt: string;
+};
+
+export type LiveWatch = {
+  url: string;
+  expiresAt: string;
+};
+
 export type InboxNotification = {
   id: string;
   type: string;
@@ -940,6 +1013,7 @@ export type InboxNotification = {
   targetType: string | null;
   targetId: string | null;
   reportId: string | null;
+  liveId?: string | null;
   createdAt: string;
   isRead: boolean;
   available: boolean;

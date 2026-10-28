@@ -2,6 +2,7 @@ import { notificationMessages, relativeTime } from '@situ/shared';
 import type { InboxNotification } from '@situ/shared';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { LiveMark } from '@/features/live/live-mark';
 import { theme } from '@/theme/theme';
 
 export function NotificationRow({ item, onPress }: { item: InboxNotification; onPress: (item: InboxNotification) => void }) {
@@ -13,9 +14,13 @@ export function NotificationRow({ item, onPress }: { item: InboxNotification; on
       onPress={() => onPress(item)}
       style={[styles.row, !item.available && styles.dim]}
     >
-      <View style={styles.icon}>
-        <Text style={styles.iconLabel}>{iconFor(item.type)}</Text>
-      </View>
+      {item.type === 'FriendLiveStarted' || item.type === 'FriendLiveEnded' || item.type === 'NearbyLiveStarted' || item.targetType === 'LiveStream' ? (
+        <LiveMark size={36} label="Transmisión en vivo" />
+      ) : (
+        <View style={styles.icon}>
+          <Text style={styles.iconLabel}>{iconFor(item.type)}</Text>
+        </View>
+      )}
       <View style={styles.copy}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.body}>{item.body}</Text>

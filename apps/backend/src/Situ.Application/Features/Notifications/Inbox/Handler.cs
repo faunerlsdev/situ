@@ -19,6 +19,7 @@ public sealed record NotificationItemResponse(
     string? TargetType,
     Guid? TargetId,
     Guid? ReportId,
+    string? LiveId,
     DateTimeOffset CreatedAt,
     bool IsRead,
     bool Available);
@@ -60,13 +61,18 @@ public sealed class ListNotificationsHandler(IApplicationDbContext db, IClock cl
         var comments = await db.Comments.Where(item => commentIds.Contains(item.Id)).Select(item => new { item.Id, item.TargetId }).ToListAsync(cancellationToken);
         reportIds.AddRange(comments.Select(item => item.TargetId));
         var reports = await db.Reports.Where(item => reportIds.Contains(item.Id)).ToListAsync(cancellationToken);
+        var liveIds = page.Where(item => item.TargetType == ContentTargetType.LiveStream && item.TargetId != null).Select(item => item.TargetId!.Value).ToArray();
+        var lives = await db.LiveStreams.Where(item => liveIds.Contains(item.Id)).Select(item => new { item.Id, item.PublicPath, item.HiddenByStaff }).ToListAsync(cancellationToken);
         var items = page.Select(item =>
         {
             var reportId = item.TargetType == ContentTargetType.Report
                 ? item.TargetId
                 : comments.FirstOrDefault(comment => comment.Id == item.TargetId)?.TargetId;
             var report = reportId is { } found ? reports.FirstOrDefault(row => row.Id == found) : null;
-            var available = report is not null && report.IsVisible(now);
+            var live = item.TargetType == ContentTargetType.LiveStream ? lives.FirstOrDefault(row => row.Id == item.TargetId) : null;
+            var available = item.TargetType == ContentTargetType.LiveStream
+                ? live is not null && !live.HiddenByStaff
+                : report is not null && report.IsVisible(now);
             return new NotificationItemResponse(
                 item.Id,
                 item.Type.ToString(),
@@ -75,6 +81,7 @@ public sealed class ListNotificationsHandler(IApplicationDbContext db, IClock cl
                 item.TargetType?.ToString(),
                 item.TargetId,
                 reportId,
+                live?.PublicPath,
                 item.CreatedAt,
                 item.IsRead,
                 available);

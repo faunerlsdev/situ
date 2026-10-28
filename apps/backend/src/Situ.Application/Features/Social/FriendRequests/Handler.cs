@@ -364,3 +364,62 @@ public sealed class ListFriendRequestsHandler(IApplicationDbContext db, IClock c
         return Result<ListFriendRequestsResponse>.Success(new ListFriendRequestsResponse(incoming, outgoing));
     }
 }
+
+public sealed record ListFriendHistoryRequest(Guid UserId, string Status);
+
+public sealed record FriendHistoryItem(Guid RequestId, string Status, Guid UserId, string UserName, string DisplayName, string? AvatarUrl, DateTimeOffset At);
+
+public sealed record ListFriendHistoryResponse(IReadOnlyList<FriendHistoryItem> Items);
+
+public sealed class ListFriendHistoryHandler(IApplicationDbContext db, IClock clock, IPublicLinks links, IMediaUrlSigner urls)
+    : IHandler<ListFriendHistoryRequest, Result<ListFriendHistoryResponse>>
+{
+    public async Task<Result<ListFriendHistoryResponse>> Handle(ListFriendHistoryRequest request, CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<FriendshipStatus>(request.Status, true, out var status) || status is not (FriendshipStatus.Pending or FriendshipStatus.Accepted or FriendshipStatus.Declined))
+        {
+            return Result<ListFriendHistoryResponse>.Failure(SocialErrors.HistoryFilter());
+        }
+
+        var now = clock.UtcNow;
+        var me = await db.Users.FirstOrDefaultAsync(item => item.Id == request.UserId, cancellationToken);
+        if (me is null)
+        {
+            return Result<ListFriendHistoryResponse>.Success(new ListFriendHistoryResponse([]));
+        }
+
+        var rows = await db.Friendships
+            .Where(item => item.Status == status && (item.RequesterId == me.Id || item.AddresseeId == me.Id))
+            .OrderByDescending(item => item.RespondedAt ?? item.RequestedAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+        var ids = rows.Select(item => item.OtherParty(me.Id)).Distinct().ToArray();
+        var users = await db.Users.Where(item => ids.Contains(item.Id)).ToDictionaryAsync(item => item.Id, cancellationToken);
+        var profiles = await db.UserProfiles.Where(item => ids.Contains(item.UserId)).ToListAsync(cancellationToken);
+        var allow = await SocialRules.AllowAdultMinorAsync(db, cancellationToken);
+        var items = new List<FriendHistoryItem>();
+        foreach (var row in rows)
+        {
+            var otherId = row.OtherParty(me.Id);
+            if (!users.TryGetValue(otherId, out var user)
+                || !SocialRules.IsVisibleAccount(user)
+                || !SocialRules.PairAllowed(me, user, now, allow)
+                || await SocialRules.FullBlockBetweenAsync(db, me.Id, user.Id, cancellationToken))
+            {
+                continue;
+            }
+
+            var profile = profiles.FirstOrDefault(item => item.UserId == user.Id);
+            items.Add(new FriendHistoryItem(
+                row.Id,
+                row.Status.ToString(),
+                user.Id,
+                user.UserName.Value,
+                ProfileCards.DisplayName(user, profile),
+                ProfileCards.Avatar(links, urls, user, profile, now),
+                row.RespondedAt ?? row.RequestedAt));
+        }
+
+        return Result<ListFriendHistoryResponse>.Success(new ListFriendHistoryResponse(items));
+    }
+}

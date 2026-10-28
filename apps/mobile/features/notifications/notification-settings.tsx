@@ -156,7 +156,16 @@ export function NotificationSettingsScreen() {
         value={settings.notifyFriendReports}
         save={(next) => persist({ ...settings, notifyFriendReports: next })}
       />
-      <SettingsToggle label={notificationMessages.lives} value={false} disabled hint={notificationMessages.comingSoon} save={async () => false} />
+      <SettingsToggle
+        label={notificationMessages.lives}
+        value={settings.notifyFriendLives}
+        save={(next) => persist({ ...settings, notifyFriendLives: next })}
+      />
+      <SettingsToggle
+        label={notificationMessages.nearbyLives}
+        value={settings.notifyNearbyLives}
+        save={(next) => persist({ ...settings, notifyNearbyLives: next })}
+      />
       <SettingsToggle label={notificationMessages.news} value={false} disabled hint={notificationMessages.comingSoon} save={async () => false} />
 
       <Text style={styles.heading}>{notificationMessages.proximityTitle}</Text>
@@ -287,6 +296,7 @@ function normalizeSettings(settings: NotificationSettings): NotificationSettings
   return {
     ...settings,
     nearbyRadiusMeters: nearestRadius(Number(settings.nearbyRadiusMeters)),
+    notifyNearbyLives: settings.notifyNearbyLives !== false,
     quietHoursStart: settings.quietHoursStart,
     quietHoursEnd: settings.quietHoursEnd,
   };

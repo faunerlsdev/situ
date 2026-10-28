@@ -10,10 +10,12 @@ using Situ.Application.Features.Notifications.Inbox;
 using Situ.Application.Features.Notifications.PurgeAlertLocations;
 using Situ.Application.Features.Notifications.Settings;
 using Situ.Application.Tests.Support;
+using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Geography;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
+using Situ.Domain.Live;
 using Situ.Domain.Notifications;
 using Situ.Domain.Reports;
 using Situ.Domain.Social;
@@ -137,7 +139,7 @@ public class NotificationFlowTests
         db.UserBlocks.Add(UserBlock.HideAnonymousContent(anonBlocker.Id, author.Id, ContentTargetType.Report, Guid.NewGuid(), Now, Now));
         db.UserCategoryInterests.Add(UserCategoryInterest.Create(muted.Id, category.Id, true));
         var settings = NotificationSettings.CreateDefault(off.Id, "America/Bogota", Now);
-        settings.Update(true, true, 1000, false, true, true, true, null, null, "America/Bogota", Now);
+        settings.Update(true, true, 1000, false, true, true, true, true, null, null, "America/Bogota", Now);
         db.NotificationSettings.Add(settings);
         suspended.Suspend(Now.AddDays(1));
         await db.SaveChangesAsync();
@@ -225,9 +227,9 @@ public class NotificationFlowTests
         var quiet = await UserAsync(db, catalog, 30, "silencio7@situ.test", "silencio7", "+573000000062");
         var awake = await UserAsync(db, catalog, 30, "despierto@situ.test", "despierto", "+573000000063", catalog.OtherCityId);
         var quietSettings = NotificationSettings.CreateDefault(quiet.Id, "America/Bogota", Now);
-        quietSettings.Update(true, true, 1000, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/Bogota", Now);
+        quietSettings.Update(true, true, 1000, true, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/Bogota", Now);
         var awakeSettings = NotificationSettings.CreateDefault(awake.Id, "America/New_York", Now);
-        awakeSettings.Update(true, true, 1000, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/New_York", Now);
+        awakeSettings.Update(true, true, 1000, true, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/New_York", Now);
         db.UserInterestCities.Add(UserInterestCity.Create(awake.Id, catalog.CityId));
         db.NotificationSettings.AddRange(quietSettings, awakeSettings);
         var report = await ReportAsync(db, author, category.Id, false, ContentVisibility.Public);
@@ -416,6 +418,160 @@ public class NotificationFlowTests
         Assert.DoesNotContain("comenta", item.Body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task Friends_only_live_notifies_friends_and_skips_everyone_else()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var streamer = await UserAsync(db, catalog, 30, "emite@situ.test", "emite", "+573000000101");
+        var friend = await UserAsync(db, catalog, 30, "amigol@situ.test", "amigol", "+573000000102");
+        var near = await UserAsync(db, catalog, 30, "cercal@situ.test", "cercal", "+573000000103", catalog.OtherCityId);
+        var blocked = await UserAsync(db, catalog, 30, "bloqueol@situ.test", "bloqueol", "+573000000104");
+        var quiet = await UserAsync(db, catalog, 30, "silenciol@situ.test", "silenciol", "+573000000105");
+        var off = await UserAsync(db, catalog, 30, "apagadol@situ.test", "apagadol", "+573000000106");
+        foreach (var person in new[] { friend, blocked, quiet, off })
+        {
+            var tie = Friendship.Request(streamer.Id, person.Id, Now);
+            tie.Accept(person.Id, Now);
+            db.Friendships.Add(tie);
+        }
+        db.UserBlocks.Add(UserBlock.CreateFull(blocked.Id, streamer.Id, Now));
+        var quietSettings = NotificationSettings.CreateDefault(quiet.Id, "America/Bogota", Now);
+        quietSettings.Update(true, true, 1000, true, true, true, true, true, new TimeOnly(9, 0), new TimeOnly(11, 0), "America/Bogota", Now);
+        var offSettings = NotificationSettings.CreateDefault(off.Id, "America/Bogota", Now);
+        offSettings.Update(true, true, 1000, true, true, false, true, true, null, null, "America/Bogota", Now);
+        db.NotificationSettings.AddRange(quietSettings, offSettings);
+        await PlaceAsync(db, near, 4.715, -74.072);
+        db.UserInterestCities.Add(UserInterestCity.Create(near.Id, catalog.CityId));
+        var stream = await StreamAsync(db, streamer, ContentVisibility.FriendsOnly, new GeoPoint(4.711, -74.072), catalog.CityId);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.LiveStarted, stream.Id);
+        await DispatchAsync(db, clock, push, NotificationJob.LiveStarted, stream.Id);
+
+        var notes = await db.Notifications.ToListAsync();
+        Assert.Equal(2, notes.Count);
+        Assert.Contains(notes, item => item.RecipientId == friend.Id && item.Type == NotificationType.FriendLiveStarted && item.Body == "Un amigo está en vivo.");
+        Assert.Contains(notes, item => item.RecipientId == quiet.Id && item.Body == "Un amigo está en vivo.");
+        Assert.DoesNotContain(notes, item => item.RecipientId == streamer.Id || item.RecipientId == near.Id || item.RecipientId == blocked.Id || item.RecipientId == off.Id);
+        var sent = Assert.Single(push.Notes);
+        Assert.Equal(stream.PublicPath, sent.Payload.TargetId);
+        Assert.Equal(nameof(NotificationType.FriendLiveStarted), sent.Payload.Type);
+        Assert.DoesNotContain(streamer.UserName.Value, sent.Body, StringComparison.OrdinalIgnoreCase);
+        AssertOpaque(sent, streamer);
+        var quietNoteId = notes.Single(note => note.RecipientId == quiet.Id).Id;
+        var quietDelivery = await db.NotificationDeliveries.SingleAsync(item => item.NotificationId == quietNoteId);
+        Assert.Equal(DeliveryStatus.Suppressed, quietDelivery.Status);
+        Assert.Equal("quiet_hours", quietDelivery.Error);
+    }
+
+    [Fact]
+    public async Task A_public_live_notifies_nearby_and_interest_city_once_and_skips_a_stream_without_a_place()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var streamer = await UserAsync(db, catalog, 30, "publico@situ.test", "publico", "+573000000111");
+        var near = await UserAsync(db, catalog, 30, "cerca2@situ.test", "cerca2", "+573000000112", catalog.OtherCityId);
+        var city = await UserAsync(db, catalog, 30, "ciudad2@situ.test", "ciudad2", "+573000000113", catalog.OtherCityId);
+        var both = await UserAsync(db, catalog, 30, "ambos@situ.test", "ambos", "+573000000114", catalog.OtherCityId);
+        var friend = await UserAsync(db, catalog, 30, "lejano@situ.test", "lejano", "+573000000115");
+        var minor = await UserAsync(db, catalog, 16, "menorv@situ.test", "menorv", "+573000000116", catalog.OtherCityId);
+        var off = await UserAsync(db, catalog, 30, "offlive@situ.test", "offlive", "+573000000117", catalog.OtherCityId);
+        var tie = Friendship.Request(streamer.Id, friend.Id, Now);
+        tie.Accept(friend.Id, Now);
+        db.Friendships.Add(tie);
+        db.UserInterestCities.Add(UserInterestCity.Create(city.Id, catalog.CityId));
+        db.UserInterestCities.Add(UserInterestCity.Create(both.Id, catalog.CityId));
+        await PlaceAsync(db, near, 4.715, -74.072);
+        await PlaceAsync(db, both, 4.714, -74.072);
+        await PlaceAsync(db, minor, 4.715, -74.072);
+        await PlaceAsync(db, off, 4.715, -74.072);
+        await PlaceAsync(db, streamer, 4.711, -74.072);
+        var offSettings = NotificationSettings.CreateDefault(off.Id, "America/Bogota", Now);
+        offSettings.Update(true, true, 1000, true, true, true, false, true, null, null, "America/Bogota", Now);
+        db.NotificationSettings.Add(offSettings);
+        var stream = await StreamAsync(db, streamer, ContentVisibility.Public, new GeoPoint(4.711, -74.072), catalog.CityId);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.LiveStarted, stream.Id);
+
+        var notes = await db.Notifications.Where(item => item.Type == NotificationType.NearbyLiveStarted).ToListAsync();
+        Assert.Equal(3, notes.Count);
+        Assert.All(notes, item => Assert.Equal("Hay una transmisión en vivo cerca de ti.", item.Body));
+        Assert.Contains(notes, item => item.RecipientId == near.Id);
+        Assert.Contains(notes, item => item.RecipientId == city.Id);
+        Assert.Contains(notes, item => item.RecipientId == both.Id);
+        Assert.DoesNotContain(notes, item => item.RecipientId == streamer.Id || item.RecipientId == friend.Id || item.RecipientId == minor.Id || item.RecipientId == off.Id);
+        Assert.Equal(3, push.Notes.Count);
+        Assert.All(push.Notes, note => Assert.Equal(stream.PublicPath, note.Payload.TargetId));
+
+        var unplaced = await StreamAsync(db, streamer, ContentVisibility.Public, null, catalog.CityId);
+        await DispatchAsync(db, clock, push, NotificationJob.LiveStarted, unplaced.Id);
+        Assert.Equal(3, await db.Notifications.CountAsync(item => item.Type == NotificationType.NearbyLiveStarted));
+    }
+
+    [Fact]
+    public async Task A_minor_friend_hears_a_minor_stream_and_the_hourly_cap_stops_another_push()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        db.SystemSettings.Add(SystemSetting.Create(SystemSettingKeys.LiveMinorsCanStream, "true", null, Now));
+        db.SystemSettings.Add(SystemSetting.Create(SystemSettingKeys.NotificationMaxPushesPerHour, "1", null, Now));
+        var streamer = await UserAsync(db, catalog, 16, "menoron@situ.test", "menoron", "+573000000121");
+        var friend = await UserAsync(db, catalog, 16, "menoram@situ.test", "menoram", "+573000000122");
+        var adult = await UserAsync(db, catalog, 30, "adultoam@situ.test", "adultoam", "+573000000123");
+        foreach (var person in new[] { friend, adult })
+        {
+            var tie = Friendship.Request(streamer.Id, person.Id, Now);
+            tie.Accept(person.Id, Now);
+            db.Friendships.Add(tie);
+        }
+        var prior = Notification.Create(friend.Id, NotificationType.System, "Aviso", "Ya hubo una.", null, null, Now);
+        db.Notifications.Add(prior);
+        await db.SaveChangesAsync();
+        var device = await db.UserDevices.SingleAsync(item => item.UserId == friend.Id);
+        var sent = NotificationDelivery.Create(prior.Id, NotificationChannel.Push, device.Id, Now);
+        sent.MarkSent(Now);
+        db.NotificationDeliveries.Add(sent);
+        var stream = await StreamAsync(db, streamer, ContentVisibility.FriendsOnly, null, null);
+        var push = new RecordingPush();
+
+        await DispatchAsync(db, clock, push, NotificationJob.LiveStarted, stream.Id);
+
+        var live = Assert.Single(await db.Notifications.Where(item => item.Type == NotificationType.FriendLiveStarted).ToListAsync());
+        Assert.Equal(friend.Id, live.RecipientId);
+        Assert.DoesNotContain(adult.Id, await db.Notifications.Where(item => item.Type == NotificationType.FriendLiveStarted).Select(item => item.RecipientId).ToListAsync());
+        Assert.DoesNotContain(push.Notes, note => note.Body == "Un amigo está en vivo.");
+        var delivery = await db.NotificationDeliveries.SingleAsync(item => item.NotificationId == live.Id);
+        Assert.Equal(DeliveryStatus.Suppressed, delivery.Status);
+        Assert.Equal("hourly_limit", delivery.Error);
+    }
+
+    private static async Task<LiveStream> StreamAsync(IdentityTestDb db, User streamer, ContentVisibility visibility, GeoPoint? location, Guid? cityId)
+    {
+        var stream = LiveStream.Schedule(
+            streamer.Id,
+            streamer.AgeOn(Now),
+            true,
+            null,
+            cityId,
+            location,
+            "En la calle",
+            visibility,
+            Guid.NewGuid().ToString("N")[..16],
+            "hash",
+            Now.AddMinutes(5),
+            Now);
+        Assert.True(stream.AcceptPublishKey("hash", Now));
+        Assert.True(stream.MarkLive(Now));
+        db.LiveStreams.Add(stream);
+        await db.SaveChangesAsync();
+        return stream;
+    }
+
     private static async Task AssertUnavailable(GetReportHandler handler, Guid viewerId, Guid reportId, string reportStatus)
     {
         var result = await handler.Handle(new GetReportRequest(viewerId, reportId), CancellationToken.None);
@@ -535,6 +691,22 @@ public class NotificationFlowTests
                 var radius = preference?.NearbyRadiusMeters ?? NotificationSettings.DefaultRadiusMeters;
                 var nearest = group.Select(item => origin.DistanceInMetersTo(item.Location)).Min();
                 if (nearest <= radius)
+                {
+                    matches.Add(new ProximityMatch(group.Key, nearest));
+                }
+            }
+
+            return matches;
+        }
+
+        public async Task<IReadOnlyList<ProximityMatch>> MatchWithinAsync(GeoPoint origin, int radiusMeters, DateTimeOffset now, CancellationToken cancellationToken)
+        {
+            var rows = await db.DeviceAlertLocations.Where(item => item.ExpiresAt > now).ToListAsync(cancellationToken);
+            var matches = new List<ProximityMatch>();
+            foreach (var group in rows.GroupBy(item => item.UserId))
+            {
+                var nearest = group.Select(item => origin.DistanceInMetersTo(item.Location)).Min();
+                if (nearest <= radiusMeters)
                 {
                     matches.Add(new ProximityMatch(group.Key, nearest));
                 }

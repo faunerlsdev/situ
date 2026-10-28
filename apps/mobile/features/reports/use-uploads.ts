@@ -79,12 +79,17 @@ export function useUploads() {
     update(reduceUploads(tasksRef.current, { type: 'cancel', id }) as LocalUpload[]);
   }, [update]);
 
+  const remove = useCallback((id: string) => {
+    controllers.current.get(id)?.abort();
+    update(reduceUploads(tasksRef.current, { type: 'remove', id }) as LocalUpload[]);
+  }, [update]);
+
   const retry = useCallback((id: string) => {
     update(reduceUploads(tasksRef.current, { type: 'retry', id }) as LocalUpload[]);
     void pump();
   }, [pump, update]);
 
-  return { tasks, enqueue, cancel, retry };
+  return { tasks, enqueue, cancel, remove, retry };
 }
 
 export async function prepareImage(uri: string, width: number | undefined): Promise<string> {

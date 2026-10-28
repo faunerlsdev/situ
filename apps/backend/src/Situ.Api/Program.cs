@@ -16,10 +16,12 @@ using Situ.Api.Configuration;
 using Situ.Infrastructure.Reports;
 using Situ.Api.Endpoints;
 using Situ.Api.Guardianship;
+using Situ.Api.Live;
 using Situ.Api.Locations;
 using Situ.Api.Notifications;
 using Situ.Api.Realtime;
 using Situ.Api.Reports;
+using Situ.Application.Features.Live;
 using Situ.Application.Features.MapRealtime;
 using Situ.Api.Retention;
 using Situ.Api.Health;
@@ -292,11 +294,23 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1),
                 QueueLimit = 0,
             }));
+    options.AddPolicy("live", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            (httpContext.User.FindFirst("sub")?.Value ?? "anon") + "|" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
 });
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, SubUserIdProvider>();
 builder.Services.AddSingleton<MapSubscriptionBook>();
+builder.Services.AddOptions<LiveStreamOptions>().Bind(builder.Configuration.GetSection(LiveStreamOptions.SectionName));
+builder.Services.AddHttpClient<IMediaMtxControl, MediaMtxControl>();
+builder.Services.AddSingleton<ILiveNotifier, SignalRLiveNotifier>();
 builder.Services.AddSingleton<IMapZonePublisher, SignalRMapZonePublisher>();
 builder.Services.AddSingleton<IFriendLocationPublisher, SignalRFriendLocationPublisher>();
 builder.Services.AddHostedService<MapZoneDispatchService>();
@@ -308,10 +322,12 @@ builder.Services.AddHostedService<CompleteAccountDeletionsService>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<PurgeAlertLocationsService>();
 builder.Services.AddHostedService<PurgeUserLocationsService>();
+builder.Services.AddHostedService<LiveReconcileService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database", tags: ["ready"])
-    .AddCheck<StorageHealthCheck>("storage", tags: ["ready"]);
+    .AddCheck<StorageHealthCheck>("storage", tags: ["ready"])
+    .AddCheck<SkiaHealthCheck>("skia", tags: ["ready"]);
 
 var app = builder.Build();
 
@@ -360,8 +376,10 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 app.MapOpenApi();
 app.MapScalarApiReference();
 app.MapSituEndpoints();
+LiveIngressEndpoints.Map(app);
 app.MapHub<MapHub>(MapHubAuth.HubPath);
 app.MapHub<FriendsHub>(MapHubAuth.FriendsHubPath);
 
+SkiaNativeProbe.EnsureLoaded();
 app.Run();
 return 0;

@@ -85,6 +85,13 @@ public sealed class ReportCategory : AggregateRoot
         bool isAdultOnly) =>
         Apply(name, description, buttonIconUrl, mapIconUrl, colorHex, sortOrder, ttlMinutes, importanceWeight, mediaRequirement, parentCategoryId, isAdultOnly);
 
+    public void ReplaceIcons(string buttonIconUrl, string mapIconUrl, DateTimeOffset now)
+    {
+        ButtonIconUrl = Guard.NotEmpty(buttonIconUrl, nameof(buttonIconUrl), 500);
+        MapIconUrl = Guard.NotEmpty(mapIconUrl, nameof(mapIconUrl), 500);
+        MarkUpdated(now);
+    }
+
     public void Activate() => IsActive = true;
 
     public void Deactivate() => IsActive = false;

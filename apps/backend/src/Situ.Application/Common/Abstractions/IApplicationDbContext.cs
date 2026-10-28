@@ -71,6 +71,8 @@ public interface IApplicationDbContext
 
     DbSet<LiveViewer> LiveViewers { get; }
 
+    DbSet<LiveViewerSession> LiveViewerSessions { get; }
+
     DbSet<AnonymousIdentityAccessLog> AnonymousIdentityAccessLogs { get; }
 
     DbSet<Complaint> Complaints { get; }

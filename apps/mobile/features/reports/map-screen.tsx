@@ -45,6 +45,10 @@ import {
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 
+import { CategoryMark } from '@/features/reports/category-mark';
+import { LiveMark } from '@/features/live/live-mark';
+import { locatedStreams } from '@/features/live/logic';
+import { refreshLiveRoster, useLiveRoster } from '@/features/live/roster';
 import { blockContent } from '@/features/interaction/block-content';
 import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
 import type { ComplaintTarget } from '@/features/interaction/complaint-sheet';
@@ -73,7 +77,6 @@ const shareIcon = { ios: 'square.and.arrow.up', android: 'share', web: 'share' }
 const flagIcon = { ios: 'flag', android: 'flag', web: 'flag' } as const;
 const blockIcon = { ios: 'nosign', android: 'block', web: 'block' } as const;
 
-const pin = require('../../assets/images/icons/situ-pin-mapa-dark.png');
 const isotipo = require('../../assets/images/brand/situ-isotipo-negro.png');
 const avatar = require('../../assets/images/brand/situ-isotipo-naranja-claro.png');
 const darkMap = require('../../mapStyles/dark.json');
@@ -112,6 +115,8 @@ export function MapScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<MapPerson | null>(null);
   const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: gate === 'ready' });
+  const lives = useLiveRoster();
+  const livePoints = locatedStreams(lives.streams);
   const people = usePeople({ active: gate === 'ready' && Platform.OS !== 'web', region: settled, selfId: me.data?.id ?? null });
   const [sheetIndex, setSheetIndex] = useState(0);
   const [parentId, setParentId] = useState<string | null>(null);
@@ -221,6 +226,11 @@ export function MapScreen() {
   });
   const showBar = useDelayed(mapQuery.isFetching, 300);
   const focused = useIsFocused();
+  useEffect(() => {
+    if (focused) {
+      refreshLiveRoster();
+    }
+  }, [focused]);
   const grid = mapRealtimeOf(appConfig.data);
   const realtime = useMapRealtime({
     mapVisible: focused && gate === 'ready',
@@ -485,7 +495,7 @@ export function MapScreen() {
                 <View style={styles.cluster}><Text style={styles.clusterText}>{item.count}</Text></View>
               ) : (
                 <PointPin fresh={realtime.freshIds.has(item.id)} reduceMotion={reduceMotion}>
-                  <CategoryPin code={item.categoryCode} categories={categories} />
+                  <CategoryMark code={item.categoryCode} remotePath={categories.find((category) => category.code === item.categoryCode)?.mapIconUrl ?? null} kind="map" style={styles.pin} />
                   {item.isMine ? <Text style={styles.mine}>Tuyo</Text> : null}
                 </PointPin>
               )}
@@ -520,6 +530,18 @@ export function MapScreen() {
               )}
             </Marker>
           ))}
+          {livePoints.map((item) => (
+            <Marker
+              key={`live-${item.id}`}
+              coordinate={{ latitude: item.latitude, longitude: item.longitude }}
+              tracksViewChanges={livePoints.length <= 8}
+              anchor={{ x: 0.5, y: 0.5 }}
+              accessibilityLabel="Transmisión en vivo"
+              onPress={() => router.push({ pathname: '/en-vivo/[id]', params: { id: item.id } })}
+            >
+              <LiveMark pulse={livePoints.length <= 8} />
+            </Marker>
+          ))}
           </MapView>
         </MapErrorBoundary>
       )}
@@ -539,6 +561,7 @@ export function MapScreen() {
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <Pressable accessibilityRole="button" accessibilityLabel="Ver detalle del reporte" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.cardBody}>
+              <CategoryMark code={selectedPoint.categoryCode} remotePath={categories.find((category) => category.code === selectedPoint.categoryCode)?.buttonIconUrl ?? null} kind="button" style={styles.icon} />
               <Text style={styles.cardTitle}>{categoryName(categories, selectedPoint.categoryCode)}</Text>
               <Text style={styles.cardMeta}>{relativeTime(selectedPoint.createdAt ?? '')}{formatDistance(selectedPoint.distanceMeters) ? ` · ${formatDistance(selectedPoint.distanceMeters)}` : ''}</Text>
               <AuthorLine author={selectedPoint.author} />
@@ -599,7 +622,6 @@ export function MapScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="Quiero reportar algo" onPress={() => void openPublish()} style={styles.fab}>
         <Image source={isotipo} resizeMode="contain" style={styles.fabMark} />
       </Pressable>
-      {/* Extensión: dictado por voz al final del MVP y "Transmitir en vivo" en la Fase 2. No van en esta UI. */}
       <BottomSheet
         ref={sheetRef}
         index={0}
@@ -635,7 +657,7 @@ export function MapScreen() {
               }}
               style={styles.cell}
             >
-              <CategoryIcon uri={absoluteMediaUrl(apiBase, category.buttonIconUrl)} />
+              <CategoryMark code={category.code} remotePath={category.buttonIconUrl} kind="button" style={styles.icon} />
               <Text style={styles.cellTitle}>{category.name}</Text>
               <Text style={styles.cellBody} numberOfLines={2}>{category.description}</Text>
             </Pressable>
@@ -691,24 +713,6 @@ function PointPin({ fresh, reduceMotion, children }: { fresh: boolean; reduceMot
     Animated.timing(opacity, { toValue: 1, duration: 280, useNativeDriver: true }).start();
   }, [fresh, opacity, reduceMotion]);
   return <Animated.View style={{ opacity }}>{children}</Animated.View>;
-}
-
-function CategoryPin({ code, categories }: { code: string | null; categories: ReportCategory[] }) {
-  const category = categories.find((item) => item.code === code);
-  const [failed, setFailed] = useState(false);
-  const uri = category ? absoluteMediaUrl(apiBase, category.mapIconUrl) : null;
-  if (!uri || failed) {
-    return <Image source={pin} style={styles.pin} resizeMode="contain" />;
-  }
-  return <Image source={{ uri }} style={styles.pin} resizeMode="contain" onError={() => setFailed(true)} />;
-}
-
-function CategoryIcon({ uri }: { uri: string | null }) {
-  const [failed, setFailed] = useState(false);
-  if (!uri || failed) {
-    return <Image source={pin} style={styles.icon} resizeMode="contain" />;
-  }
-  return <Image source={{ uri }} style={styles.icon} resizeMode="contain" onError={() => setFailed(true)} />;
 }
 
 function VoteButton({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {

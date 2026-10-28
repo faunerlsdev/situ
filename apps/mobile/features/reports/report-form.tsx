@@ -24,7 +24,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
 import { api } from '@/lib/api';
@@ -66,6 +66,8 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
   const identityLocked = useRef(false);
   const [point, setPoint] = useState({ latitude: 4.711, longitude: -74.072 });
   const [picking, setPicking] = useState(false);
+  const [sheet, setSheet] = useState<'photo' | 'video' | null>(null);
+  const [pinMoved, setPinMoved] = useState(false);
   const [errors, setErrors] = useState<{ description?: string; media?: string }>({});
   const [address, setAddress] = useState('');
   const category = categories.find((item) => item.id === chosenId) ?? null;
@@ -165,7 +167,7 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       notify.warning(rejectedMediaReason({ kind: 'image', mime: 'image/jpeg', name: 'foto.jpg', imageCount, videoCount, limits }) ?? 'Puedes subir hasta 5 fotos.');
       return;
     }
-    if (source === 'camera' && !(await allowCamera())) {
+    if (!(await allowCapture(source))) {
       return;
     }
     setPicking(true);
@@ -195,7 +197,7 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       notify.warning(limits.maxVideos === 1 ? 'Puedes subir un solo video.' : `Puedes subir hasta ${limits.maxVideos} videos.`);
       return;
     }
-    if (source === 'camera' && !(await allowCamera())) {
+    if (!(await allowCapture(source))) {
       return;
     }
     setPicking(true);
@@ -279,23 +281,20 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       {needsMedia ? <Text style={styles.hint}>Esta categoría pide foto o video para poder enviarse.</Text> : null}
       <Text style={styles.hint}>Si aparece un menor de edad, su imagen es un dato personal protegido.</Text>
       <View style={styles.row}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Tomar foto" disabled={picking} onPress={() => void addImage('camera')} style={styles.secondary}><Text style={styles.secondaryLabel}>Tomar foto</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Elegir foto" disabled={picking} onPress={() => void addImage('library')} style={styles.secondary}><Text style={styles.secondaryLabel}>Elegir foto</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Foto" disabled={picking} onPress={() => setSheet('photo')} style={styles.secondary}><Text style={styles.secondaryLabel}>Foto</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Video" disabled={picking} onPress={() => setSheet('video')} style={styles.secondary}><Text style={styles.secondaryLabel}>Video</Text></Pressable>
       </View>
-      <View style={styles.row}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Grabar video" disabled={picking} onPress={() => void addVideo('camera')} style={styles.secondary}><Text style={styles.secondaryLabel}>Grabar video</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Elegir video" disabled={picking} onPress={() => void addVideo('library')} style={styles.secondary}><Text style={styles.secondaryLabel}>Elegir video</Text></Pressable>
-      </View>
-      {uploads.tasks.map((task) => (
+      {uploads.tasks.filter((task) => task.status !== 'cancelled').map((task) => (
         <View key={task.id} style={styles.upload}>
-          {task.kind === 'image' ? <Image source={{ uri: task.uri }} style={styles.thumb} /> : null}
+          {task.kind === 'image' ? <Image source={{ uri: task.uri }} style={styles.thumb} /> : <View style={styles.thumb}><Text style={styles.hint}>Video</Text></View>}
           <Text style={styles.hint}>{task.kind === 'image' ? 'Foto' : 'Video'} · {task.status === 'ready' ? 'Lista' : `${task.progress}%`}</Text>
           <View style={styles.track}><View style={[styles.trackFill, { width: `${task.progress}%` }]} /></View>
-          {task.status === 'failed' || task.status === 'cancelled' ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Reintentar archivo" onPress={() => uploads.retry(task.id)}><Text style={styles.link}>Reintentar</Text></Pressable>
-          ) : task.status !== 'ready' ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Cancelar archivo" onPress={() => uploads.cancel(task.id)}><Text style={styles.link}>Cancelar</Text></Pressable>
-          ) : null}
+          <View style={styles.row}>
+            {task.status === 'failed' ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Reintentar archivo" onPress={() => uploads.retry(task.id)}><Text style={styles.link}>Reintentar</Text></Pressable>
+            ) : null}
+            <Pressable accessibilityRole="button" accessibilityLabel="Quitar archivo" onPress={() => uploads.remove(task.id)}><Text style={styles.link}>Quitar</Text></Pressable>
+          </View>
           {task.error ? <Text style={styles.error}>{task.error}</Text> : null}
         </View>
       ))}
@@ -305,9 +304,21 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       {mapChoice.status === 'unavailable' ? (
         <Text style={styles.hint}>El mapa no está disponible en este dispositivo todavía. Puedes buscar la dirección.</Text>
       ) : (
-        <MapView style={styles.map} provider={PROVIDER_DEFAULT} region={{ ...point, latitudeDelta: 0.01, longitudeDelta: 0.01 }}>
-          <Marker coordinate={point} draggable accessibilityLabel="Mover el lugar del reporte" onDragEnd={(event) => setPoint(event.nativeEvent.coordinate)} />
-        </MapView>
+        <>
+          <MapView
+            style={styles.map}
+            provider={PROVIDER_DEFAULT}
+            region={{ ...point, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
+            onPress={(event) => {
+              setPoint(event.nativeEvent.coordinate);
+              setPinMoved(true);
+            }}
+          >
+            <Marker coordinate={point} accessibilityLabel="Lugar del reporte" />
+          </MapView>
+          {pinMoved ? <Text style={styles.hint}>Movimos el pin.</Text> : null}
+          <Text style={styles.hint}>Zona aproximada. El pin no publica la dirección exacta.</Text>
+        </>
       )}
       <View style={styles.row}>
         <Choice label="Público en el mapa" selected={visibility === 'Public'} onPress={() => setVisibility('Public')} />
@@ -341,6 +352,19 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
           </Pressable>
         </View>
       ) : null}
+      <MediaSheet
+        kind={sheet}
+        onClose={() => setSheet(null)}
+        onChoose={(source) => {
+          const kind = sheet;
+          setSheet(null);
+          if (kind === 'photo') {
+            void addImage(source);
+          } else if (kind === 'video') {
+            void addVideo(source);
+          }
+        }}
+      />
       <Pressable accessibilityRole="button" accessibilityLabel="Publicar reporte" disabled={create.isPending} onPress={() => void submit()} style={styles.send}>
         <Text style={styles.sendLabel}>{create.isPending ? 'Publicando…' : 'Publicar'}</Text>
       </Pressable>
@@ -348,13 +372,52 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
   );
 }
 
-async function allowCamera(): Promise<boolean> {
-  const permission = await ImagePicker.requestCameraPermissionsAsync();
+async function allowCapture(source: 'camera' | 'library'): Promise<boolean> {
+  const camera = source === 'camera';
+  const proceed = await confirm({
+    title: camera ? 'Usar la cámara' : 'Elegir de la galería',
+    message: camera
+      ? 'SITU abre la cámara solo para la foto o el video de este reporte.'
+      : 'SITU abre tu galería solo para elegir la foto o el video de este reporte.',
+    type: 'info',
+    confirmText: 'Continuar',
+    cancelText: 'Cancelar',
+  });
+  if (!proceed) {
+    return false;
+  }
+  const permission = camera
+    ? await ImagePicker.requestCameraPermissionsAsync()
+    : await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (permission.granted) {
     return true;
   }
-  await alertModal({ title: feedbackMessages.cameraDeniedTitle, message: feedbackMessages.cameraDeniedBody, type: 'warning', buttonText: feedbackMessages.openSettings });
+  await alertModal({
+    title: camera ? feedbackMessages.cameraDeniedTitle : 'Necesitamos la galería',
+    message: camera ? feedbackMessages.cameraDeniedBody : 'Activa el permiso de fotos para elegir la imagen o el video.',
+    type: 'warning',
+    buttonText: feedbackMessages.openSettings,
+  });
   return false;
+}
+
+function MediaSheet({ kind, onClose, onChoose }: { kind: 'photo' | 'video' | null; onClose: () => void; onChoose: (source: 'camera' | 'library') => void }) {
+  return (
+    <Modal visible={kind !== null} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.sheetBackdrop}>
+        <Pressable accessibilityLabel="Cerrar" style={styles.sheetDismiss} onPress={onClose} />
+        <View style={styles.sheet}>
+          <Text style={styles.hint}>{kind === 'video' ? 'Video' : 'Foto'}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={kind === 'video' ? 'Grabar video' : 'Tomar foto'} onPress={() => onChoose('camera')} style={styles.secondary}>
+            <Text style={styles.secondaryLabel}>Abrir la cámara</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Elegir de la galería" onPress={() => onChoose('library')} style={styles.secondary}>
+            <Text style={styles.secondaryLabel}>Elegir de la galería</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
 }
 
 async function explainPublishBlock(
@@ -450,8 +513,8 @@ async function clearDraft() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 12, padding: 20, backgroundColor: theme.colors.bg },
-  title: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.display, fontSize: 28 },
+  content: { gap: 10, padding: 12, backgroundColor: theme.colors.bg },
+  title: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.display, fontSize: 22, lineHeight: 28 },
   link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 16, minHeight: 44 },
   chips: { gap: 8 },
   chip: { minHeight: 44, paddingHorizontal: 12, borderRadius: 22, justifyContent: 'center', backgroundColor: theme.colors.surfaceElevated },
@@ -469,7 +532,10 @@ const styles = StyleSheet.create({
   thumb: { width: 72, height: 72, borderRadius: 12, backgroundColor: theme.colors.skeleton },
   track: { height: 4, borderRadius: 2, backgroundColor: theme.colors.skeleton },
   trackFill: { height: 4, borderRadius: 2, backgroundColor: theme.colors.primary },
-  map: { height: 180, borderRadius: 16 },
+  map: { height: 420, borderRadius: 16 },
+  sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: theme.colors.overlay },
+  sheetDismiss: { flex: 1 },
+  sheet: { gap: 8, padding: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: theme.colors.surface },
   choice: { flex: 1, minHeight: 44, borderRadius: theme.radius.button, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceElevated },
   switchRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   switchKnob: { width: 44, height: 28, borderRadius: 14, backgroundColor: theme.colors.border },

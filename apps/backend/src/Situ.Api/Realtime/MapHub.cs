@@ -54,6 +54,7 @@ public sealed class MapHub(
         }
 
         book.Connect(Context.ConnectionId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, "user:" + userId.ToString("D"));
         Context.Items[LimitsKey] = limits.Value;
         logger.LogInformation(
             "Map hub connections {Connections} subscribed cells {Cells}.",

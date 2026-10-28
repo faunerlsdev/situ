@@ -41,6 +41,13 @@ function rewritePodfile(contents, projectRoot) {
     }
     rewritten = rewritten.replace(pattern, `pod '${name}', :podspec => '${podspec}'`);
   }
+  const hook = "system('node', File.expand_path('../plugins/patch-rtmp-socket-logs.js', __dir__))";
+  if (rewritten.includes('post_install do |installer|') && !rewritten.includes('patch-rtmp-socket-logs.js')) {
+    rewritten = rewritten.replace(
+      'post_install do |installer|\n',
+      `post_install do |installer|\n    ${hook}\n`,
+    );
+  }
   return rewritten;
 }
 

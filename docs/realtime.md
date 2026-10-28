@@ -82,6 +82,18 @@ Logs sin usuario, sin token y sin celda concreta:
 
 SignalR y el log de conexiones HTTP quedan en `Warning` para no escribir la query del token.
 
+## Transmisiones
+
+Cuando una transmisión pasa a estar al aire, o cuando una que estaba al aire termina, el hub `/hubs/map` manda `live` a los grupos `user:{id}` de quienes pueden verla. Si es pública, de un adulto y tiene ubicación redondeada, también llega a la celda de esa ubicación. El cuerpo es `{ "publicId": "<path>", "change": "started" | "ended" }`. No lleva nombre, título, cuenta ni coordenada. El teléfono vuelve a pedir `GET /api/v1/live`.
+
+El mismo cambio encola `live.started` o `live.ended` en el outbox. La visibilidad de la transmisión reemplaza las demás audiencias:
+
+- Solo amigos: el aviso va únicamente a amigos que pueden verla (`CanWatch`, bloqueos, menores). El texto es "Un amigo está en vivo." Al terminar, "La transmisión de un amigo terminó." Respeta `notifyFriendLives`. No usa cercanía ni ciudad.
+- Público, y quien transmite compartió ubicación: avisa a quien tenga una ubicación de alertas vigente a menos de `live.notify_radius_m` metros (1000 por defecto, entre 100 y 10000) y a quien tenga la ciudad de la transmisión como ciudad de interés. Una persona que cae en los dos recibe un solo aviso: "Hay una transmisión en vivo cerca de ti." Respeta `notifyNearbyLives`. No avisa al resto de los amigos por ser amigos.
+- Público sin ubicación: no hay punto ni ciudad que evaluar. No se envía ningún aviso. La transmisión sigue en la lista de En vivo. No se inventa la ciudad de la cuenta.
+
+Nadie avisa a quien transmite. El texto no lleva nombre, título ni coordenada. Un toque abre el reproductor: en el push, `targetId` es el path público; en la bandeja, el servidor lo resuelve al mismo path. El silencio suprime el push y deja el aviso en la bandeja. El tope es `notifications.max_pushes_per_hour` (6). Una misma persona no recibe dos veces el mismo aviso de la misma transmisión. El reintento sigue en el outbox. Una transmisión pública que termina no dispara otro aviso masivo.
+
 ## Un solo nodo
 
 Hoy hay un proceso de la API. Los grupos de SignalR viven en la memoria de ese proceso. No hace falta Redis: no hay un segundo nodo al que avisarle.

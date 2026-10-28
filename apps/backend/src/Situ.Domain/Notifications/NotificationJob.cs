@@ -14,6 +14,8 @@ public sealed class NotificationJob : AuditableEntity
 {
     public const string ReportCreated = "report.created";
     public const string CommentAdded = "comment.added";
+    public const string LiveStarted = "live.started";
+    public const string LiveEnded = "live.ended";
     public const int MaxAttempts = 5;
 
     private NotificationJob()

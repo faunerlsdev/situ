@@ -91,6 +91,11 @@ internal static partial class SettingsRules
             [SystemSettingKeys.LocationPublicConsentText] = value => Text(value, 1000),
             [SystemSettingKeys.LocationMinorReminderDays] = value => Int(value, 1, 90),
             [SystemSettingKeys.LocationLastSeenRoundMinutes] = value => Int(value, 1, 60),
+            [SystemSettingKeys.LiveMinorsCanStream] = Bool,
+            [SystemSettingKeys.LiveMaxConcurrent] = value => Int(value, 1, 20),
+            [SystemSettingKeys.LiveMaxViewers] = value => Int(value, 1, 500),
+            [SystemSettingKeys.LiveMaxMinutes] = value => Int(value, 1, 180),
+            [SystemSettingKeys.LiveNotifyRadiusMeters] = value => Int(value, 100, 10_000),
             [SystemSettingKeys.WebSessionRefreshDays] = value => Int(value, 1, 365),
             [SystemSettingKeys.WebSessionRememberDays] = value => Int(value, 1, 365),
         };

@@ -425,11 +425,16 @@ export type UploadAction =
   | { type: 'ready'; id: string; mediaId: string }
   | { type: 'fail'; id: string; error: string }
   | { type: 'cancel'; id: string }
+  | { type: 'remove'; id: string }
   | { type: 'retry'; id: string };
 
 export function reduceUploads(tasks: UploadTask[], action: UploadAction): UploadTask[] {
   if (action.type === 'enqueue') {
     return [...tasks, action.task];
+  }
+
+  if (action.type === 'remove') {
+    return tasks.filter((task) => task.id !== action.id);
   }
 
   return tasks.map((task) => {

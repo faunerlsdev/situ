@@ -18,7 +18,7 @@ public sealed class FileComplaintValidator : AbstractValidator<FileComplaintRequ
 {
     public FileComplaintValidator()
     {
-        RuleFor(request => request.TargetType).Must(type => type is ContentTargetType.Report or ContentTargetType.Comment or ContentTargetType.User);
+        RuleFor(request => request.TargetType).Must(type => type is ContentTargetType.Report or ContentTargetType.Comment or ContentTargetType.User or ContentTargetType.LiveStream);
         RuleFor(request => request.Details).MaximumLength(1000);
     }
 }
@@ -81,6 +81,11 @@ public sealed class FileComplaintHandler(IApplicationDbContext db, IClock clock)
         if (targetType == ContentTargetType.Comment)
         {
             return await db.Comments.Where(item => item.Id == targetId).Select(item => (Guid?)item.AuthorId).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (targetType == ContentTargetType.LiveStream)
+        {
+            return await db.LiveStreams.Where(item => item.Id == targetId).Select(item => (Guid?)item.StreamerId).FirstOrDefaultAsync(cancellationToken);
         }
 
         var exists = await db.Users.AnyAsync(item => item.Id == targetId, cancellationToken);
@@ -437,9 +442,12 @@ public sealed class RevealAnonymousIdentityHandler(IApplicationDbContext db, ICl
             return Result<RevealAnonymousIdentityResponse>.Failure(InteractionErrors.RevealDenied());
         }
 
-        Guid? authorId = request.TargetType == ContentTargetType.Report
-            ? await db.Reports.Where(item => item.Id == request.TargetId).Select(item => (Guid?)item.AuthorId).FirstOrDefaultAsync(cancellationToken)
-            : await db.Comments.Where(item => item.Id == request.TargetId).Select(item => (Guid?)item.AuthorId).FirstOrDefaultAsync(cancellationToken);
+        Guid? authorId = request.TargetType switch
+        {
+            ContentTargetType.Report => await db.Reports.Where(item => item.Id == request.TargetId).Select(item => (Guid?)item.AuthorId).FirstOrDefaultAsync(cancellationToken),
+            ContentTargetType.LiveStream => await db.LiveStreams.Where(item => item.Id == request.TargetId).Select(item => (Guid?)item.StreamerId).FirstOrDefaultAsync(cancellationToken),
+            _ => await db.Comments.Where(item => item.Id == request.TargetId).Select(item => (Guid?)item.AuthorId).FirstOrDefaultAsync(cancellationToken),
+        };
         if (authorId is null)
         {
             return Result<RevealAnonymousIdentityResponse>.Failure(InteractionErrors.ComplaintTarget());

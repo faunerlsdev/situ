@@ -293,6 +293,11 @@ internal static class CatalogSeed
         [SystemSettingKeys.LocationPublicConsentText] = "Texto del consentimiento para mostrar ubicación en el mapa general.",
         [SystemSettingKeys.LocationMinorReminderDays] = "Días entre recordatorios de que un menor comparte ubicación con amigos.",
         [SystemSettingKeys.LocationLastSeenRoundMinutes] = "Minutos a los que se redondea la hora de última vez visto.",
+        [SystemSettingKeys.LiveMinorsCanStream] = "Si es false, un menor no puede transmitir en vivo (ni a amigos ni en público). Pendiente de revisión jurídica (Ley 1581 de 2012). No lo enciendas sin ese concepto.",
+        [SystemSettingKeys.LiveMaxConcurrent] = "Transmisiones simultáneas en todo el servidor. El equipo tiene 2 vCPU y no transcodifica.",
+        [SystemSettingKeys.LiveMaxViewers] = "Espectadores a la vez en una transmisión.",
+        [SystemSettingKeys.LiveMaxMinutes] = "Minutos máximos de una transmisión. Al cumplirse se corta.",
+        [SystemSettingKeys.LiveNotifyRadiusMeters] = "Metros alrededor de una transmisión pública para avisar a quien tenga una ubicación de alertas vigente. No usa la ubicación en segundo plano.",
     };
 
     private static void SeedAvatars(ModelBuilder modelBuilder)

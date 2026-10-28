@@ -7,12 +7,13 @@ using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Identity;
+using Situ.Domain.Social;
 
 namespace Situ.Application.Features.Social.SearchUsers;
 
 public sealed record SearchUsersRequest(Guid UserId, string UserName);
 
-public sealed record UserCard(Guid UserId, string UserName, string DisplayName, string? AvatarUrl);
+public sealed record UserCard(Guid UserId, string UserName, string DisplayName, string? AvatarUrl, string Relation);
 
 public sealed record SearchUsersResponse(IReadOnlyList<UserCard> Users);
 
@@ -64,11 +65,22 @@ public sealed class SearchUsersHandler(IApplicationDbContext db, IClock clock, I
         }
 
         var profile = await db.UserProfiles.FirstOrDefaultAsync(item => item.UserId == other.Id, cancellationToken);
+        var tie = await db.Friendships
+            .Where(item => item.Status == FriendshipStatus.Accepted || item.Status == FriendshipStatus.Pending)
+            .Where(item => (item.RequesterId == me.Id && item.AddresseeId == other.Id) || (item.RequesterId == other.Id && item.AddresseeId == me.Id))
+            .OrderByDescending(item => item.Status == FriendshipStatus.Accepted)
+            .FirstOrDefaultAsync(cancellationToken);
+        var relation = tie is null
+            ? "none"
+            : tie.Status == FriendshipStatus.Accepted
+                ? "friends"
+                : tie.RequesterId == me.Id ? "outgoing" : "incoming";
         var card = new UserCard(
             other.Id,
             other.UserName.Value,
             ProfileCards.DisplayName(other, profile),
-            ProfileCards.Avatar(links, urls, other, profile, now));
+            ProfileCards.Avatar(links, urls, other, profile, now),
+            relation);
         return Result<SearchUsersResponse>.Success(new SearchUsersResponse([card]));
     }
 }

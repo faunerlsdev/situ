@@ -35,4 +35,10 @@ describe('nitro rtmp podspecs', () => {
     expect(rewritten).toContain(`:podspec => '${lines.RTMPHaishinKit}'`);
     expect(rewritten).not.toContain(":podspec => '../node_modules/");
   });
+
+  it('keeps the RTMPS debug hook inside post_install', () => {
+    const podfile = `${injected}\n  post_install do |installer|\n    react_native_post_install()\n  end\n`;
+    const rewritten = rewritePodfile(podfile, mobileRoot);
+    expect(rewritten).toContain('patch-rtmp-socket-logs.js');
+  });
 });

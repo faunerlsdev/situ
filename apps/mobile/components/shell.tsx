@@ -7,6 +7,8 @@ import type { ReactNode } from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useLiveRoster } from '@/features/live/roster';
+import { LiveToolbarMark } from '@/features/live/toolbar-mark';
 import { setMapPlace } from '@/features/reports/place';
 import { useAppConfig } from '@/features/reports/use-app-config';
 import { api } from '@/lib/api';
@@ -14,12 +16,10 @@ import { api } from '@/lib/api';
 import { useSession } from '@/providers/session-provider';
 import { theme } from '@/theme/theme';
 
-const wordmark = require('../assets/images/brand/situ-wordmark-naranja.png');
 const searchIcon = require('../assets/images/icons/ic-buscar.png');
 const newsIcon = require('../assets/images/icons/situ-noticias-dark.png');
 const mapIcon = require('../assets/images/icons/nav-mapa-globo-dark.png');
 const chismeIcon = require('../assets/images/icons/nav-chisme-megafono-dark.png');
-const liveIcon = require('../assets/images/icons/nav-en-vivo-dark.png');
 const messagesIcon = require('../assets/images/icons/nav-mensajes-dark.png');
 
 type ShellContextValue = {
@@ -32,7 +32,7 @@ const ShellContext = createContext<ShellContextValue | null>(null);
 const tabs = [
   { href: '/mapa', label: 'Mapa', icon: mapIcon },
   { href: '/chisme', label: 'Chisme', icon: chismeIcon },
-  { href: '/notificaciones', label: notificationMessages.tab, icon: liveIcon },
+  { href: '/notificaciones', label: notificationMessages.tab, icon: chismeIcon },
   { href: '/mensajes', label: 'Mensajes', icon: messagesIcon },
 ] as const;
 
@@ -58,7 +58,10 @@ export function ShellProvider({ children }: { children: ReactNode }) {
 
 export function WazeHeader() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const shell = useContext(ShellContext);
+  const lives = useLiveRoster();
+  const liveCount = lives.count;
 
   return (
     <View style={{ backgroundColor: theme.colors.surface, paddingTop: insets.top }}>
@@ -76,7 +79,9 @@ export function WazeHeader() {
             <Image source={searchIcon} resizeMode="contain" style={styles.search} />
           </Pressable>
         </View>
-        <Image source={wordmark} resizeMode="contain" accessibilityLabel="Situ" style={styles.wordmark} />
+        <View style={styles.headerRight}>
+          <LiveToolbarMark count={liveCount} onPress={() => router.push('/en-vivo')} />
+        </View>
       </View>
       <View style={styles.divider} />
     </View>
@@ -137,10 +142,12 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
   const { signOut } = useSession();
   const insets = useSafeAreaInsets();
   const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: visible });
+  const requests = useQuery({ queryKey: ['friend-requests'], queryFn: () => api.friendRequests() });
+  const pendingFriends = requests.data?.incoming.length ?? 0;
 
   function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/ubicacion' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
-    onClose();
     router.push(href);
+    onClose();
   }
 
   return (
@@ -152,8 +159,13 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
           <Pressable accessibilityRole="button" accessibilityLabel={profileMessages.menu} onPress={() => go('/perfil')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>{profileMessages.menu}</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => go('/amigos')} style={styles.drawerRow}>
+          <Pressable accessibilityRole="button" accessibilityLabel={pendingFriends > 0 ? `Amigos, ${pendingFriends} solicitudes` : 'Amigos'} onPress={() => go('/amigos')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Amigos</Text>
+            {pendingFriends > 0 ? (
+              <View style={styles.menuBadge} accessibilityElementsHidden>
+                <Text style={styles.badgeText}>{pendingFriends > 99 ? '99+' : String(pendingFriends)}</Text>
+              </View>
+            ) : null}
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => go('/visibilidad')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Visibilidad de mi perfil</Text>
@@ -298,6 +310,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   avatar: {
     width: 36,
     height: 36,
@@ -316,10 +333,6 @@ const styles = StyleSheet.create({
   search: {
     width: 32,
     height: 32,
-  },
-  wordmark: {
-    height: 28,
-    width: 72,
   },
   divider: {
     height: 1,
@@ -393,7 +406,18 @@ const styles = StyleSheet.create({
   },
   drawerRow: {
     minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  menuBadge: {
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: theme.colors.dangerSolid,
   },
   drawerLabel: {
     color: theme.colors.textPrimary,

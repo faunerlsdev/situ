@@ -1132,6 +1132,46 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Description = "Minutos a los que se redondea la hora de última vez visto.",
                             Key = "location.last_seen_round_minutes",
                             Value = "5"
+                        },
+                        new
+                        {
+                            Id = new Guid("2c874b2f-9844-8461-9122-0f4519708016"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Si es false, un menor no puede transmitir en vivo (ni a amigos ni en público). Pendiente de revisión jurídica (Ley 1581 de 2012). No lo enciendas sin ese concepto.",
+                            Key = "live.minors_can_stream",
+                            Value = "false"
+                        },
+                        new
+                        {
+                            Id = new Guid("35b463b4-9326-13a2-69ad-b1bf4404391d"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Transmisiones simultáneas en todo el servidor. El equipo tiene 2 vCPU y no transcodifica.",
+                            Key = "live.max_concurrent",
+                            Value = "2"
+                        },
+                        new
+                        {
+                            Id = new Guid("70f9f0ce-f11f-2bfa-58b9-3703249867cc"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Espectadores a la vez en una transmisión.",
+                            Key = "live.max_viewers",
+                            Value = "50"
+                        },
+                        new
+                        {
+                            Id = new Guid("eab36100-4af5-9b8d-b00f-4e8203a9417c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Minutos máximos de una transmisión. Al cumplirse se corta.",
+                            Key = "live.max_minutes",
+                            Value = "30"
+                        },
+                        new
+                        {
+                            Id = new Guid("ea3d6bb8-8f1a-a703-afa5-171a4040b124"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Metros alrededor de una transmisión pública para avisar a quien tenga una ubicación de alertas vigente. No usa la ubicación en segundo plano.",
+                            Key = "live.notify_radius_m",
+                            Value = "1000"
                         });
                 });
 
@@ -3122,7 +3162,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
@@ -3142,6 +3182,15 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("faces_blurred");
 
+                    b.Property<bool>("HiddenByStaff")
+                        .HasColumnType("boolean")
+                        .HasColumnName("hidden_by_staff");
+
+                    b.Property<string>("HiddenReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("hidden_reason");
+
                     b.Property<string>("IngestKey")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -3156,13 +3205,30 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnName("is_anonymous");
 
                     b.Property<Point>("Location")
-                        .IsRequired()
                         .HasColumnType("geography(point, 4326)")
                         .HasColumnName("location");
 
                     b.Property<int>("PeakViewers")
                         .HasColumnType("integer")
                         .HasColumnName("peak_viewers");
+
+                    b.Property<string>("PublicPath")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("public_path");
+
+                    b.Property<DateTimeOffset?>("PublishKeyExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("publish_key_expires_at");
+
+                    b.Property<string>("PublishKeyHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("publish_key_hash");
+
+                    b.Property<DateTimeOffset?>("PublishKeyUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("publish_key_used_at");
 
                     b.Property<DateTimeOffset?>("RecordingExpiresAt")
                         .HasColumnType("timestamp with time zone")
@@ -3172,6 +3238,11 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("recording_key");
+
+                    b.Property<string>("RecordingPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("recording_path");
 
                     b.Property<Guid?>("ReportId")
                         .HasColumnType("uuid")
@@ -3229,11 +3300,18 @@ namespace Situ.Infrastructure.Persistence.Migrations
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Location"), "gist");
 
+                    b.HasIndex("PublicPath")
+                        .IsUnique()
+                        .HasDatabaseName("ux_live_streams_public_path");
+
                     b.HasIndex("ReportId")
                         .HasDatabaseName("ix_live_streams_report_id");
 
                     b.HasIndex("StreamerId")
                         .HasDatabaseName("ix_live_streams_streamer_id");
+
+                    b.HasIndex("Status", "Visibility")
+                        .HasDatabaseName("ix_live_streams_status_visibility");
 
                     b.ToTable("live_streams");
                 });
@@ -3278,6 +3356,40 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_live_viewers_user_id");
 
                     b.ToTable("live_viewers");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Live.LiveViewerSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("LiveStreamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("live_stream_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_live_viewer_sessions");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_live_viewer_sessions_expires_at");
+
+                    b.HasIndex("LiveStreamId")
+                        .HasDatabaseName("ix_live_viewer_sessions_live_stream_id");
+
+                    b.ToTable("live_viewer_sessions");
                 });
 
             modelBuilder.Entity("Situ.Domain.Moderation.AnonymousIdentityAccessLog", b =>
@@ -4489,6 +4601,12 @@ namespace Situ.Infrastructure.Persistence.Migrations
                     b.Property<bool>("NotifyImportantNews")
                         .HasColumnType("boolean")
                         .HasColumnName("notify_important_news");
+
+                    b.Property<bool>("NotifyNearbyLives")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("notify_nearby_lives");
 
                     b.Property<bool>("NotifyNearbyReports")
                         .ValueGeneratedOnAdd()
@@ -6740,7 +6858,6 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_live_streams_category_id");
 
                     b.HasOne("Situ.Domain.Geography.City", null)
@@ -6778,6 +6895,16 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_live_viewers_user_id");
+                });
+
+            modelBuilder.Entity("Situ.Domain.Live.LiveViewerSession", b =>
+                {
+                    b.HasOne("Situ.Domain.Live.LiveStream", null)
+                        .WithMany()
+                        .HasForeignKey("LiveStreamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_live_viewer_sessions_live_stream_id");
                 });
 
             modelBuilder.Entity("Situ.Domain.Moderation.AnonymousIdentityAccessLog", b =>

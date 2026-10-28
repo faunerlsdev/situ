@@ -405,6 +405,7 @@ Exigen sesión de usuario. El dispositivo actual sale del claim `did` del access
   "notifyNearbyReports": true,
   "notifyFriendReports": true,
   "notifyFriendLives": true,
+  "notifyNearbyLives": true,
   "notifyImportantNews": true,
   "quietHoursStart": "22:00",
   "quietHoursEnd": "07:00",
@@ -412,7 +413,7 @@ Exigen sesión de usuario. El dispositivo actual sale del claim `did` del access
 }
 ```
 
-`PUT /api/v1/me/notification-settings` recibe el mismo cuerpo. El radio va de 100 a 10000. El silencio pide inicio y fin, o ninguno. Apagar `notifyNearbyReports` borra la ubicación de alertas. Los interruptores de vivos de amigos y de noticias se guardan; esos disparadores todavía no corren.
+`PUT /api/v1/me/notification-settings` recibe el mismo cuerpo. El radio va de 100 a 10000. El silencio pide inicio y fin, o ninguno. Apagar `notifyNearbyReports` borra la ubicación de alertas. `notifyFriendLives` aplica solo a transmisiones de solo amigos. `notifyNearbyLives` aplica a una transmisión pública que sí compartió ubicación. El interruptor de noticias se guarda; ese disparador todavía no corre.
 
 `GET /api/v1/me/interest-cities` lista las ciudades adicionales. La principal sigue siendo la del registro y no aparece aquí.
 
@@ -493,13 +494,13 @@ Responde `202` con `{ "accepted": true, "trackingCode": "TD-A1B2C3D4" }`. En el 
 
 La web todavía no tiene pantallas. Estos son los endpoints que va a consumir. Todos piden sesión. La base es `/api/v1`.
 
-`GET /users/search?userName=ana` busca el nombre de usuario exacto, de 3 a 30 caracteres. Si no hay coincidencia, si te bloquearon o si la pareja adulto/menor no está permitida, responde `200` con `{ "users": [] }`. No dice por qué. Una coincidencia válida trae solo `userId`, `userName`, `displayName` y `avatarUrl`. Hay un límite por minuto (`friends.search_per_minute`, 10) y la política HTTP `user-search`.
+`GET /users/search?userName=ana` busca el nombre de usuario exacto, de 3 a 30 caracteres. Si no hay coincidencia, si te bloquearon o si la pareja adulto/menor no está permitida, responde `200` con `{ "users": [] }`. No dice por qué. Una coincidencia válida trae `userId`, `userName`, `displayName`, `avatarUrl` y `relation` (`none`, `outgoing`, `incoming` o `friends`). No incluye amigos en común. Hay un límite por minuto (`friends.search_per_minute`, 10) y la política HTTP `user-search`.
 
 `POST /friends/requests` con `{ "userId": "…" }` responde `{ "status": "sent" }` tanto si la solicitud se creó como si la otra persona no puede recibirla. `{ "status": "incoming" }` significa que esa persona ya te escribió. `409 friendship.already_friends` si ya son amigos. `409 friendship.rate_limited` si superas las pendientes (`friends.max_pending`, 30) o las del día (`friends.max_requests_per_day`, 20).
 
 `POST /friends/requests/{id}/accept`, `/reject` y `/cancel`. `DELETE /friends/{userId}` corta la amistad y la fila de ubicación compartida de esa pareja.
 
-`GET /friends` devuelve `{ "friends": [ { "userId", "userName", "displayName", "avatarUrl", "sharesLocation" } ] }`. `GET /friends/requests` devuelve `incoming` y `outgoing`.
+`GET /friends` devuelve `{ "friends": [ { "userId", "userName", "displayName", "avatarUrl", "sharesLocation" } ] }`. `GET /friends/requests` devuelve `incoming` y `outgoing`. `GET /friends/history?status=Pending|Accepted|Declined` devuelve hasta 50 filas de esa persona, con el mismo filtro de bloqueo y de pareja adulto/menor. Otro valor responde `400 friendship.history_filter`. No lista canceladas ni amigos en común.
 
 `POST /friends/invitations` con `{ "email": "ana@correo.com" }` siempre responde `{ "status": "sent" }` si el correo es válido, exista o no la cuenta. No envía el correo cuando el destinatario es un menor. El enlace es de un solo uso, vence a los 30 días y apunta a `/amigos/invitacion?token=`. `POST /friends/invitations/accept` con `{ "token": "…" }` lo consume y deja la solicitud pendiente.
 
@@ -663,6 +664,31 @@ Bloquear, eliminar amigo, quitarlo de la lista, apagar, vencer, ponerse invisibl
 | 409 | `notification.interest_city_limit` | Se pasó el máximo del plan |
 | 404 | `notification.category_not_found` | La categoría silenciada no existe |
 | 404 | `notification.not_found` | La notificación no es de esta persona |
+
+## Transmisiones en vivo
+
+Sesión de usuario. Límite `live`: 60 peticiones por minuto por cuenta e IP. La web no inicia transmisiones.
+
+En esta versión la transmisión siempre se muestra como anónima (`anonymity.display_name`, por defecto "Situero anónimo"). El identificador que ve el cliente es un path opaco, no el id de la cuenta. La identidad solo sale por `POST /api/v1/moderation/anonymous-identity/reveal` con el permiso `anonymity.reveal`, el tipo `LiveStream` y una justificación. Un menor no puede transmitir mientras `live.minors_can_stream` sea `false` (el valor de fábrica). Puede ver solo la transmisión de un amigo que también es menor, si la amistad ya está permitida. Un adulto ve las públicas y las de sus amigos. Cada `GET` y cada `POST /watch` vuelven a comprobar amistad, bloqueo y `CanStreamTo`.
+
+`POST /api/v1/live`
+
+Cuerpo: `visibility` (`Public` o `Friends`), `title` (hasta 80), `categoryId` opcional, `latitude` y `longitude` opcionales. La ubicación se guarda redondeada (300 m en público, 25 m entre amigos) y nunca precisa. Respuesta: `id`, `publishUrl` (`rtmps://live.<dominio>:1936/<id>?user=situ&pass=<clave>`), `publishKey` de un solo uso que vence a los 120 segundos, y `publishKeyExpiresAt`. La clave va en la query porque MediaMTX no lee el desafío RTMP. No devuelve secretos del servidor. `publishUrl` no se escribe en logs.
+
+`POST /api/v1/live/{id}/end` la termina quien la abrió. `GET /api/v1/live` y `GET /api/v1/live/{id}` listan solo las que están al aire y quien consulta puede ver. `POST /api/v1/live/{id}/watch` devuelve `url` (`https://live.<dominio>/hls/<id>/<token>/index.m3u8`) y `expiresAt`. El token va en el path: el reproductor pide los segmentos con una ruta relativa y no conserva `?token=`. El token dura 120 segundos y no puede pasar de 180. El cliente lo renueva antes de vencer. `POST /api/v1/live/{id}/report` reutiliza las denuncias con tipo `LiveStream`.
+
+El panel, con sesión de personal y segundo factor: `GET /api/v1/admin/live`, `POST /api/v1/admin/live/{id}/end`, `POST /api/v1/admin/live/{id}/hide` (cuerpo `reason`) y `GET /api/v1/admin/live/{id}/complaints`. Esas rutas no incluyen la cuenta que transmite. Los ajustes `live.minors_can_stream`, `live.max_concurrent` (2), `live.max_viewers` (50) y `live.max_minutes` (30) se editan por la API de ajustes que ya existe, con `settings.manage` y bitácora. `live.cut` cubre terminar y ocultar. `complaints.resolve` cubre las denuncias.
+
+`POST /internal/live/authorize` no está bajo `/api/v1`. Solo responde 200 si la conexión es loopback y el secreto `LIVE_INGEST_SECRET` llega en `X-Situ-Live-Secret` o en la query `secret`. MediaMTX no puede poner esa cabecera: `install.sh` deja el secreto en la URL local del archivo de MediaMTX, que no se publica. `password` es la clave de un solo uso, no el secreto del servidor. Al aceptar `publish`, la transmisión pasa a estar al aire en ese momento; no espera el sondeo de 5 segundos. `GET /internal/live/hls` lo llama nginx en localhost. Solo responde 200, 401 o 403 (nginx convierte cualquier otro código en 500). El token sale de `X-Live-Token` o, si esa cabecera va vacía, de la URI original (`?token=` o el segmento `/hls/<id>/<token>/`). Un rechazo no escribe el token. El log solo dice el código (`live.hls_missing_token`, `live.hls_bad_signature`, `live.hls_expired`, `live.hls_path_mismatch`, `live.hls_unknown_stream`, `live.hls_forbidden`) y si el path tiene forma de id.
+
+| HTTP | code | detail |
+| --- | --- | --- |
+| 403 | `live.minors_cannot_stream` | En esta versión un menor no puede transmitir. |
+| 409 | `live.already_live` | Ya tienes una transmisión activa. |
+| 409 | `live.limit_concurrent` | Ahora mismo no hay cupo para otra transmisión. |
+| 409 | `live.viewers_full` | Esta transmisión ya no admite más personas. |
+| 404 | `live.not_found` | No encontramos esa transmisión. |
+| 401 | `live.unauthorized` | No autorizado. |
 
 ## Qué debe saber el cliente
 

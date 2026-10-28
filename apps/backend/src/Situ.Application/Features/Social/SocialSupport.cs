@@ -107,6 +107,8 @@ internal static class SocialErrors
 
     public static Error NotFriend() => Error.NotFound("friendship.not_found", "No encontramos esa amistad.");
 
+    public static Error HistoryFilter() => Error.Validation("friendship.history_filter", "Elige pendientes, aceptadas o rechazadas.");
+
     public static Error InvitationInvalid() => Error.NotFound("invitation.not_valid", "Esta invitación ya no sirve.");
 
     public static Error MinorPublic() => Error.Forbidden("profile.minor_must_be_private", "Un menor de edad tiene que mantener el perfil privado.");

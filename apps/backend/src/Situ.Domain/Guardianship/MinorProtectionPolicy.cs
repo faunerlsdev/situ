@@ -34,7 +34,11 @@ public static class MinorProtectionPolicy
     /// <summary>A minor cannot upload their own photo as an avatar. Gallery icons stay available.</summary>
     public static bool CanUploadProfilePhoto(int age) => age >= AdultAge;
 
-    /// <summary>Minors can only stream to accepted friends (RF-MIN-09).</summary>
+    /// <summary>
+    /// Minors can only stream to accepted friends (RF-MIN-09).
+    /// The panel key live.minors_can_stream (default false) is stricter: while it is off, minors cannot stream at all.
+    /// That default is pending legal review under Ley 1581 de 2012. Do not turn it on without that review.
+    /// </summary>
     public static bool CanStreamTo(int age, ContentVisibility visibility) =>
         age >= AdultAge || visibility == ContentVisibility.FriendsOnly;
 

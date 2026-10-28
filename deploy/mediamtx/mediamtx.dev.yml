@@ -37,11 +37,16 @@ hls: true
 hlsAddress: :8888
 hlsEncryption: false
 hlsAllowOrigins: ["*"]
-hlsVariant: lowLatency
-hlsSegmentDuration: 1s
+hlsVariant: mpegts
+hlsSegmentDuration: 2s
 hlsPartDuration: 200ms
 hlsCDNSecret: ""
 
 pathDefaults:
   record: false
   overridePublisher: true
+
+# Proof-of-concept name only. Production does not publish "poc".
+paths:
+  poc:
+    source: publisher

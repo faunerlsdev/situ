@@ -50,7 +50,26 @@ current_value() {
     printf ''
     return
   fi
-  grep "^${key}=" "$file" | head -n 1 | cut -d= -f2- || true
+  local raw
+  raw=$(grep "^${key}=" "$file" | head -n 1 | cut -d= -f2- || true)
+  if [[ "$raw" == \"*\" && ${#raw} -ge 2 ]]; then
+    raw=${raw:1:${#raw}-2}
+  fi
+  printf '%s' "$raw"
+}
+
+set_quoted_key() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  local tmp
+  tmp=$(mktemp)
+  if [[ -f "$file" ]]; then
+    grep -v "^${key}=" "$file" > "$tmp" || true
+  fi
+  printf '%s="%s"\n' "$key" "$value" >> "$tmp"
+  chmod 600 "$tmp"
+  mv "$tmp" "$file"
 }
 
 write_from_example() {
@@ -65,7 +84,7 @@ write_from_example() {
   log "Escrito ${target}"
 }
 
-for name in postgres api migrate web admin landing support backup monitor nginx; do
+for name in postgres api migrate web admin landing support backup monitor nginx live; do
   write_from_example "$name"
 done
 
@@ -102,6 +121,28 @@ else
   app_connection="Host=${SITU_POSTGRES_HOST};Database=situ;Username=situ_app;Password=${app_password}"
   migrator_connection="Host=${SITU_POSTGRES_HOST};Database=situ;Username=situ_migrator;Password=${migrator_password}"
 fi
+live_ingest=$(openssl rand -hex 32)
+live_hls=$(openssl rand -hex 32)
+live_cdn=$(openssl rand -hex 32)
+fill_quoted() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  local current
+  current=$(current_value "$file" "$key")
+  if [[ "$FORCE" -eq 1 || -z "$current" || "$current" == *CHANGE_ME* ]]; then
+    set_quoted_key "$file" "$key" "$value"
+    log "Generado ${key} en ${file}"
+  fi
+}
+fill_quoted /etc/situ/api.env Live__IngestSecret "$live_ingest"
+fill_quoted /etc/situ/api.env Live__HlsSecret "$live_hls"
+fill_quoted /etc/situ/api.env Live__ControlUrl "http://127.0.0.1:${SITU_MTX_API_PORT}"
+fill_quoted /etc/situ/live.env LIVE_INGEST_SECRET "$live_ingest"
+fill_quoted /etc/situ/live.env LIVE_HLS_SECRET "$live_hls"
+fill_quoted /etc/situ/live.env HLS_CDN_SECRET "$live_cdn"
+fill_quoted /etc/situ/live.env LIVE_AUTH_URL "http://127.0.0.1:${SITU_API_PORT}/internal/live/authorize"
+
 fill_if_placeholder /etc/situ/api.env ConnectionStrings__Default "$app_connection"
 fill_if_placeholder /etc/situ/migrate.env ConnectionStrings__Default "$migrator_connection"
 
@@ -115,7 +156,7 @@ if [[ ! -f /etc/situ/age.key ]]; then
   log "Clave age creada en /etc/situ/age.key"
 fi
 
-unset jwt guardian media app_password migrator_password public_key
+unset jwt guardian media app_password migrator_password public_key live_ingest live_hls live_cdn
 
 pending=0
 while IFS= read -r key; do

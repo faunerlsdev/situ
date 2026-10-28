@@ -65,7 +65,7 @@ public sealed class NotificationEndpoints : IEndpoint
     private static async Task<IResult> UpdateSettings(SettingsBody body, ICurrentUser currentUser, IHandler<UpdateNotificationSettingsRequest, Result<NotificationSettingsResponse>> handler, CancellationToken cancellationToken) =>
         currentUser.UserId is not { } userId
             ? Results.Unauthorized()
-            : (await handler.Handle(new UpdateNotificationSettingsRequest(userId, body.PushEnabled, body.NearbyRadiusMeters, body.NotifyNearbyReports, body.NotifyFriendReports, body.NotifyFriendLives, body.NotifyImportantNews, body.QuietHoursStart, body.QuietHoursEnd, body.TimeZoneId), cancellationToken)).ToHttpResult();
+            : (await handler.Handle(new UpdateNotificationSettingsRequest(userId, body.PushEnabled, body.NearbyRadiusMeters, body.NotifyNearbyReports, body.NotifyFriendReports, body.NotifyFriendLives, body.NotifyNearbyLives, body.NotifyImportantNews, body.QuietHoursStart, body.QuietHoursEnd, body.TimeZoneId), cancellationToken)).ToHttpResult();
 
     private static async Task<IResult> ListCities(ICurrentUser currentUser, IHandler<ListInterestCitiesRequest, Result<InterestCitiesResponse>> handler, CancellationToken cancellationToken) =>
         currentUser.UserId is not { } userId
@@ -132,7 +132,7 @@ public sealed class NotificationEndpoints : IEndpoint
             ? Results.Unauthorized()
             : (await handler.Handle(new MarkAllNotificationsReadRequest(userId), cancellationToken)).ToHttpResult();
 
-    private sealed record SettingsBody(bool PushEnabled, double NearbyRadiusMeters, bool NotifyNearbyReports, bool NotifyFriendReports, bool NotifyFriendLives, bool NotifyImportantNews, string? QuietHoursStart, string? QuietHoursEnd, string TimeZoneId);
+    private sealed record SettingsBody(bool PushEnabled, double NearbyRadiusMeters, bool NotifyNearbyReports, bool NotifyFriendReports, bool NotifyFriendLives, bool NotifyNearbyLives, bool NotifyImportantNews, string? QuietHoursStart, string? QuietHoursEnd, string TimeZoneId);
     private sealed record CategoriesBody(IReadOnlyList<Guid> MutedCategoryIds);
     private sealed record TokenBody(string Token);
     private sealed record LocationBody(double Latitude, double Longitude, double? AccuracyMeters);

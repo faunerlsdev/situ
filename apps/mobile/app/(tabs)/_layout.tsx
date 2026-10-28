@@ -27,8 +27,9 @@ export default function TabsLayout() {
         <Tabs.Screen name="chisme" options={{ title: 'Chisme', href: social ? undefined : null }} />
         <Tabs.Screen name="notificaciones" options={{ title: 'Alertas' }} />
         <Tabs.Screen name="mensajes" options={{ title: 'Mensajes', href: social ? undefined : null }} />
-        <Tabs.Screen name="amigos" options={{ href: null, title: 'Amigos' }} />
-        <Tabs.Screen name="perfil" options={{ href: null, title: 'Perfil' }} />
+        {/* href: null hides the tab and Expo Router then replaces that route with the first visible tab, so the tap looks dead. */}
+        <Tabs.Screen name="amigos" options={{ title: 'Amigos' }} />
+        <Tabs.Screen name="perfil" options={{ title: 'Perfil' }} />
       </Tabs>
     </ShellProvider>
   );

@@ -43,9 +43,14 @@ hlsAllowOrigins: []
 # Do not trust X-Forwarded-For. Read auth allows 127.0.0.1 only; nginx is the public gate.
 hlsTrustedProxies: []
 hlsAlwaysRemux: false
-hlsVariant: lowLatency
+# mpegts muxes H.264 and AAC in one segment: EXT-X-VERSION 3, CODECS on the
+# variant, and PROGRAM-DATE-TIME on every segment. MediaMTX 1.21.3 fmp4 writes
+# VERSION 10, an audio EXT-X-MEDIA tag with no LANGUAGE, and a date only on the
+# last two segments. lowLatency rewrites part duration and logs an iOS error.
+# The publisher keyframe interval is 2s, so the segment matches that GOP.
+hlsVariant: mpegts
 hlsSegmentCount: 7
-hlsSegmentDuration: 1s
+hlsSegmentDuration: 2s
 hlsPartDuration: 200ms
 hlsSegmentMaxSize: 50M
 hlsMuxerCloseAfter: 60s
@@ -59,3 +64,12 @@ pathDefaults:
   recordSegmentDuration: 1h
   recordDeleteAfter: 0s
   overridePublisher: false
+
+# The API path is 16 random bytes, lowercase hex (32 characters). A name that
+# does not match is "not configured" and never reaches authHTTPAddress.
+# Do not add all_others or a catch-all regex: that would accept any name.
+# authMethod http still runs for publish and for HLS read on this path.
+# authHTTPExclude leaves api out, so 127.0.0.1 can kick a connection by its id.
+paths:
+  "~^[a-f0-9]{32}$":
+    source: publisher

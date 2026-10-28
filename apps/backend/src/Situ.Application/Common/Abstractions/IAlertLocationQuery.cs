@@ -8,4 +8,7 @@ public sealed record ProximityMatch(Guid UserId, double DistanceMeters);
 public interface IAlertLocationQuery
 {
     Task<IReadOnlyList<ProximityMatch>> MatchAsync(GeoPoint origin, DateTimeOffset now, CancellationToken cancellationToken);
+
+    /// <summary>Devices whose last alert location is still inside the TTL and within <paramref name="radiusMeters"/> of the origin. Does not use each person's own radius.</summary>
+    Task<IReadOnlyList<ProximityMatch>> MatchWithinAsync(GeoPoint origin, int radiusMeters, DateTimeOffset now, CancellationToken cancellationToken);
 }

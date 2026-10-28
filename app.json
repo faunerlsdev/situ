@@ -8,6 +8,10 @@
     "owner": "faunerls.dev",
     "android": {
       "package": "com.faunerls.dev.situ"
+    },
+    "ios": {
+      "bundleIdentifier": "com.faunerls.dev.situ",
+      "appleTeamId": "Y27698UG63"
     }
   }
 }

@@ -20,7 +20,7 @@ El plugin desactiva el servicio en primer plano de cámara y micrófono (`androi
 
 ## Ajustes de video
 
-`prepareVideo(1280, 720, 30, 2500000, 2, rotación)` y `prepareAudio(128000, 44100, true)`. Códecs H.264 y AAC. `streamMode` es `lowLatency`. MediaMTX arma HLS de baja latencia con segmentos de 1 segundo y partes de 200 ms, y alarga el segmento hasta incluir un keyframe. El piso esperado, sumando ese keyframe de 2 segundos y el buffer del reproductor, es de unos 3 a 6 segundos. No hay una medición real: no se publicó desde un teléfono. La clave de publicación no va en la URL: el teléfono llama `setAuthorization('situ', clave)` antes de conectar.
+`prepareVideo(1280, 720, 30, 2500000, 2, rotación)` y `prepareAudio(128000, 44100, true)`. En iOS el perfil es H.264 Baseline (`kVTProfileLevel_H264_Baseline_AutoLevel`) y el keyframe es `maxKeyFrameIntervalDuration` de 2 segundos. En Android `KEY_I_FRAME_INTERVAL` también es 2 segundos y el perfil lo elige el codificador del teléfono. El audio pedido es AAC-LC, 44100 Hz, estéreo, 128 kbps. `streamMode` es `lowLatency` y solo afecta el envío RTMP, no la variante HLS. MediaMTX sirve MPEG-TS (`hlsVariant: mpegts`) con segmentos de 2 segundos, alineados a ese keyframe. No se usa `fmp4` ni `lowLatency`: el primero publica `#EXT-X-VERSION:10` y un audio separado sin `LANGUAGE`, y el segundo cambia la duración de las partes y avisa que eso falla en iOS. MediaMTX 1.21.3 no usa el desafío RTMP de `setAuthorization`: lee `user` y `pass` de la query. La URL de publicación es `rtmps://live.<dominio>:1936/<id>?user=situ&pass=<clave>`. El id es el path. La clave es de un solo uso y no se escribe en logs.
 
 ## Mac, sin TLS
 
@@ -62,21 +62,23 @@ bash deploy/mediamtx/check-capacity.sh
 Producción:
 
 - RTMPS estricto en `1936/tcp`. RTMP sin cifrar, RTSP, SRT y WebRTC apagados. La dirección RTMP queda en `127.0.0.1:11935` para no usar el `1935` del otro MediaMTX. El cifrado estricto no abre ese puerto. Ningún script toca ufw: si `1936/tcp` está cerrado, ábrelo tú.
+- La única ruta de publicación es `"~^[a-f0-9]{32}$"` con `source: publisher`. Ese es el id opaco de la API (32 hex en minúscula). No hay `all_others` ni otra expresión que acepte cualquier nombre. Un nombre que no coincida queda como "not configured" y MediaMTX no llama a la autorización. `poc` existe solo en `mediamtx.dev.yml`.
+- `authMethod: http` sigue valiendo para esa ruta. `authHTTPExclude` deja fuera `api`, `metrics` y `pprof`, no `publish`, `read` ni `playback`. Publicar y leer HLS pasan por `LIVE_AUTH_URL`. La API de control sigue en `127.0.0.1:19998` y expulsa por id de conexión: `POST /v3/rtmps/conns/kick/{id}`. El `path` de esa conexión es el id opaco; el corte no usa el path como id.
 - HLS de baja latencia solo en `127.0.0.1:18890`. nginx lo publica en `https://live.<dominio>/hls/` con un token de 120 segundos. El máximo aceptado es 180.
 - API de control en `127.0.0.1:19998`.
 - Grabación fMP4 en `/var/lib/situ/live`, segmentos de una hora, sin borrado automático.
 - `situ-mediamtx` limita la memoria a 768 MB y la CPU a un núcleo. Los logs van a journald.
 
-La autorización HTTP queda parametrizada en `LIVE_AUTH_URL` (`/etc/situ/live.env`). Hoy apunta a `http://127.0.0.1:5099/authorize`, un proceso temporal. Cuando exista la API, cambia esa URL a `http://127.0.0.1:15080/internal/live/authorize`, recarga MediaMTX y apaga el temporal:
+La autorización HTTP queda en `LIVE_AUTH_URL` (`/etc/situ/live.env`). El valor es `http://127.0.0.1:15080/internal/live/authorize`. MediaMTX no puede enviar una cabecera propia: `install.sh` añade `?secret=` solo en `/etc/mediamtx/mediamtx.yml`, que no sale del servidor. En RTMP y RTMPS, gortmplib arma la URL con el `tcUrl` del `connect` y el nombre del `publish`, y MediaMTX toma `user` y `pass` solo de esa query (`query.Get`). El path es `URL.Path` sin la barra inicial: con la URL `rtmps://live.<dominio>:1936/<id>?user=situ&pass=<clave>` el path queda `<id>`. La app deja de llamar `setAuthorization`. iOS manda la query en el nombre del publish. Android, con RootEncoder, recibe `rtmps://live.<dominio>:1936/?<id>?user=situ&pass=<clave>` para que el `tcUrl` lleve la query y el nombre del stream quede vacío; MediaMTX resuelve el mismo path `<id>` y los mismos parámetros. La clave que va en `pass` es la de un solo uso de `POST /api/v1/live`, no `LIVE_INGEST_SECRET`. Un rechazo responde 401 y el log de la API solo dice el código (`live.missing_key`, `live.invalid_key`, `live.expired`, `live.already_used`, `live.unknown_path`, `live.invalid_state`, `live.limit`) y si el path tiene forma de id. No escribe la clave ni la query. El proceso temporal de `127.0.0.1:5099` ya no se enciende. Si en un servidor viejo sigue activo:
 
 ```bash
 sudo systemctl disable --now situ-live-auth.service
 sudo systemctl reload situ-mediamtx.service
 ```
 
-El temporal acepta `publish` solo si `password` es `LIVE_INGEST_SECRET` y el path tiene letras, números, guion o guion bajo. Acepta `read` solo desde `127.0.0.1`. nginx exige además el token y manda `Authorization: Bearer` con `HLS_CDN_SECRET` hacia MediaMTX. No se confía en `X-Forwarded-For`, para que una lectura externa no se haga pasar por localhost.
+La API acepta `publish` solo si `password` es la clave de un solo uso de ese path y todavía no se usó. Acepta `read` solo si la transmisión está al aire. nginx valida el token HMAC y manda `Authorization: Bearer` con `HLS_CDN_SECRET` hacia MediaMTX. No se confía en `X-Forwarded-For`.
 
-MediaMTX hace POST con este cuerpo. Una respuesta 2xx permite la acción. El campo `expireAt` es opcional y cierra la sesión al llegar esa hora:
+MediaMTX hace POST con este cuerpo. Una respuesta 2xx permite la acción. El campo `expireAt` es opcional y cierra la sesión al llegar esa hora. En el Mac el path de prueba es `poc`. En el servidor el path es el id opaco de 32 hex en minúscula; otro nombre ni siquiera llega a este POST:
 
 ```json
 {
@@ -99,9 +101,9 @@ Token HLS, HMAC-SHA256 en hexadecimal de `expires.path` con `LIVE_HLS_SECRET`. `
 node deploy/mediamtx/token.mjs --secret "$LIVE_HLS_SECRET" --path poc --ttl 120
 ```
 
-La URL queda `https://live.<dominio>/hls/poc/index.m3u8?token=<token>`. nginx deja una cookie `situ_live` para los segmentos siguientes. En el teléfono pega el token en el campo y marca RTMPS.
+La URL de la app queda `https://live.<dominio>/hls/<id>/<token>/index.m3u8`. El `<id>` es el path opaco. nginx quita el segmento del token antes de hablar con MediaMTX, así que el manifiesto y los `.ts` relativos piden el mismo path. `auth_request` no ve `$arg_token`; el mapa de `situ-live.conf` lo saca de `$request_uri`. No se emite ni se reenvía una cookie. `GET /internal/live/hls` solo responde 200, 401 o 403.
 
-Cortar una publicación y ver espectadores, en el servidor:
+Cortar una publicación y ver espectadores, en el servidor. El `{id}` es el id de la conexión RTMPS, no el path. El path que devuelve el listado es el id opaco:
 
 ```bash
 curl -s http://127.0.0.1:19998/v3/rtmps/conns/list

@@ -5,6 +5,7 @@ namespace Situ.Domain.Live;
 
 public enum LiveStreamStatus
 {
+    Waiting,
     Live,
     Ended,
     Cut,
@@ -14,7 +15,7 @@ public enum LiveStreamStatus
 
 /// <summary>
 /// Live video from the mobile app (never from the web). Appears on the map with a red camera icon (RF-LIV-01..09).
-/// Minors can only stream to friends and always anonymously (RF-MIN-09).
+/// v1 does not let minors stream unless the panel setting live.minors_can_stream is on. When it is, they stay friends-only and anonymous (RF-MIN-09).
 /// </summary>
 public sealed class LiveStream : AggregateRoot
 {
@@ -30,9 +31,16 @@ public sealed class LiveStream : AggregateRoot
     }
 
     public Guid StreamerId { get; private set; }
-    public Guid CategoryId { get; private set; }
+    public Guid? CategoryId { get; private set; }
     public Guid? CityId { get; private set; }
-    public GeoPoint Location { get; private set; }
+    public GeoPoint? Location { get; private set; }
+    public string? PublicPath { get; private set; }
+    public string? PublishKeyHash { get; private set; }
+    public DateTimeOffset? PublishKeyExpiresAt { get; private set; }
+    public DateTimeOffset? PublishKeyUsedAt { get; private set; }
+    public bool HiddenByStaff { get; private set; }
+    public string? HiddenReason { get; private set; }
+    public string? RecordingPath { get; private set; }
     public string Title { get; private set; }
     public ContentVisibility Visibility { get; private set; }
     public bool IsAnonymous { get; private set; }
@@ -54,6 +62,8 @@ public sealed class LiveStream : AggregateRoot
     public Guid? ReportId { get; private set; }
 
     public bool IsLive => Status == LiveStreamStatus.Live;
+
+    public bool IsOpen => Status is LiveStreamStatus.Waiting or LiveStreamStatus.Live;
 
     public static LiveStream Start(
         Guid streamerId,
@@ -99,6 +109,131 @@ public sealed class LiveStream : AggregateRoot
         return stream;
     }
 
+    /// <summary>
+    /// Opens a stream that is not public until MediaMTX reports a publisher.
+    /// The plaintext publish key is not stored.
+    /// </summary>
+    public static LiveStream Schedule(
+        Guid streamerId,
+        int streamerAge,
+        bool minorsCanStream,
+        Guid? categoryId,
+        Guid? cityId,
+        GeoPoint? location,
+        string title,
+        ContentVisibility visibility,
+        string publicPath,
+        string publishKeyHash,
+        DateTimeOffset publishKeyExpiresAt,
+        DateTimeOffset now)
+    {
+        var isMinor = MinorProtectionPolicy.IsMinor(streamerAge);
+        Guard.That(
+            !isMinor || minorsCanStream,
+            "live.minors_cannot_stream",
+            "Minors cannot start a live stream while live.minors_can_stream is off.");
+        Guard.That(
+            MinorProtectionPolicy.CanStreamTo(streamerAge, visibility),
+            "live.minor_friends_only",
+            "Users under 18 can only stream to their friends.");
+
+        var stream = new LiveStream
+        {
+            StreamerId = Guard.NotEmpty(streamerId, nameof(streamerId)),
+            CategoryId = categoryId,
+            CityId = cityId,
+            Location = location,
+            Title = Guard.NotEmpty(title, nameof(title), 80),
+            Visibility = visibility,
+            IsAnonymous = true,
+            StreamerIsMinor = isMinor,
+            FacesBlurred = true,
+            VoiceModified = true,
+            Status = LiveStreamStatus.Waiting,
+            StartedAt = now,
+            PublicPath = Guard.NotEmpty(publicPath, nameof(publicPath), 64),
+            PublishKeyHash = Guard.NotEmpty(publishKeyHash, nameof(publishKeyHash), 128),
+            PublishKeyExpiresAt = publishKeyExpiresAt,
+        };
+        stream.MarkCreated(now);
+        return stream;
+    }
+
+    public bool AcceptPublishKey(string hash, DateTimeOffset now)
+    {
+        if (PublishRefusal(hash, now) is not null)
+        {
+            return false;
+        }
+
+        PublishKeyUsedAt = now;
+        MarkUpdated(now);
+        return true;
+    }
+
+    /// <summary>
+    /// Why a publish key cannot be accepted. Null means the hash matches and the key can be consumed.
+    /// The password itself is never part of the code.
+    /// </summary>
+    public string? PublishRefusal(string? password, string hash, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return "live.missing_key";
+        }
+
+        return PublishRefusal(hash, now);
+    }
+
+    private string? PublishRefusal(string hash, DateTimeOffset now)
+    {
+        if (HiddenByStaff)
+        {
+            return "live.invalid_state";
+        }
+
+        if (Status == LiveStreamStatus.Expired)
+        {
+            return "live.limit";
+        }
+
+        if (PublishKeyUsedAt is not null)
+        {
+            return "live.already_used";
+        }
+
+        if (Status != LiveStreamStatus.Waiting)
+        {
+            return "live.invalid_state";
+        }
+
+        if (PublishKeyExpiresAt is not { } expires || now > expires)
+        {
+            return "live.expired";
+        }
+
+        if (!FixedEquals(PublishKeyHash, hash))
+        {
+            return "live.invalid_key";
+        }
+
+        return null;
+    }
+
+    public bool MarkLive(DateTimeOffset now)
+    {
+        if (Status != LiveStreamStatus.Waiting || HiddenByStaff || PublishKeyUsedAt is null)
+        {
+            return false;
+        }
+
+        Status = LiveStreamStatus.Live;
+        StartedAt = now;
+        MarkUpdated(now);
+        Raise(new LiveStreamPublishedEvent(Id, PublicPath ?? string.Empty, Visibility, Location));
+        return true;
+    }
+
     public void ReportViewerCount(int currentViewers)
     {
         if (currentViewers > PeakViewers)
@@ -109,14 +244,27 @@ public sealed class LiveStream : AggregateRoot
 
     public void End(string? recordingKey, DateTimeOffset now, TimeSpan? recordingRetention = null, TimeSpan? internalRetention = null)
     {
-        EnsureLive();
+        EnsureOpen();
         Finish(LiveStreamStatus.Ended, recordingKey, now, recordingRetention, internalRetention);
+    }
+
+    public void Hide(string reason, DateTimeOffset now)
+    {
+        HiddenByStaff = true;
+        HiddenReason = Guard.NotEmpty(reason, nameof(reason), 300);
+        if (IsOpen)
+        {
+            Cut(reason, null, now);
+            return;
+        }
+
+        MarkUpdated(now);
     }
 
     /// <summary>Server-side cut by a moderator or by the system (RF-LIV-08).</summary>
     public void Cut(string reason, string? recordingKey, DateTimeOffset now)
     {
-        EnsureLive();
+        EnsureOpen();
         Guard.NotEmpty(reason, nameof(reason), 300);
         Finish(LiveStreamStatus.Cut, recordingKey, now, null, null);
         Raise(new LiveStreamCutEvent(Id, StreamerId, reason));
@@ -162,10 +310,13 @@ public sealed class LiveStream : AggregateRoot
 
     private void Finish(LiveStreamStatus status, string? recordingKey, DateTimeOffset now, TimeSpan? recordingRetention, TimeSpan? internalRetention)
     {
+        var wasVisible = Status == LiveStreamStatus.Live;
         Status = status;
         EndedAt = now;
         IngestKey = null;
+        PublishKeyHash = null;
         RecordingKey = Guard.Optional(recordingKey, nameof(recordingKey), 500);
+        RecordingPath = RecordingKey;
 
         if (RecordingKey is not null)
         {
@@ -174,11 +325,27 @@ public sealed class LiveStream : AggregateRoot
         }
 
         MarkUpdated(now);
-        Raise(new LiveStreamEndedEvent(Id, StreamerId));
+        Raise(new LiveStreamEndedEvent(Id, StreamerId, wasVisible));
     }
 
-    private void EnsureLive() =>
-        Guard.That(Status == LiveStreamStatus.Live, "live.not_live", "The stream is not live.");
+    private void EnsureOpen() =>
+        Guard.That(IsOpen, "live.not_live", "The stream is not live.");
+
+    private static bool FixedEquals(string? left, string? right)
+    {
+        if (left is null || right is null || left.Length != right.Length)
+        {
+            return false;
+        }
+
+        var difference = 0;
+        for (var index = 0; index < left.Length; index++)
+        {
+            difference |= left[index] ^ right[index];
+        }
+
+        return difference == 0;
+    }
 }
 
 public sealed record LiveStreamStartedEvent(
@@ -189,6 +356,12 @@ public sealed record LiveStreamStartedEvent(
     ContentVisibility Visibility,
     bool IsAnonymous) : DomainEvent;
 
-public sealed record LiveStreamEndedEvent(Guid LiveStreamId, Guid StreamerId) : DomainEvent;
+public sealed record LiveStreamEndedEvent(Guid LiveStreamId, Guid StreamerId, bool WasVisible) : DomainEvent;
+
+public sealed record LiveStreamPublishedEvent(
+    Guid LiveStreamId,
+    string PublicPath,
+    ContentVisibility Visibility,
+    GeoPoint? Location) : DomainEvent;
 
 public sealed record LiveStreamCutEvent(Guid LiveStreamId, Guid StreamerId, string Reason) : DomainEvent;

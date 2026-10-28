@@ -29,6 +29,7 @@ export function NotificationCenter() {
       available: item.available,
       reportId: item.reportId,
       targetType: item.targetType,
+      liveId: item.liveId,
     });
     if (target.kind === 'unavailable') {
       notify.warning(notificationMessages.unavailableNotice, { placement: 'top' });
@@ -37,6 +38,11 @@ export function NotificationCenter() {
 
     if (!item.isRead) {
       void markRead(queryClient, item.id);
+    }
+
+    if (target.kind === 'live') {
+      router.push({ pathname: '/en-vivo/[id]', params: { id: target.publicId } });
+      return;
     }
 
     if (target.kind === 'report') {

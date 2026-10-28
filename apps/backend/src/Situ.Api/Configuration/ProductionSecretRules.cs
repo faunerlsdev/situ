@@ -45,6 +45,9 @@ public static class ProductionSecretRules
     public const string ConnectionRejectedMessage =
         "ConnectionStrings:Default contiene un placeholder.";
 
+    public const string LiveSecretMessage =
+        "Live:IngestSecret y Live:HlsSecret tienen que existir, ser distintos y no ser placeholders.";
+
     public const string CorsRejectedMessage =
         "Cors:AllowedOrigins debe incluir al menos un origen https que no sea localhost.";
 
@@ -126,6 +129,13 @@ public static class ProductionSecretRules
         if (IsPlaceholderConnection(configuration["ConnectionStrings:Default"]))
         {
             errors.Add(ConnectionRejectedMessage);
+        }
+
+        var ingest = configuration["Live:IngestSecret"] ?? "";
+        var hls = configuration["Live:HlsSecret"] ?? "";
+        if (IsRejectedSecret(ingest) || IsRejectedSecret(hls) || string.Equals(ingest, hls, StringComparison.Ordinal))
+        {
+            errors.Add(LiveSecretMessage);
         }
 
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];

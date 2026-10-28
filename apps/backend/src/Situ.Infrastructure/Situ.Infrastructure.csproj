@@ -15,6 +15,8 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
         <PackageReference Include="SkiaSharp" />
+        <!-- Linux publish does not pull a native library from SkiaSharp itself. This build has no fontconfig or freetype dependency. HarfBuzz is not used. -->
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     </ItemGroup>
 
 </Project>

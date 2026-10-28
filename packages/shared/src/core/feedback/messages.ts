@@ -37,6 +37,7 @@ export const notificationMessages = {
   nearby: 'Reportes en tu ciudad y cerca de ti',
   friends: 'Reportes de tus amigos',
   lives: 'Transmisiones de amigos',
+  nearbyLives: 'Transmisiones en vivo cerca',
   news: 'Noticias importantes',
   comingSoon: 'Próximamente',
   proximityTitle: 'Qué tan cerca',

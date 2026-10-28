@@ -58,6 +58,7 @@ module.exports = {
     'android.permission.ACCESS_FINE_LOCATION',
     'android.permission.CAMERA',
     'android.permission.RECORD_AUDIO',
+    'android.permission.WAKE_LOCK',
     'android.permission.POST_NOTIFICATIONS',
     'android.permission.USE_BIOMETRIC',
     'android.permission.USE_FINGERPRINT',

@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=mediamtx
-Group=mediamtx
+User=situ-mediamtx
+Group=situ-mediamtx
 WorkingDirectory=/var/lib/situ/live
 ExecStart=/usr/local/bin/mediamtx /etc/mediamtx/mediamtx.yml
 ExecReload=/bin/kill -HUP $MAINPID

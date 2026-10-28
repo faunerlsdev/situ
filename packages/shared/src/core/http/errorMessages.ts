@@ -124,6 +124,15 @@ export const apiMessages: Record<string, string> = {
   'location.area_too_large': 'Acerca el mapa para ver personas.',
   'account_deletion.already_scheduled': 'Ya hay una solicitud de eliminación en curso.',
   'account_deletion.not_scheduled': 'No hay una eliminación que cancelar.',
+  'live.minors_cannot_stream': 'En esta versión un menor no puede transmitir.',
+  'live.minor_friends_only': 'Un menor solo puede transmitir a sus amigos.',
+  'live.already_live': 'Ya tienes una transmisión activa.',
+  'live.limit_concurrent': 'Ahora mismo no hay cupo para otra transmisión.',
+  'live.viewers_full': 'Esta transmisión ya no admite más personas.',
+  'live.not_found': 'No encontramos esa transmisión.',
+  'live.forbidden': 'No puedes ver transmisiones.',
+  'live.unauthorized': 'No autorizado.',
+  'live.not_configured': 'La transmisión en vivo no está configurada.',
 };
 
 export function messageFor(code: AppErrorCode, apiCode?: string, detail?: string): string {

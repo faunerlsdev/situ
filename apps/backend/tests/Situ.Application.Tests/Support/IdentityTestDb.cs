@@ -50,6 +50,7 @@ internal class IdentityTestDb(DbContextOptions<IdentityTestDb> options) : DbCont
     public DbSet<LegalDocument> LegalDocuments => Set<LegalDocument>();
     public DbSet<LiveStream> LiveStreams => Set<LiveStream>();
     public DbSet<LiveViewer> LiveViewers => Set<LiveViewer>();
+    public DbSet<LiveViewerSession> LiveViewerSessions => Set<LiveViewerSession>();
     public DbSet<AnonymousIdentityAccessLog> AnonymousIdentityAccessLogs => Set<AnonymousIdentityAccessLog>();
     public DbSet<Complaint> Complaints => Set<Complaint>();
     public DbSet<ModerationAction> ModerationActions => Set<ModerationAction>();

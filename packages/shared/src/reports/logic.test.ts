@@ -109,6 +109,8 @@ describe('upload queue', () => {
     tasks = reduceUploads(tasks, { type: 'retry', id: 'b' });
     expect(tasks[1]).toMatchObject({ status: 'queued', progress: 0 });
     expect(nextQueued(tasks)?.id).toBe('b');
+    tasks = reduceUploads(tasks, { type: 'remove', id: 'a' });
+    expect(tasks.map((task) => task.id)).toEqual(['b']);
   });
 });
 

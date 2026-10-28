@@ -22,6 +22,7 @@ public sealed class NotificationSettings : AuditableEntity
     public bool NotifyNearbyReports { get; private set; }
     public bool NotifyFriendReports { get; private set; }
     public bool NotifyFriendLives { get; private set; }
+    public bool NotifyNearbyLives { get; private set; }
     public bool NotifyImportantNews { get; private set; }
     public TimeOnly? QuietHoursStart { get; private set; }
     public TimeOnly? QuietHoursEnd { get; private set; }
@@ -38,6 +39,7 @@ public sealed class NotificationSettings : AuditableEntity
             NotifyNearbyReports = true,
             NotifyFriendReports = true,
             NotifyFriendLives = true,
+            NotifyNearbyLives = true,
             NotifyImportantNews = true,
             TimeZoneId = string.IsNullOrWhiteSpace(timeZoneId) ? DefaultTimeZoneId : Guard.NotEmpty(timeZoneId, nameof(timeZoneId), 64),
         };
@@ -53,6 +55,7 @@ public sealed class NotificationSettings : AuditableEntity
         bool notifyNearbyReports,
         bool notifyFriendReports,
         bool notifyFriendLives,
+        bool notifyNearbyLives,
         bool notifyImportantNews,
         TimeOnly? quietStart,
         TimeOnly? quietEnd,
@@ -67,6 +70,7 @@ public sealed class NotificationSettings : AuditableEntity
         NotifyNearbyReports = notifyNearbyReports;
         NotifyFriendReports = notifyFriendReports;
         NotifyFriendLives = notifyFriendLives;
+        NotifyNearbyLives = notifyNearbyLives;
         NotifyImportantNews = notifyImportantNews;
         QuietHoursStart = quietStart;
         QuietHoursEnd = quietEnd;

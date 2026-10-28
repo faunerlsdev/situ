@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copy the live certificate where the mediamtx user can read it, then reload.
+# Copy the existing certificate where situ-mediamtx can read it, then reload.
 set -eu
 
 if [ -f /etc/situ/live.env ]; then
@@ -8,7 +8,7 @@ if [ -f /etc/situ/live.env ]; then
 fi
 
 domain=${DOMAIN_ROOT:?Falta DOMAIN_ROOT}
-source="/etc/letsencrypt/live/live.${domain}"
+source="/etc/letsencrypt/live/${domain}"
 target=/etc/mediamtx/tls
 
 if [ ! -f "${source}/fullchain.pem" ] || [ ! -f "${source}/privkey.pem" ]; then
@@ -16,9 +16,9 @@ if [ ! -f "${source}/fullchain.pem" ] || [ ! -f "${source}/privkey.pem" ]; then
   exit 1
 fi
 
-install -d -o mediamtx -g mediamtx -m 750 "$target"
-install -o mediamtx -g mediamtx -m 640 "${source}/fullchain.pem" "${target}/fullchain.pem"
-install -o mediamtx -g mediamtx -m 640 "${source}/privkey.pem" "${target}/privkey.pem"
+install -d -o situ-mediamtx -g situ-mediamtx -m 750 "$target"
+install -o situ-mediamtx -g situ-mediamtx -m 640 "${source}/fullchain.pem" "${target}/fullchain.pem"
+install -o situ-mediamtx -g situ-mediamtx -m 640 "${source}/privkey.pem" "${target}/privkey.pem"
 if command -v systemctl >/dev/null 2>&1; then
   systemctl reload situ-mediamtx.service || systemctl restart situ-mediamtx.service || true
 fi

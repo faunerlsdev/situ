@@ -103,6 +103,12 @@ describe('opening a notification', () => {
     });
     expect(notificationOpenTarget({ available: false, reportId: 'r1', targetType: 'Report' })).toEqual({ kind: 'unavailable' });
     expect(notificationOpenTarget({ available: true, reportId: null, targetType: 'Report' })).toEqual({ kind: 'inbox', notificationId: null });
+    expect(notificationOpenTarget({ available: true, reportId: null, targetType: 'LiveStream', liveId: 'abc123', notificationId: 'n9' })).toEqual({
+      kind: 'live',
+      publicId: 'abc123',
+      notificationId: 'n9',
+    });
+    expect(notificationOpenTarget({ available: false, reportId: null, targetType: 'LiveStream', liveId: 'abc123' })).toEqual({ kind: 'unavailable' });
   });
 
   it('resolves a system push from its data', () => {
@@ -125,6 +131,21 @@ describe('opening a notification', () => {
     expect(pushDataTarget({ notification: true })).toEqual({ kind: 'inbox', notificationId: null });
     expect(pushDataTarget({ type: 'NearbyReport', notificationId: 'n4' })).toEqual({ kind: 'inbox', notificationId: 'n4' });
     expect(pushDataTarget({ reportId: '', type: 'Comment' })).toEqual({ kind: 'inbox', notificationId: null });
+    expect(pushDataTarget({
+      notificationId: 'n5',
+      type: 'FriendLiveStarted',
+      targetType: 'LiveStream',
+      targetId: 'abc123',
+    })).toEqual({ kind: 'live', publicId: 'abc123', notificationId: 'n5' });
+    expect(pushDataTarget({ notificationId: 'n7', type: 'NearbyLiveStarted', targetId: 'abc123' })).toEqual({
+      kind: 'live',
+      publicId: 'abc123',
+      notificationId: 'n7',
+    });
+    expect(pushDataTarget({ notificationId: 'n6', type: 'FriendLiveEnded', targetType: 'LiveStream' })).toEqual({
+      kind: 'inbox',
+      notificationId: 'n6',
+    });
   });
 
   it('treats report.not_available as a closed report', () => {

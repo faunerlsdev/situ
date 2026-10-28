@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Situ.Application.Common.Abstractions;
+using Situ.Application.Features.Live;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
+using Situ.Domain.Live;
 using Situ.Domain.Notifications;
 using Situ.Domain.Reports;
 
@@ -61,6 +63,8 @@ public sealed class DomainEventDispatcher(ILogger<DomainEventDispatcher> logger,
                 {
                     ReportCreatedEvent created => (NotificationJob.ReportCreated, created.ReportId),
                     CommentAddedEvent comment => (NotificationJob.CommentAdded, comment.CommentId),
+                    LiveStreamPublishedEvent published => (NotificationJob.LiveStarted, published.LiveStreamId),
+                    LiveStreamEndedEvent ended when ended.WasVisible => (NotificationJob.LiveEnded, ended.LiveStreamId),
                     _ => ((string?)null, Guid.Empty),
                 };
                 if (kind is null)
@@ -91,6 +95,106 @@ public sealed class DomainEventDispatcher(ILogger<DomainEventDispatcher> logger,
         catch (Exception exception)
         {
             logger.LogWarning("Map zone outbox insert failed ({ExceptionType}).", exception.GetType().Name);
+        }
+
+        try
+        {
+            await NotifyLiveAsync(scopes, domainEvents, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning("Live map notice failed ({ExceptionType}).", exception.GetType().Name);
+        }
+    }
+
+    private static async Task NotifyLiveAsync(
+        IServiceScopeFactory scopes,
+        IReadOnlyCollection<IDomainEvent> domainEvents,
+        CancellationToken cancellationToken)
+    {
+        var signals = new List<(Guid StreamId, string Change)>();
+        foreach (var domainEvent in domainEvents)
+        {
+            switch (domainEvent)
+            {
+                case LiveStreamPublishedEvent published:
+                    signals.Add((published.LiveStreamId, "started"));
+                    break;
+                case LiveStreamEndedEvent ended when ended.WasVisible:
+                    signals.Add((ended.LiveStreamId, "ended"));
+                    break;
+            }
+        }
+
+        if (signals.Count == 0)
+        {
+            return;
+        }
+
+        await using var scope = scopes.CreateAsyncScope();
+        var notifier = scope.ServiceProvider.GetService<ILiveNotifier>();
+        if (notifier is null)
+        {
+            return;
+        }
+
+        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var clock = scope.ServiceProvider.GetRequiredService<IClock>();
+        var now = clock.UtcNow;
+        var settings = await db.SystemSettings.Where(item =>
+                item.Key == SystemSettingKeys.LiveMinorsCanStream
+                || item.Key == SystemSettingKeys.FriendsAllowAdultMinor
+                || item.Key == SystemSettingKeys.MapCellDegrees)
+            .ToDictionaryAsync(item => item.Key, item => item.Value, cancellationToken);
+        var minorsCanStream = string.Equals(settings.GetValueOrDefault(SystemSettingKeys.LiveMinorsCanStream), "true", StringComparison.OrdinalIgnoreCase);
+        var allowAdultMinor = string.Equals(settings.GetValueOrDefault(SystemSettingKeys.FriendsAllowAdultMinor), "true", StringComparison.OrdinalIgnoreCase);
+        var degrees = MapRealtimeLimits.Degrees(settings.GetValueOrDefault(SystemSettingKeys.MapCellDegrees));
+        foreach (var (streamId, change) in signals)
+        {
+            var stream = await db.LiveStreams.FirstOrDefaultAsync(item => item.Id == streamId, cancellationToken);
+            if (stream?.PublicPath is null)
+            {
+                continue;
+            }
+
+            var streamer = await db.Users.FirstOrDefaultAsync(item => item.Id == stream.StreamerId, cancellationToken);
+            if (streamer is null)
+            {
+                continue;
+            }
+
+            var friendIds = await db.Friendships
+                .Where(item => item.Status == Situ.Domain.Social.FriendshipStatus.Accepted
+                    && (item.RequesterId == streamer.Id || item.AddresseeId == streamer.Id))
+                .Select(item => item.RequesterId == streamer.Id ? item.AddresseeId : item.RequesterId)
+                .ToListAsync(cancellationToken);
+            var people = await db.Users.Where(item => friendIds.Contains(item.Id)).ToListAsync(cancellationToken);
+            var groups = new List<string>();
+            foreach (var friend in people)
+            {
+                var blocked = await db.UserBlocks.AnyAsync(
+                    item => (item.Scope == Situ.Domain.Social.UserBlockScope.Full
+                            && ((item.BlockerId == friend.Id && item.BlockedUserId == streamer.Id)
+                                || (item.BlockerId == streamer.Id && item.BlockedUserId == friend.Id)))
+                        || (item.Scope == Situ.Domain.Social.UserBlockScope.AnonymousContentOnly
+                            && item.BlockerId == friend.Id
+                            && item.BlockedUserId == streamer.Id),
+                    cancellationToken);
+                if (LiveAudience.CanWatch(friend, streamer, stream, true, blocked, minorsCanStream, allowAdultMinor, now))
+                {
+                    groups.Add("user:" + friend.Id.ToString("D"));
+                }
+            }
+
+            if (stream.Visibility == ContentVisibility.Public && stream.Location is { } location && !streamer.IsMinor(now))
+            {
+                groups.Add(MapCell.Id(location.Latitude, location.Longitude, degrees));
+            }
+
+            if (groups.Count > 0)
+            {
+                await notifier.ChangedAsync(groups, stream.PublicPath, change, cancellationToken);
+            }
         }
     }
 

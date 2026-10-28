@@ -3219,6 +3219,7 @@ export interface components {
             notifyNearbyReports: boolean;
             notifyFriendReports: boolean;
             notifyFriendLives: boolean;
+            notifyNearbyLives: boolean;
             notifyImportantNews: boolean;
             quietHoursStart: null | string;
             quietHoursEnd: null | string;
@@ -3589,6 +3590,7 @@ export interface components {
             notifyNearbyReports: boolean;
             notifyFriendReports: boolean;
             notifyFriendLives: boolean;
+            notifyNearbyLives: boolean;
             notifyImportantNews: boolean;
             quietHoursStart: null | string;
             quietHoursEnd: null | string;

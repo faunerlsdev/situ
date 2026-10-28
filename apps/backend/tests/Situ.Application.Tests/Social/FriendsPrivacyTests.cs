@@ -78,6 +78,39 @@ public class FriendsPrivacyTests
         var limited = await search.Handle(new SearchUsersRequest(adult.Id, "adulto"), CancellationToken.None);
         Assert.Equal("friendship.search_limited", limited.Error!.Code);
         Assert.All(db.AuditLogs.Where(item => item.Action == "friends.search"), item => Assert.Null(item.Changes));
+        Assert.Equal("none", exact.Value.Users[0].Relation);
+    }
+
+    [Fact]
+    public async Task Search_reports_the_tie_and_history_lists_only_the_chosen_status()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var me = await UserAsync(db, clock, 30, "me@situ.test", "yoyo");
+        var sent = await UserAsync(db, clock, 30, "sent@situ.test", "enviada");
+        var got = await UserAsync(db, clock, 30, "got@situ.test", "recibida");
+        var pal = await UserAsync(db, clock, 30, "pal@situ.test", "amigo");
+        var no = await UserAsync(db, clock, 30, "no@situ.test", "rechazo");
+        var outgoing = Friendship.Request(me.Id, sent.Id, Now);
+        var incoming = Friendship.Request(got.Id, me.Id, Now);
+        var accepted = Friendship.Request(me.Id, pal.Id, Now);
+        accepted.Accept(pal.Id, Now);
+        var declined = Friendship.Request(me.Id, no.Id, Now);
+        declined.Decline(no.Id, Now);
+        db.Friendships.AddRange(outgoing, incoming, accepted, declined);
+        await db.SaveChangesAsync();
+        var search = new SearchUsersHandler(db, clock, new FakeLinks(), new Signer());
+
+        Assert.Equal("outgoing", (await search.Handle(new SearchUsersRequest(me.Id, "enviada"), CancellationToken.None)).Value!.Users[0].Relation);
+        Assert.Equal("incoming", (await search.Handle(new SearchUsersRequest(me.Id, "recibida"), CancellationToken.None)).Value!.Users[0].Relation);
+        Assert.Equal("friends", (await search.Handle(new SearchUsersRequest(me.Id, "amigo"), CancellationToken.None)).Value!.Users[0].Relation);
+
+        var history = new ListFriendHistoryHandler(db, clock, new FakeLinks(), new Signer());
+        var rejected = await history.Handle(new ListFriendHistoryRequest(me.Id, "Declined"), CancellationToken.None);
+        Assert.Equal(no.Id, Assert.Single(rejected.Value!.Items).UserId);
+        var pending = await history.Handle(new ListFriendHistoryRequest(me.Id, "pending"), CancellationToken.None);
+        Assert.Equal(2, pending.Value!.Items.Count);
+        Assert.Equal("friendship.history_filter", (await history.Handle(new ListFriendHistoryRequest(me.Id, "cancelled"), CancellationToken.None)).Error!.Code);
     }
 
     [Fact]

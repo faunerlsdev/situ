@@ -3,10 +3,11 @@ import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, m
 import type { RegisterValues } from '@situ/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -36,6 +37,9 @@ export default function RegisterScreen() {
   const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const keepFieldVisible = useRef(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -202,10 +206,40 @@ export default function RegisterScreen() {
     }
   }
 
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+    const show = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardInset(event.endCoordinates.height);
+      if (keepFieldVisible.current) {
+        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      }
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardInset(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  function focusLowerField() {
+    keepFieldVisible.current = true;
+    requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+  }
+
+  function blurLowerField() {
+    keepFieldVisible.current = false;
+  }
+
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.glow} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[styles.content, keyboardInset > 0 ? { paddingBottom: 40 + keyboardInset } : null]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.hero}>
           <Image source={globe} resizeMode="contain" style={styles.globe} />
           <Text style={styles.title}>Registro</Text>
@@ -311,13 +345,13 @@ export default function RegisterScreen() {
         <Text style={styles.label}>Fecha de nacimiento</Text>
         <View style={styles.dateRow}>
           <Controller control={form.control} name="day" render={({ field }) => (
-            <DateBox value={field.value} onChangeText={field.onChange} placeholder="Día" accessibilityLabel="Día" />
+            <DateBox value={field.value} onChangeText={field.onChange} onFocus={focusLowerField} onBlur={blurLowerField} placeholder="Día" accessibilityLabel="Día" />
           )} />
           <Controller control={form.control} name="month" render={({ field }) => (
-            <DateBox value={field.value} onChangeText={field.onChange} placeholder="Mes" accessibilityLabel="Mes" />
+            <DateBox value={field.value} onChangeText={field.onChange} onFocus={focusLowerField} onBlur={blurLowerField} placeholder="Mes" accessibilityLabel="Mes" />
           )} />
           <Controller control={form.control} name="year" render={({ field }) => (
-            <DateBox value={field.value} onChangeText={field.onChange} placeholder="Año" accessibilityLabel="Año" />
+            <DateBox value={field.value} onChangeText={field.onChange} onFocus={focusLowerField} onBlur={blurLowerField} placeholder="Año" accessibilityLabel="Año" />
           )} />
         </View>
         {form.formState.errors.day?.message ? <Text style={styles.fieldError}>{form.formState.errors.day.message}</Text> : null}
@@ -360,6 +394,8 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   textContentType="emailAddress"
+                  onFocus={focusLowerField}
+                  onBlur={blurLowerField}
                 />
               )}
             />
