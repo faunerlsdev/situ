@@ -2,13 +2,22 @@ import { csrfCookie, deviceCookie } from '@/lib/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
 function apiSources() {
-  const raw = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:5080';
+  const raw = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5080';
   try {
     const url = new URL(raw);
-    const ws = `${url.protocol === 'https:' ? 'wss:' : 'ws:'}//${url.host}`;
-    return { http: url.origin, ws };
+    const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    const http = new Set([url.origin]);
+    const ws = new Set([`${wsProtocol}//${url.host}`]);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      const port = url.port ? `:${url.port}` : '';
+      http.add(`${url.protocol}//localhost${port}`);
+      http.add(`${url.protocol}//127.0.0.1${port}`);
+      ws.add(`${wsProtocol}//localhost${port}`);
+      ws.add(`${wsProtocol}//127.0.0.1${port}`);
+    }
+    return { http: [...http].join(' '), ws: [...ws].join(' ') };
   } catch {
-    return { http: 'http://127.0.0.1:5080', ws: 'ws://127.0.0.1:5080' };
+    return { http: 'http://localhost:5080 http://127.0.0.1:5080', ws: 'ws://localhost:5080 ws://127.0.0.1:5080' };
   }
 }
 
@@ -36,6 +45,7 @@ export function proxy(request: NextRequest) {
   requestHeaders.set('content-security-policy', csp);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('Cache-Control', 'private, no-store');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=()');

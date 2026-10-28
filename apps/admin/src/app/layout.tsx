@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import type { ReactNode } from 'react';
 import { Montserrat, Source_Sans_3 } from 'next/font/google';
 import { Providers } from '@/components/providers';
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export const dynamic = 'force-dynamic';
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  await headers();
   return (
     <html lang="es-CO" className={`${sourceSans.variable} ${montserrat.variable}`}>
       <body>

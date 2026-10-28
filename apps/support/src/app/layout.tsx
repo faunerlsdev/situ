@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import type { ReactNode } from 'react';
 import { Montserrat, Source_Sans_3 } from 'next/font/google';
 import { SiteFooter } from '@/components/site-footer';
@@ -26,7 +27,10 @@ export const metadata: Metadata = {
   description: 'Centro de ayuda de SITU: cuenta, mapa, privacidad y planes.',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export const dynamic = 'force-dynamic';
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  await headers();
   return (
     <html lang="es-CO" data-scroll-behavior="smooth" className={`${sourceSans.variable} ${montserrat.variable}`}>
       <body className="flex min-h-screen flex-col">

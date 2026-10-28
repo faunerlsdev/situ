@@ -27,6 +27,8 @@ import { theme } from '@/theme/theme';
 
 const globe = require('../../assets/images/icons/nav-mapa-globo-dark.png');
 
+const callingCodeOptions = callingCodes.map((item) => ({ id: item.code, name: item.label }));
+
 export default function RegisterScreen() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
@@ -229,13 +231,13 @@ export default function RegisterScreen() {
           control={form.control}
           name="callingCode"
           render={({ field }) => (
-            <View style={styles.phoneRow}>
-              {callingCodes.map((item) => (
-                <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.label} accessibilityState={{ selected: field.value === item.code }} onPress={() => field.onChange(item.code)} style={[styles.code, field.value === item.code && styles.codeOn]}>
-                  <Text style={styles.codeLabel}>+{item.code}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <SelectField
+              label="Indicativo"
+              value={field.value}
+              placeholder="Selecciona un país"
+              options={callingCodeOptions}
+              onChange={field.onChange}
+            />
           )}
         />
         <Controller
@@ -477,10 +479,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  phoneRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  code: { minHeight: 36, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
-  codeOn: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  codeLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 13 },
   hint: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13, lineHeight: 18 },
   fieldError: {
     color: theme.colors.danger,

@@ -128,7 +128,18 @@ describe('store config', () => {
 describe('eas profiles', () => {
   const eas = JSON.parse(readFileSync(path.join(mobileRoot, 'eas.json'), 'utf8')) as {
     cli: { appVersionSource: string };
-    build: Record<string, { distribution?: string; autoIncrement?: boolean; developmentClient?: boolean; channel?: string }>;
+    build: Record<
+      string,
+      {
+        distribution?: string;
+        autoIncrement?: boolean;
+        developmentClient?: boolean;
+        channel?: string;
+        env?: Record<string, string>;
+        android?: { buildType?: string };
+        ios?: { simulator?: boolean };
+      }
+    >;
     submit: { production: { android: { track: string; serviceAccountKeyPath: string } } };
   };
   const mobilePackage = JSON.parse(readFileSync(path.join(mobileRoot, 'package.json'), 'utf8')) as {
@@ -141,6 +152,12 @@ describe('eas profiles', () => {
     expect(eas.build.development?.distribution).toBe('internal');
     expect(eas.build.preview?.distribution).toBe('internal');
     expect(eas.build.preview?.autoIncrement).toBe(true);
+    expect(eas.build.preview?.developmentClient).toBeUndefined();
+    expect(eas.build.preview?.env?.EXPO_PUBLIC_API_URL).toBe('https://api.somossitu.com');
+    expect(eas.build.preview?.env?.EXPO_PUBLIC_DOMAIN_ROOT).toBe('somossitu.com');
+    expect(eas.build.preview?.env?.EXPO_PUBLIC_LIVE_POC).toBeUndefined();
+    expect(eas.build.preview?.android?.buildType).toBe('apk');
+    expect(eas.build.preview?.ios?.simulator).toBe(false);
     expect(eas.build.production?.distribution).toBe('store');
     expect(eas.build.production?.autoIncrement).toBe(true);
     expect(eas.build.production?.channel).toBeUndefined();

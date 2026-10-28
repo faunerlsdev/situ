@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import type { ReactNode } from 'react';
 import { Montserrat, Source_Sans_3 } from 'next/font/google';
 import { AppChrome } from '@/components/app-chrome';
@@ -30,7 +31,12 @@ export const viewport: Viewport = {
   themeColor: '#1C1C1C',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export const dynamic = 'force-dynamic';
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Reading the request headers opts every page out of static prerender.
+  // The nonce only exists on the live request, so a static shell cannot carry it.
+  await headers();
   return (
     <html lang="es-CO" data-scroll-behavior="smooth" className={`${sourceSans.variable} ${montserrat.variable}`}>
       <body data-theme="dark" className="flex min-h-screen flex-col bg-app-bg font-sans text-app-text">

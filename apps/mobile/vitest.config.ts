@@ -11,6 +11,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['features/**/*.test.ts', 'features/**/*.test.tsx'],
+    include: ['features/**/*.test.ts', 'features/**/*.test.tsx', 'plugins/**/*.test.ts'],
   },
 });

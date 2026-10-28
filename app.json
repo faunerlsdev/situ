@@ -5,6 +5,9 @@
         "projectId": "947392db-a743-40ed-a7b2-fb7e54206c44"
       }
     },
-    "owner": "faunerls.dev"
+    "owner": "faunerls.dev",
+    "android": {
+      "package": "com.faunerls.dev.situ"
+    }
   }
 }

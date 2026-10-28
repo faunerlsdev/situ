@@ -10,6 +10,8 @@ describe('admin proxy', () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).toContain(process.env.NODE_ENV === 'production' ? "script-src 'self'" : "'unsafe-eval'");
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     expect(response.headers.get('X-Frame-Options')).toBe('DENY');
     expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');

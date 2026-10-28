@@ -5,9 +5,12 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SelectField } from '@/components/select-field';
 import { useMe } from '@/features/reports/use-me';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
+
+const callingCodeOptions = callingCodes.map((item) => ({ id: item.code, name: item.label }));
 
 import {
   isValidUserName,
@@ -157,13 +160,13 @@ export default function EditProfileScreen() {
       </Pressable>
       <Text style={styles.title}>Teléfono</Text>
       <Text style={styles.body}>{phonePurpose}</Text>
-      <View style={styles.codes}>
-        {callingCodes.map((item) => (
-          <Pressable key={item.code} accessibilityRole="button" accessibilityLabel={item.label} onPress={() => setCallingCode(item.code)}>
-            <Text style={styles.link}>{callingCode === item.code ? item.label : `+${item.code}`}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <SelectField
+        label="Indicativo"
+        value={callingCode}
+        placeholder="Selecciona un país"
+        options={callingCodeOptions}
+        onChange={setCallingCode}
+      />
       <Field label="Número" value={phone} onChangeText={setPhone} autoCapitalize="none" />
       <Field label="Contraseña actual" value={phonePassword} onChangeText={setPhonePassword} autoCapitalize="none" />
       <Pressable accessibilityRole="button" accessibilityLabel="Guardar teléfono" onPress={() => void savePhone()} style={styles.button}>
@@ -273,7 +276,6 @@ const styles = StyleSheet.create({
   hint: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 14 },
   counter: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13, textAlign: 'right' },
   row: { minHeight: 44, justifyContent: 'center' },
-  codes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
   button: { minHeight: 44, borderRadius: theme.radius.button, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
   buttonLabel: { color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },

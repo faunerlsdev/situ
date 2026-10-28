@@ -12,7 +12,17 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.somossitu.com",
+        "EXPO_PUBLIC_DOMAIN_ROOT": "somossitu.com"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
     },
     "production": {
       "distribution": "store",

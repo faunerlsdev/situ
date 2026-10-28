@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --port 3004",
     "build": "next build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test csp-dynamic.check.mjs"
   },
   "dependencies": {
     "@situ/shared": "workspace:*",

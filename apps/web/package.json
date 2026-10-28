@@ -7,7 +7,7 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run && node --test csp-dynamic.check.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
