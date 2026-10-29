@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { City, Country, LegalDocument, Region } from '@situ/shared';
-import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, notify, phonePurpose, presentError, registerSchema } from '@situ/shared';
+import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, notify, phonePurpose, presentError, registerSchema, sites } from '@situ/shared';
 import type { RegisterValues } from '@situ/shared';
 import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -237,8 +237,14 @@ export function RegisterForm({
         ) : null}
         <div className="font-sans text-[12px] leading-4 font-bold text-app-muted italic [&_a]:text-primary">
           {documents.map((document) => (
-            <a key={document.id} href={document.url} className="block underline">{legalLabel(document.type)}</a>
+            <a key={document.id} href={legalHref(document)} className="block underline">{legalLabel(document.type)}</a>
           ))}
+          {documents.some((document) => document.type === 'TermsOfUse') ? null : (
+            <a href={`${sites.landing}/terminos`} className="block underline">Términos de uso</a>
+          )}
+          {documents.some((document) => document.type === 'PrivacyPolicy') ? null : (
+            <a href={`${sites.landing}/privacidad`} className="block underline">Política de privacidad</a>
+          )}
           <label className="mt-2 flex items-start gap-2">
             <input type="checkbox" className="mt-0.5" {...form.register('accepted')} />
             Acepto los documentos legales vigentes.
@@ -328,6 +334,16 @@ function SelectInput({
       {error ? <FieldError id={`${id}-error`} message={error} /> : null}
     </label>
   );
+}
+
+function legalHref(document: LegalDocument) {
+  if (document.type === 'TermsOfUse') {
+    return `${sites.landing}/terminos`;
+  }
+  if (document.type === 'PrivacyPolicy') {
+    return `${sites.landing}/privacidad`;
+  }
+  return document.url;
 }
 
 function legalLabel(type: LegalDocument['type']) {

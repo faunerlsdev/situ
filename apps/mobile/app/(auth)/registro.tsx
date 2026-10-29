@@ -28,6 +28,17 @@ import { theme } from '@/theme/theme';
 
 const globe = require('../../assets/images/icons/nav-mapa-globo-dark.png');
 
+function publishedLegalUrl(document: LegalDocument) {
+  const root = (process.env.EXPO_PUBLIC_DOMAIN_ROOT || 'somossitu.com').trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+  if (document.type === 'PrivacyPolicy') {
+    return `https://${root}/privacidad`;
+  }
+  if (document.type === 'TermsOfUse') {
+    return `https://${root}/terminos`;
+  }
+  return document.url;
+}
+
 const callingCodeOptions = callingCodes.map((item) => ({ id: item.code, name: item.label }));
 
 export default function RegisterScreen() {
@@ -368,7 +379,7 @@ export default function RegisterScreen() {
             key={document.id}
             style={styles.legal}
             onPress={() => {
-              void Linking.openURL(document.url);
+              void Linking.openURL(publishedLegalUrl(document));
             }}
           >
             {document.type === 'PrivacyPolicy' ? 'Política de privacidad' : 'Términos de uso'}

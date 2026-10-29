@@ -89,8 +89,8 @@ internal static class CatalogSeed
     private static void SeedLegalDocuments(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<LegalDocument>().HasData(
-            LegalDocumentRow(LegalDocumentType.TermsOfUse, "terminos", "https://situ.local/legal/terminos"),
-            LegalDocumentRow(LegalDocumentType.PrivacyPolicy, "privacidad", "https://situ.local/legal/privacidad"));
+            LegalDocumentRow(LegalDocumentType.TermsOfUse, "terminos", "https://somossitu.com/terminos"),
+            LegalDocumentRow(LegalDocumentType.PrivacyPolicy, "privacidad", "https://somossitu.com/privacidad"));
     }
 
     private static object LegalDocumentRow(LegalDocumentType type, string slug, string url) => new
@@ -99,7 +99,7 @@ internal static class CatalogSeed
         Type = type,
         CountryId = (Guid?)ColombiaId,
         Locale = "es-CO",
-        Version = "2026-01",
+        Version = "2026-10-29",
         Url = url,
         IsActive = true,
         PublishedAt = SeededAt,

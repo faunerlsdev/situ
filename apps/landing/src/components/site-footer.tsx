@@ -5,8 +5,6 @@ export function SiteFooter() {
   const links = [
     { href: '/privacidad', label: 'Privacidad' },
     { href: '/terminos', label: 'Términos' },
-    { href: '/politica-de-tratamiento-de-datos', label: 'Política de tratamiento de datos' },
-    { href: '/contenido-y-moderacion', label: 'Contenido y moderación' },
     { href: sites.supportUrl, label: 'Soporte' },
     { href: sites.deleteAccountUrl, label: 'Eliminar cuenta' },
   ];

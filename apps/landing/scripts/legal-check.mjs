@@ -6,12 +6,22 @@ const landingRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const directory = process.argv[2] ?? path.join(landingRoot, 'content/legal');
 const names = (await readdir(directory)).filter((name) => name.endsWith('.md')).sort();
 const marked = [];
+const drafts = [];
 
 for (const name of names) {
   const text = await readFile(path.join(directory, name), 'utf8');
-  if (text.includes('LEGAL_PLACEHOLDER')) {
-    marked.push(name);
+  if (!text.includes('LEGAL_PLACEHOLDER')) {
+    continue;
   }
+  if (text.includes('borrador')) {
+    drafts.push(name);
+    continue;
+  }
+  marked.push(name);
+}
+
+if (drafts.length > 0) {
+  console.error(`Borradores con LEGAL_PLACEHOLDER: ${drafts.join(', ')}`);
 }
 
 if (marked.length > 0) {

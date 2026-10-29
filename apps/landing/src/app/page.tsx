@@ -105,10 +105,17 @@ export default function LandingPage() {
         </div>
         <p className="mt-6">
           <a
-            href={`${sites.support}/solicitudes`}
+            href={`${sites.support}/contacto`}
             className="font-semibold text-ink underline-offset-2 hover:underline"
           >
-            Pedir tus datos o el retiro de un contenido
+            Consultas de privacidad
+          </a>
+          {' · '}
+          <a
+            href={`${sites.support}/retiro-contenido`}
+            className="font-semibold text-ink underline-offset-2 hover:underline"
+          >
+            Retiro de contenido
           </a>
         </p>
       </section>

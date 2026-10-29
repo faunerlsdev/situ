@@ -10,5 +10,5 @@ export function dataDeletionUrl(): string | null {
 
 export function supportFallbackUrl(): string {
   const domain = domainRoot();
-  return domain ? `https://ayuda.${domain}/contacto` : 'https://somossitu.com/soporte';
+  return domain ? `https://ayuda.${domain}/contacto` : 'https://ayuda.somossitu.com/contacto';
 }

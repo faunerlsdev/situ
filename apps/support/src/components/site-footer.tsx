@@ -17,16 +17,6 @@ export function SiteFooter() {
                 Términos
               </a>
             </li>
-            <li>
-              <a href={`${sites.landing}/politica-de-tratamiento-de-datos`} className="font-semibold text-ink underline-offset-2 hover:underline">
-                Tratamiento de datos
-              </a>
-            </li>
-            <li>
-              <a href={`${sites.landing}/contenido-y-moderacion`} className="font-semibold text-ink underline-offset-2 hover:underline">
-                Contenido y moderación
-              </a>
-            </li>
           </ul>
         </nav>
       </div>

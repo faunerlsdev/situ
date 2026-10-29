@@ -66,7 +66,7 @@ public sealed class GetAppConfigHandler(IApplicationDbContext db, CaptchaPublicV
             new LegalLinksView(
                 Text(settings, SystemSettingKeys.LegalTermsUrl, "https://somossitu.com/terminos"),
                 Text(settings, SystemSettingKeys.LegalPrivacyUrl, "https://somossitu.com/privacidad"),
-                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://somossitu.com/soporte"),
+                Text(settings, SystemSettingKeys.LegalSupportUrl, "https://ayuda.somossitu.com/contacto"),
                 Text(settings, SystemSettingKeys.ModerationResponseCommitment, SystemSettingKeys.Defaults[SystemSettingKeys.ModerationResponseCommitment])),
             PanelCopies.Read(settings.GetValueOrDefault(SystemSettingKeys.PanelCopyByCountry)),
             GetMapRealtimeConfigHandler.Read(settings),

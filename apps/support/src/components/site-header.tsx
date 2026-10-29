@@ -8,7 +8,7 @@ import { BrandMark } from './brand-mark';
 const links = [
   { href: '/', label: 'Inicio' },
   { href: '/contacto', label: 'Contacto' },
-  { href: '/solicitudes', label: 'Solicitudes' },
+  { href: '/retiro-contenido', label: 'Retiro de contenido' },
 ] as const;
 
 export function SiteHeader() {

@@ -175,7 +175,7 @@ public static class SystemSettingKeys
         [ProfileAvatarMaxBytes] = "5242880",
         [LegalTermsUrl] = "https://somossitu.com/terminos",
         [LegalPrivacyUrl] = "https://somossitu.com/privacidad",
-        [LegalSupportUrl] = "https://somossitu.com/soporte",
+        [LegalSupportUrl] = "https://ayuda.somossitu.com/contacto",
         [ModerationResponseCommitment] = "Revisamos cada denuncia. Si el contenido afecta a un menor, lo ocultamos de inmediato. El resto lo atendemos en menos de 24 horas.",
         [PanelCopyByCountry] = "[]",
         [MapCellDegrees] = "0.05",

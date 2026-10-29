@@ -15,8 +15,6 @@ export type LegalDocument = {
 export const publicLegalPages = [
   { slug: 'terminos', path: '/terminos' },
   { slug: 'privacidad', path: '/privacidad' },
-  { slug: 'politica-de-tratamiento-de-datos', path: '/politica-de-tratamiento-de-datos' },
-  { slug: 'contenido-y-moderacion', path: '/contenido-y-moderacion' },
 ] as const;
 
 export function domainRoot(value = process.env.DOMAIN_ROOT) {
@@ -31,8 +29,6 @@ export function publicSiteUrls(root = domainRoot()) {
     help: `https://ayuda.${root}`,
     termsUrl: `https://${root}/terminos`,
     privacyUrl: `https://${root}/privacidad`,
-    treatmentUrl: `https://${root}/politica-de-tratamiento-de-datos`,
-    moderationUrl: `https://${root}/contenido-y-moderacion`,
     supportUrl: `https://ayuda.${root}/contacto`,
     deleteAccountUrl: `https://app.${root}/cuenta/eliminar`,
     supportEmail: `soporte@${root}`,

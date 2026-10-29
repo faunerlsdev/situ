@@ -35,7 +35,7 @@ public class RegisterUserHandlerTests
         {
             Assert.Equal(user.Id, consent.UserId);
             Assert.Equal(ConsentMethod.Registration, consent.Method);
-            Assert.Equal("2026-01", consent.Version);
+            Assert.Equal("2026-10-29", consent.Version);
             Assert.Equal("127.0.0.1", consent.IpAddress);
         });
         Assert.Contains(consents, consent => consent.DocumentType == LegalDocumentType.TermsOfUse);

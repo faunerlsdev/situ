@@ -15,7 +15,7 @@ export default function ContactPage() {
   return (
     <section className="mx-auto w-full max-w-xl px-5 py-12">
       <h1 className="font-display text-5xl">Contacto</h1>
-      <p className="mt-3 text-gray600">Escríbenos si no encontraste la respuesta en los artículos.</p>
+      <p className="mt-3 text-gray600">Este es el formulario de consultas y reclamos de privacidad. También puedes escribirnos si no encontraste la respuesta en los artículos.</p>
       <p className="mt-4 text-gray600">
         Correo: <a className="font-semibold text-ink underline-offset-2 hover:underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>
       </p>

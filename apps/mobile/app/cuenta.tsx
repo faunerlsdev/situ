@@ -16,7 +16,7 @@ import { theme } from '@/theme/theme';
 const fallbackLegal = {
   termsUrl: 'https://somossitu.com/terminos',
   privacyPolicyUrl: 'https://somossitu.com/privacidad',
-  supportUrl: 'https://somossitu.com/soporte',
+  supportUrl: 'https://ayuda.somossitu.com/contacto',
   responseCommitment: '',
 };
 

@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@situ/shared'],
   agentRules: false,
+  async redirects() {
+    return [{ source: '/solicitudes', destination: '/retiro-contenido', statusCode: 301 }];
+  },
 };
 
 export default nextConfig;

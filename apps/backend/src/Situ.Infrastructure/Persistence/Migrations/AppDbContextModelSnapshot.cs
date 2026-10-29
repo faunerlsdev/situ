@@ -891,7 +891,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Description = "URL de soporte.",
                             Key = "legal.support_url",
-                            Value = "https://somossitu.com/soporte"
+                            Value = "https://ayuda.somossitu.com/contacto"
                         },
                         new
                         {
@@ -3139,8 +3139,8 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Locale = "es-CO",
                             PublishedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Type = "TermsOfUse",
-                            Url = "https://situ.local/legal/terminos",
-                            Version = "2026-01"
+                            Url = "https://somossitu.com/terminos",
+                            Version = "2026-10-29"
                         },
                         new
                         {
@@ -3151,8 +3151,8 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Locale = "es-CO",
                             PublishedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Type = "PrivacyPolicy",
-                            Url = "https://situ.local/legal/privacidad",
-                            Version = "2026-01"
+                            Url = "https://somossitu.com/privacidad",
+                            Version = "2026-10-29"
                         });
                 });
 

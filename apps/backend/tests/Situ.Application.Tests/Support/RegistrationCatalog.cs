@@ -79,9 +79,9 @@ internal static class RegistrationCatalog
         var otherRegion = Region.Create(country.Id, "Antioquia", "05");
         var otherCity = City.Create(otherRegion.Id, country.Id, "Medellín", new GeoPoint(6.244, -75.581), "America/Bogota");
         var terms = LegalDocument.Publish(
-            LegalDocumentType.TermsOfUse, country.Id, "es-CO", "2026-01", "https://situ.local/legal/terminos", Now);
+            LegalDocumentType.TermsOfUse, country.Id, "es-CO", "2026-10-29", "https://somossitu.com/terminos", Now);
         var privacy = LegalDocument.Publish(
-            LegalDocumentType.PrivacyPolicy, country.Id, "es-CO", "2026-01", "https://situ.local/legal/privacidad", Now);
+            LegalDocumentType.PrivacyPolicy, country.Id, "es-CO", "2026-10-29", "https://somossitu.com/privacidad", Now);
 
         db.AddRange(country, region, city, otherRegion, otherCity, terms, privacy);
         await db.SaveChangesAsync();
