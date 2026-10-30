@@ -391,6 +391,55 @@ public class LiveFlowTests
         Assert.Equal(ContentTargetType.LiveStream, (await db.Complaints.SingleAsync()).TargetType);
     }
 
+    [Fact]
+    public async Task Reporting_an_ended_stream_is_accepted()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var owner = await PersonAsync(db, clock, 30, "owner-ended@situ.test", "duenoended");
+        var viewer = await PersonAsync(db, clock, 29, "viewer-ended@situ.test", "miraended");
+        var created = await new CreateLiveHandler(db, clock, Options()).Handle(
+            new CreateLiveRequest(owner.Id, "Public", "Público", null, null, null),
+            CancellationToken.None);
+        var stream = await db.LiveStreams.SingleAsync();
+        Assert.True(stream.AcceptPublishKey(stream.PublishKeyHash!, Now));
+        Assert.True(stream.MarkLive(Now));
+        stream.End("live/ended-recording", Now);
+        await db.SaveChangesAsync();
+
+        var filed = await new ReportLiveHandler(db, clock, new FileComplaintHandler(db, clock)).Handle(
+            new ReportLiveRequest(viewer.Id, created.Value!.Id, ComplaintReason.Harassment, "Sigue visible"),
+            CancellationToken.None);
+
+        Assert.True(filed.IsSuccess);
+        Assert.Equal(ContentTargetType.LiveStream, (await db.Complaints.SingleAsync()).TargetType);
+    }
+
+    [Fact]
+    public async Task Reporting_a_stream_is_rejected_when_the_viewer_blocked_the_streamer()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var owner = await PersonAsync(db, clock, 30, "owner-block@situ.test", "duenoblock");
+        var viewer = await PersonAsync(db, clock, 29, "viewer-block@situ.test", "mirablock");
+        var created = await new CreateLiveHandler(db, clock, Options()).Handle(
+            new CreateLiveRequest(owner.Id, "Public", "Público", null, null, null),
+            CancellationToken.None);
+        var stream = await db.LiveStreams.SingleAsync();
+        Assert.True(stream.AcceptPublishKey(stream.PublishKeyHash!, Now));
+        Assert.True(stream.MarkLive(Now));
+        db.UserBlocks.Add(UserBlock.CreateFull(viewer.Id, owner.Id, Now));
+        await db.SaveChangesAsync();
+
+        var filed = await new ReportLiveHandler(db, clock, new FileComplaintHandler(db, clock)).Handle(
+            new ReportLiveRequest(viewer.Id, created.Value!.Id, ComplaintReason.Spam, null),
+            CancellationToken.None);
+
+        Assert.True(filed.IsFailure);
+        Assert.Equal("live.not_found", filed.Error!.Code);
+        Assert.Empty(db.Complaints);
+    }
+
     private sealed class UnusedAuthorize : IHandler<AuthorizeLiveRequest, Result>
     {
         public Task<Result> Handle(AuthorizeLiveRequest request, CancellationToken cancellationToken) =>

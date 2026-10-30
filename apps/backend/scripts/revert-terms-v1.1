@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Puts terms 2026-10-29 back as the active version and points the landing at v1.0.
+# Restores the lawyer note in the v1.1 draft. Does not deploy.
+set -euo pipefail
+
+if [[ "${SITU_CONFIRM_TERMS_V11:-}" != "revert" ]]; then
+  echo "Esto revierte la base del API y los archivos de la landing." >&2
+  echo "Para continuar: SITU_CONFIRM_TERMS_V11=revert bash apps/backend/scripts/revert-terms-v1.1" >&2
+  exit 1
+fi
+
+root="$(cd "$(dirname "$0")/../../.." && pwd)"
+dotnet run --project "$root/apps/backend/src/Situ.Api" -- terms:revert-v1.1
+
+python3 - "$root" <<'PY'
+import pathlib, sys
+root = pathlib.Path(sys.argv[1])
+terms = root / "docs/legal/terminos-situ-v1.1.md"
+text = terms.read_text()
+marker = "<!-- PENDIENTE REVISIÓN DEL ABOGADO -->"
+heading = "### 20.X Tolerancia cero"
+if marker not in text and heading in text:
+    text = text.replace(heading, marker + "\n\n" + heading, 1)
+    terms.write_text(text)
+policy = root / "apps/landing/src/lib/terms-policy.ts"
+policy.write_text(policy.read_text().replace("terminos-situ-v1.1.md", "terminos-situ-v1.0.md"))
+PY
+
+echo "Revertido en el código. La página pública vuelve a v1.0 al desplegar la landing."

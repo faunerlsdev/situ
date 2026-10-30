@@ -310,7 +310,7 @@ export default function WatchLiveScreen() {
       <VideoView style={styles.video} player={player} nativeControls contentFit="contain" allowsPictureInPicture={false} />
       <Text style={styles.status}>{playerNote ?? watchCopy(phase)}</Text>
       <Text style={styles.body}>Esta transmisión es anónima.</Text>
-      {phase === 'playing' || phase === 'offline' ? (
+      {phase === 'playing' || phase === 'offline' || phase === 'ended' ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => setComplaint(true)} style={styles.report}>
           <Text style={styles.reportLabel}>Denunciar</Text>
         </Pressable>

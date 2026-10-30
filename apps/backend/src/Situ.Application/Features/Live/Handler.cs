@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Interaction;
+using Situ.Application.Features.Moderation;
 using Situ.Application.Features.Interaction.Complaints;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Administration;
@@ -91,6 +92,11 @@ public sealed class CreateLiveHandler(
                 ? ReportSettings.Int(settings, SystemSettingKeys.LocationFriendPrecisionMeters, 25)
                 : ReportSettings.Int(settings, SystemSettingKeys.LocationPublicPrecisionMeters, 300);
             location = LiveLocation.Round(new GeoPoint(latitude, longitude), meters);
+        }
+
+        if (ContentFilter.Rejects(request.Title, await ContentFilterCatalog.TermsAsync(db, cancellationToken)))
+        {
+            return Result<CreateLiveResponse>.Failure(ContentFilter.Rejected("title"));
         }
 
         var path = LiveTokens.NewPath();
@@ -409,7 +415,7 @@ public sealed class ReportLiveHandler(IApplicationDbContext db, IClock clock, IH
         }
 
         var settings = await LiveRules.SettingsAsync(db, cancellationToken);
-        if (!await ListLiveHandler.VisibleAsync(db, viewer, stream, settings, clock.UtcNow, cancellationToken))
+        if (!await ListLiveHandler.VisibleAsync(db, viewer, stream, settings, clock.UtcNow, cancellationToken, liveOnly: false))
         {
             return Result<FileComplaintResponse>.Failure(LiveRules.NotFound());
         }

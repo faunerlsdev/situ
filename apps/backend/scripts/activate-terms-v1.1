@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Activates terms 1.1 in the database the API is configured to use, points the
+# landing page at docs/legal/terminos-situ-v1.1.md, and removes the lawyer note.
+# Does not deploy. The public page changes on the next landing release.
+set -euo pipefail
+
+if [[ "${SITU_CONFIRM_TERMS_V11:-}" != "activate" ]]; then
+  echo "Esto cambia la base del API y los archivos de la landing." >&2
+  echo "Para continuar: SITU_CONFIRM_TERMS_V11=activate bash apps/backend/scripts/activate-terms-v1.1" >&2
+  exit 1
+fi
+
+root="$(cd "$(dirname "$0")/../../.." && pwd)"
+dotnet run --project "$root/apps/backend/src/Situ.Api" -- terms:activate-v1.1
+
+python3 - "$root" <<'PY'
+import pathlib, sys
+root = pathlib.Path(sys.argv[1])
+terms = root / "docs/legal/terminos-situ-v1.1.md"
+text = terms.read_text()
+text = text.replace("<!-- PENDIENTE REVISIÓN DEL ABOGADO -->\n\n", "")
+text = text.replace("<!-- PENDIENTE REVISIÓN DEL ABOGADO -->\n", "")
+terms.write_text(text)
+policy = root / "apps/landing/src/lib/terms-policy.ts"
+policy.write_text(policy.read_text().replace("terminos-situ-v1.0.md", "terminos-situ-v1.1.md"))
+PY
+
+echo "Listo en el código. La página pública cambia al desplegar la landing."

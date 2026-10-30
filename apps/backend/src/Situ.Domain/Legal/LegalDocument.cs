@@ -59,5 +59,7 @@ public sealed class LegalDocument : AuditableEntity
         return document;
     }
 
+    public void Activate() => IsActive = true;
+
     public void Retire() => IsActive = false;
 }
