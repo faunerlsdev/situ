@@ -15,6 +15,7 @@ export type LegalDocument = {
 export const publicLegalPages = [
   { slug: 'terminos', path: '/terminos' },
   { slug: 'privacidad', path: '/privacidad' },
+  { slug: 'seguridad-infantil', path: '/seguridad-infantil' },
 ] as const;
 
 export function domainRoot(value = process.env.DOMAIN_ROOT) {

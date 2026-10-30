@@ -11,7 +11,7 @@ const landingRoot = path.resolve(__dirname, '../..');
 
 describe('documentos legales', () => {
   it('publica términos y privacidad, sin páginas en revisión', () => {
-    expect(publicLegalPages.map((page) => page.path)).toEqual(['/terminos', '/privacidad']);
+    expect(publicLegalPages.map((page) => page.path)).toEqual(['/terminos', '/privacidad', '/seguridad-infantil']);
   });
 
   it('arma las URLs públicas con DOMAIN_ROOT', () => {

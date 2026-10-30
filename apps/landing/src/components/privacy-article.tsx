@@ -1,12 +1,20 @@
 import type { ReactNode } from 'react';
 import type { PrivacyBlock, PrivacyDocument } from '@/lib/privacy-policy';
 
-export function PrivacyArticle({ document }: { document: PrivacyDocument }) {
+export function PrivacyArticle({
+  document,
+  id,
+  extraLinks = [],
+}: {
+  document: PrivacyDocument;
+  id?: string;
+  extraLinks?: { href: string; label: string }[];
+}) {
   return (
-    <article className="mx-auto w-full max-w-3xl px-5 py-16">
+    <article id={id} className="mx-auto w-full max-w-3xl scroll-mt-6 px-5 py-16">
       <h1 className="font-display text-4xl leading-tight sm:text-5xl">{document.title}</h1>
       <div className="mt-6 space-y-4 leading-8 text-gray600">{document.intro.map((block, index) => renderBlock(block, `intro-${index}`))}</div>
-      {document.sections.length > 0 ? (
+      {document.sections.length > 0 || extraLinks.length > 0 ? (
         <nav aria-label="Contenido" className="mt-10 rounded-3xl border border-gray200 bg-white p-5">
           <p className="font-display text-2xl text-ink">Contenido</p>
           <ol className="mt-4 space-y-2 text-sm">
@@ -14,6 +22,13 @@ export function PrivacyArticle({ document }: { document: PrivacyDocument }) {
               <li key={section.id}>
                 <a href={`#${section.id}`} className="font-semibold text-ink underline-offset-2 hover:underline">
                   {section.title}
+                </a>
+              </li>
+            ))}
+            {extraLinks.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} className="font-semibold text-ink underline-offset-2 hover:underline">
+                  {link.label}
                 </a>
               </li>
             ))}

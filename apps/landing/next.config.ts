@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/privacidad': ['../../docs/legal/politica-privacidad-situ-v1.1.md'],
     '/terminos': ['../../docs/legal/terminos-situ-v1.0.md'],
+    '/seguridad-infantil': ['../../docs/legal/seguridad-infantil-situ.md'],
   },
 };
 

@@ -5,6 +5,7 @@ export function SiteFooter() {
   const links = [
     { href: '/privacidad', label: 'Privacidad' },
     { href: '/terminos', label: 'Términos' },
+    { href: '/seguridad-infantil', label: 'Seguridad infantil' },
     { href: sites.supportUrl, label: 'Soporte' },
     { href: sites.deleteAccountUrl, label: 'Eliminar cuenta' },
   ];
