@@ -7,6 +7,7 @@ using Situ.Domain.Administration;
 using Situ.Domain.Social;
 using Situ.Domain.Common;
 using Situ.Domain.Identity;
+using Situ.Domain.Profiles;
 using Situ.Domain.Reports;
 using Situ.Domain.Retention;
 
@@ -196,6 +197,33 @@ public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IC
             host.SetReactionCount(Math.Max(0, host.ReactionCount - removed));
         }
 
+        var streams = await db.LiveStreams.Where(item => item.StreamerId == userId).ToListAsync(cancellationToken);
+        var streamIds = streams.Select(item => item.Id).ToList();
+        foreach (var stream in streams)
+        {
+            if (!string.IsNullOrWhiteSpace(stream.RecordingKey))
+            {
+                await files.DeleteAsync(stream.RecordingKey, cancellationToken);
+            }
+
+            stream.ForgetSavedReport();
+        }
+
+        if (streamIds.Count > 0)
+        {
+            var sourced = await db.Reports
+                .Where(item => item.SourceLiveStreamId != null && streamIds.Contains(item.SourceLiveStreamId.Value))
+                .ToListAsync(cancellationToken);
+            foreach (var sourcedReport in sourced)
+            {
+                sourcedReport.ForgetSourceLive();
+            }
+        }
+
+        db.LiveViewers.RemoveRange(await db.LiveViewers.Where(item => item.UserId == userId || streamIds.Contains(item.LiveStreamId)).ToListAsync(cancellationToken));
+        db.LiveViewerSessions.RemoveRange(await db.LiveViewerSessions.Where(item => streamIds.Contains(item.LiveStreamId)).ToListAsync(cancellationToken));
+        db.LiveStreams.RemoveRange(streams);
+
         var media = await db.ReportMedias.Where(item => item.OwnerUserId == userId || (item.ReportId != null && reportIds.Contains(item.ReportId.Value))).ToListAsync(cancellationToken);
         foreach (var file in media)
         {
@@ -214,7 +242,7 @@ public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IC
             host?.RemoveComment();
         }
 
-        db.Comments.RemoveRange(await db.Comments.Where(item => commentIds.Contains(item.Id) || item.AuthorId == userId).ToListAsync(cancellationToken));
+        db.Comments.RemoveRange(await db.Comments.Where(item => commentIds.Contains(item.Id) || item.AuthorId == userId || (item.TargetType == ContentTargetType.LiveStream && streamIds.Contains(item.TargetId))).ToListAsync(cancellationToken));
         db.Reactions.RemoveRange(await db.Reactions.Where(item => item.UserId == userId || (item.TargetType == ContentTargetType.Report && reportIds.Contains(item.TargetId)) || (item.TargetType == ContentTargetType.Comment && commentIds.Contains(item.TargetId))).ToListAsync(cancellationToken));
         db.ReportConfirmations.RemoveRange(await db.ReportConfirmations.Where(item => item.UserId == userId || reportIds.Contains(item.ReportId)).ToListAsync(cancellationToken));
         db.Reports.RemoveRange(await db.Reports.Where(item => reportIds.Contains(item.Id)).ToListAsync(cancellationToken));
@@ -240,6 +268,11 @@ public sealed class CompleteAccountDeletionsHandler(IApplicationDbContext db, IC
         db.LoginAttempts.RemoveRange(await db.LoginAttempts.Where(item => item.UserId == userId || item.EmailAttempted == email).ToListAsync(cancellationToken));
         db.DataExportRequests.RemoveRange(await db.DataExportRequests.Where(item => item.UserId == userId).ToListAsync(cancellationToken));
         var profile = await db.UserProfiles.FirstOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        if (profile is { AvatarKind: AvatarKind.Custom, AvatarUrl: { } avatarKey } && avatarKey.StartsWith("avatars/", StringComparison.Ordinal))
+        {
+            await files.DeleteAsync(avatarKey, cancellationToken);
+        }
+
         profile?.Erase(now);
         user.CompleteDeletion(now);
     }

@@ -270,6 +270,9 @@ public sealed class LiveStream : AggregateRoot
         Raise(new LiveStreamCutEvent(Id, StreamerId, reason));
     }
 
+    /// <summary>Drops the saved-report link so the account-deletion job can remove the stream and the report.</summary>
+    public void ForgetSavedReport() => ReportId = null;
+
     /// <summary>Publishes the saved recording as a report. It expires with the recording.</summary>
     public void SaveAsReport(Guid reportId, DateTimeOffset now)
     {

@@ -54,6 +54,14 @@ export function parsePrivacyPolicy(
       index += 1;
       continue;
     }
+    if (line.trim().startsWith('<!--')) {
+      if (!line.includes('-->')) {
+        index += 1;
+        while (index < lines.length && !(lines[index] ?? '').includes('-->')) index += 1;
+      }
+      index += 1;
+      continue;
+    }
     if (line.startsWith('# ')) {
       title = line.slice(2).trim();
       index += 1;

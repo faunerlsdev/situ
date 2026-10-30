@@ -162,6 +162,9 @@ public sealed class Report : AggregateRoot
         Raise(new ReportBecameImportantEvent(Id, CategoryId, CityId, Location));
     }
 
+    /// <summary>Drops the link to a live stream that is about to be deleted with its author.</summary>
+    public void ForgetSourceLive() => SourceLiveStreamId = null;
+
     public void Expire(DateTimeOffset now)
     {
         if (Status != ReportStatus.Active)

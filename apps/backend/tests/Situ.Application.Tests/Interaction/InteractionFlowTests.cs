@@ -14,6 +14,7 @@ using Situ.Domain.Common;
 using Situ.Domain.Geography;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
+using Situ.Domain.Live;
 using Situ.Domain.Moderation;
 using Situ.Domain.News;
 using Situ.Domain.Notifications;
@@ -431,7 +432,41 @@ public class InteractionFlowTests
         db.ReportMedias.Add(media);
         var profile = UserProfile.CreateDefault(user.Id, "Ana");
         profile.MarkCreated(Now);
+        profile.UseCustomAvatar("avatars/custom.jpg");
         db.UserProfiles.Add(profile);
+        var other = await UserAsync(db, clock, 30, "other-erase@situ.test", "othererase");
+        var stream = LiveStream.Schedule(
+            user.Id,
+            16,
+            true,
+            null,
+            user.CityId,
+            new GeoPoint(4.711, -74.072),
+            "Centro",
+            ContentVisibility.FriendsOnly,
+            "erase-live",
+            "hash",
+            Now.AddHours(2),
+            Now);
+        Assert.True(stream.AcceptPublishKey("hash", Now));
+        Assert.True(stream.MarkLive(Now));
+        stream.End("live/recording", Now);
+        var linked = Report.Create(
+            user.Id,
+            report.CategoryId,
+            user.CityId,
+            new GeoPoint(4.711, -74.072),
+            "Grabación del centro.",
+            false,
+            true,
+            TimeSpan.FromHours(2),
+            Now,
+            stream.Id);
+        stream.SaveAsReport(linked.Id, Now);
+        db.LiveStreams.Add(stream);
+        db.Reports.Add(linked);
+        db.LiveViewers.Add(LiveViewer.Join(stream.Id, other.Id, Now));
+        db.UserBlocks.Add(UserBlock.CreateFull(user.Id, other.Id, Now));
         await db.SaveChangesAsync();
         var files = new MemoryFiles();
         var mail = new FakeEmailSender();
@@ -465,9 +500,20 @@ public class InteractionFlowTests
         Assert.Equal("Cuenta eliminada", profile.DisplayName);
         Assert.Equal("erased", user.PasswordHash);
         Assert.Empty(db.Reports);
+        Assert.Empty(db.LiveStreams);
+        Assert.Empty(db.LiveViewers);
+        Assert.Empty(db.UserBlocks);
         Assert.Empty(db.UserDevices);
         Assert.Empty(db.DeviceAlertLocations);
-        Assert.Equal(new[] { "media/original", "media/thumb" }, files.Deleted);
+        Assert.Null(user.Phone);
+        Assert.Equal(new DateOnly(2000, 1, 1), user.DateOfBirth);
+        Assert.Equal("Eliminado", user.GivenNames.Value);
+        Assert.Equal("Eliminado", user.Surnames.Value);
+        Assert.Null(profile.AvatarUrl);
+        Assert.Contains("media/original", files.Deleted);
+        Assert.Contains("media/thumb", files.Deleted);
+        Assert.Contains("live/recording", files.Deleted);
+        Assert.Contains("avatars/custom.jpg", files.Deleted);
         Assert.NotNull(await db.GuardianConsents.FirstOrDefaultAsync(item => item.Id == consent.Id));
         Assert.Contains(db.AuditLogs, item => item.Action == "account_deletion.completed");
     }

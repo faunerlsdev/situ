@@ -171,6 +171,7 @@ export const feedbackMessages = {
   blockedEmpty: 'No tienes a nadie bloqueado.',
   underReview: 'En revisión',
   underReviewHelp: 'Recibimos denuncias y lo estamos revisando. Mientras tanto sigue visible para ti.',
+  interestCity: 'Ciudad de interés (opcional): te mostramos primero lo que pasa ahí',
   deleteAccountTitle: 'Eliminar mi cuenta',
   deleteAccountBody: 'Vamos a borrar tus datos, reportes, comentarios, fotos y videos. Conservamos los registros de auditoría y de autorización porque la ley nos lo pide. Tienes 14 días para arrepentirte. Al confirmar, cerramos la sesión en todos tus dispositivos.',
   deleteAccountConfirm: 'Esto programa el borrado. Puedes cancelarlo durante 14 días si vuelves a ingresar.',

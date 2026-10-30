@@ -90,6 +90,7 @@ internal static class CatalogSeed
     {
         modelBuilder.Entity<LegalDocument>().HasData(
             LegalDocumentRow(LegalDocumentType.TermsOfUse, "terminos", "https://somossitu.com/terminos"),
+            InactiveTermsV11(),
             LegalDocumentRow(LegalDocumentType.PrivacyPolicy, "privacidad", "https://somossitu.com/privacidad"));
     }
 
@@ -102,6 +103,24 @@ internal static class CatalogSeed
         Version = "2026-10-29",
         Url = url,
         IsActive = true,
+        PublishedAt = SeededAt,
+        CreatedAt = SeededAt,
+        UpdatedAt = (DateTimeOffset?)null,
+    };
+
+    /// <summary>
+    /// Prepared row for terms 1.1. Inactive, so registration still records version 2026-10-29
+    /// until this row is activated on purpose.
+    /// </summary>
+    private static object InactiveTermsV11() => new
+    {
+        Id = SeedId.For("legal:terminos:1.1"),
+        Type = LegalDocumentType.TermsOfUse,
+        CountryId = (Guid?)ColombiaId,
+        Locale = "es-CO",
+        Version = "1.1",
+        Url = "https://somossitu.com/terminos",
+        IsActive = false,
         PublishedAt = SeededAt,
         CreatedAt = SeededAt,
         UpdatedAt = (DateTimeOffset?)null,

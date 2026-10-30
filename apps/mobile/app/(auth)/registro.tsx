@@ -1,5 +1,5 @@
 import type { City, Country, LegalDocument, Region } from '@situ/shared';
-import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, messageFromUnknown, notify, phonePurpose, registerSchema } from '@situ/shared';
+import { adultAge, ageInYears, callingCodes, composeDateOfBirth, composePhone, feedbackMessages, messageFromUnknown, notify, phonePurpose, registerSchema } from '@situ/shared';
 import type { RegisterValues } from '@situ/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useRouter } from 'expo-router';
@@ -180,7 +180,7 @@ export default function RegisterScreen() {
     const years = dateOfBirth ? ageInYears(dateOfBirth) : null;
     const needsGuardian = years !== null && years < adultAge;
     if (!dateOfBirth || documents.length === 0) {
-      notify.warning('Completa el lugar y acepta los documentos legales.');
+      notify.warning('Revisa la fecha de nacimiento y acepta los documentos legales.');
       return;
     }
 
@@ -196,8 +196,8 @@ export default function RegisterScreen() {
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
-        regionId: values.regionId,
-        cityId: values.cityId,
+        regionId: values.regionId || null,
+        cityId: values.cityId || null,
         acceptedDocumentIds: documents.map((document) => document.id),
         guardianEmail: needsGuardian ? values.guardianEmail.trim() : undefined,
         minorNoticeAccepted: needsGuardian ? values.minorNoticeAccepted : false,
@@ -289,7 +289,7 @@ export default function RegisterScreen() {
           control={form.control}
           name="phone"
           render={({ field }) => (
-            <WideField value={field.value} onChangeText={field.onChange} placeholder="Teléfono" accessibilityLabel="Teléfono" autoComplete="tel" textContentType="telephoneNumber" keyboardType="phone-pad" />
+            <WideField value={field.value} onChangeText={field.onChange} placeholder="Celular (opcional)" accessibilityLabel="Celular, opcional" autoComplete="tel" textContentType="telephoneNumber" keyboardType="phone-pad" />
           )}
         />
         <Text style={styles.hint}>{phonePurpose}</Text>
@@ -335,6 +335,7 @@ export default function RegisterScreen() {
           onChange={(id) => form.setValue('countryId', id, { shouldValidate: true })}
         />
         {form.formState.errors.countryId?.message ? <Text style={styles.fieldError}>{form.formState.errors.countryId.message}</Text> : null}
+        <Text style={styles.label}>{feedbackMessages.interestCity}</Text>
         <SelectField
           label={selectedCountry?.regionLabel ?? 'Departamento'}
           value={regionId}
@@ -353,7 +354,7 @@ export default function RegisterScreen() {
           onChange={(id) => form.setValue('cityId', id, { shouldValidate: true })}
         />
         {form.formState.errors.cityId?.message ? <Text style={styles.fieldError}>{form.formState.errors.cityId.message}</Text> : null}
-        <Text style={styles.label}>Fecha de nacimiento</Text>
+        <Text style={styles.label}>Fecha de nacimiento. La usamos para verificar la edad mínima.</Text>
         <View style={styles.dateRow}>
           <Controller control={form.control} name="day" render={({ field }) => (
             <DateBox value={field.value} onChangeText={field.onChange} onFocus={focusLowerField} onBlur={blurLowerField} placeholder="Día" accessibilityLabel="Día" />

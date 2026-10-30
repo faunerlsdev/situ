@@ -2773,7 +2773,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid>("CityId")
+                    b.Property<Guid?>("CityId")
                         .HasColumnType("uuid")
                         .HasColumnName("city_id");
 
@@ -2857,7 +2857,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("phone");
 
-                    b.Property<Guid>("RegionId")
+                    b.Property<Guid?>("RegionId")
                         .HasColumnType("uuid")
                         .HasColumnName("region_id");
 
@@ -3141,6 +3141,18 @@ namespace Situ.Infrastructure.Persistence.Migrations
                             Type = "TermsOfUse",
                             Url = "https://somossitu.com/terminos",
                             Version = "2026-10-29"
+                        },
+                        new
+                        {
+                            Id = new Guid("7ad39d3f-9848-4e1a-d5b4-d37731f778ba"),
+                            CountryId = new Guid("64ad145f-12fa-a01d-eb52-19e907a31ad2"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            IsActive = false,
+                            Locale = "es-CO",
+                            PublishedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Type = "TermsOfUse",
+                            Url = "https://somossitu.com/terminos",
+                            Version = "1.1"
                         },
                         new
                         {
@@ -6799,7 +6811,6 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CityId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_users_city_id");
 
                     b.HasOne("Situ.Domain.Geography.Country", null)
@@ -6813,7 +6824,6 @@ namespace Situ.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("RegionId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_users_region_id");
                 });
 

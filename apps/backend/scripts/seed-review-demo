@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Creates two App Review accounts and sample content near Bogotá.
+# Does not print the passwords. Do not point the API configuration at production
+# unless that was confirmed.
+set -euo pipefail
+
+if [[ -z "${SITU_REVIEW_DEMO_PASSWORD:-}" || -z "${SITU_REVIEW_DELETE_PASSWORD:-}" ]]; then
+  echo "Define SITU_REVIEW_DEMO_PASSWORD y SITU_REVIEW_DELETE_PASSWORD." >&2
+  exit 1
+fi
+
+root="$(cd "$(dirname "$0")/../../.." && pwd)"
+dotnet run --project "$root/apps/backend/src/Situ.Api" -- review:seed-demo

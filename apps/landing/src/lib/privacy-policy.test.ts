@@ -103,4 +103,14 @@ describe('política de privacidad', () => {
       server.kill('SIGTERM');
     }
   }, 30_000);
+
+  it('no muestra un comentario HTML del documento', () => {
+    const document = parsePrivacyPolicy(
+      '# Título\n\n<!-- PENDIENTE REVISIÓN DEL ABOGADO -->\n\n## 1. Sección\n\nTexto visible.',
+      legalIdentity,
+    );
+    const html = renderToStaticMarkup(createElement(PrivacyArticle, { document }));
+    expect(html).not.toContain('PENDIENTE');
+    expect(html).toContain('Texto visible.');
+  });
 });

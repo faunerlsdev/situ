@@ -4,6 +4,7 @@ import { legalIdentity, type LegalIdentity } from '../../config/legal-identity';
 import { fillTerminos } from '../../../../scripts/legal/fill-terminos.mjs';
 import { headingId, parsePrivacyPolicy, type PrivacyDocument } from './privacy-policy';
 
+// v1.1 lives at docs/legal/terminos-situ-v1.1.md and stays off this page until that version is activated.
 export const termsSourcePath = path.join(process.cwd(), '../../docs/legal/terminos-situ-v1.0.md');
 
 export function termsSectionId(title: string) {
