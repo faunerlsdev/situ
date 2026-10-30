@@ -16,9 +16,26 @@ const microphone =
 
 const faceId = 'SITU usa Face ID para desbloquear tu sesión en este dispositivo.';
 
+const collected = (type) => ({
+  NSPrivacyCollectedDataType: type,
+  NSPrivacyCollectedDataTypeLinked: true,
+  NSPrivacyCollectedDataTypeTracking: false,
+  NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+});
+
 const privacyManifests = {
   NSPrivacyTracking: false,
-  NSPrivacyCollectedDataTypes: [],
+  NSPrivacyCollectedDataTypes: [
+    collected('NSPrivacyCollectedDataTypePreciseLocation'),
+    collected('NSPrivacyCollectedDataTypeCoarseLocation'),
+    collected('NSPrivacyCollectedDataTypeName'),
+    collected('NSPrivacyCollectedDataTypeEmailAddress'),
+    collected('NSPrivacyCollectedDataTypePhoneNumber'),
+    collected('NSPrivacyCollectedDataTypePhotosorVideos'),
+    collected('NSPrivacyCollectedDataTypeUserID'),
+    collected('NSPrivacyCollectedDataTypeOtherUserContent'),
+    collected('NSPrivacyCollectedDataTypeProductInteraction'),
+  ],
   NSPrivacyAccessedAPITypes: [
     {
       NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',

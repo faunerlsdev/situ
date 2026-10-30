@@ -1,6 +1,7 @@
 import {
   absoluteMediaUrl,
   alertModal,
+  confirm,
   AppError,
   classifyWriteError,
   asNumber,
@@ -273,13 +274,16 @@ export function MapScreen() {
   async function allowLocation() {
     const permission = await Location.requestForegroundPermissionsAsync();
     if (!permission.granted) {
-      await alertModal({
+      const openSettings = await confirm({
         title: feedbackMessages.locationDeniedTitle,
         message: feedbackMessages.locationDeniedBody,
         type: 'warning',
-        buttonText: feedbackMessages.openSettings,
+        confirmText: feedbackMessages.openSettings,
+        cancelText: 'Ahora no',
       });
-      await Linking.openSettings();
+      if (openSettings) {
+        await Linking.openSettings();
+      }
       move(homeRef.current, false);
       setGate('ready');
       return;

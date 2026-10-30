@@ -12,6 +12,18 @@ public static class ResultHttpExtensions
 
     private static IResult Problem(Error error)
     {
+        if (error.Type == ErrorType.Validation
+            && error.Extensions.TryGetValue("field", out var field)
+            && field is string name
+            && name.Length > 0)
+        {
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]> { [name] = [error.Message] },
+                detail: error.Message,
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                extensions: new Dictionary<string, object?> { ["code"] = error.Code });
+        }
+
         var status = StatusCode(error.Type);
         var extensions = new Dictionary<string, object?> { ["code"] = error.Code };
         foreach (var (key, value) in error.Extensions)

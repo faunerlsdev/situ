@@ -439,7 +439,16 @@ function presentWriteError(
   setRetryAt: (value: string | null) => void,
   retry: () => void,
 ) {
-  const failure = classifyWriteError(error instanceof AppError ? error : { code: 'NETWORK' });
+  const failure = classifyWriteError(
+    error instanceof AppError
+      ? {
+          code: error.code,
+          apiCode: error.apiCode,
+          retryAfter: error.retryAfter,
+          userMessage: error.fieldErrors?.text ?? error.userMessage,
+        }
+      : { code: 'NETWORK' },
+  );
   if (failure.kind === 'inline') {
     setInline(failure.message);
     return;

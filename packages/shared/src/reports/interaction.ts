@@ -98,7 +98,10 @@ export type WriteFailure =
   | { kind: 'network' }
   | { kind: 'toast'; message: string };
 
-export function classifyWriteError(error: { code?: string; apiCode?: string; retryAfter?: string }, now = Date.now()): WriteFailure {
+export function classifyWriteError(
+  error: { code?: string; apiCode?: string; retryAfter?: string; userMessage?: string },
+  now = Date.now(),
+): WriteFailure {
   if (error.code === 'NETWORK' || error.code === 'TIMEOUT') {
     return { kind: 'network' };
   }
@@ -120,7 +123,7 @@ export function classifyWriteError(error: { code?: string; apiCode?: string; ret
   }
 
   if (error.code === 'VALIDATION') {
-    return { kind: 'inline', message: feedbackMessages.commentInvalid };
+    return { kind: 'inline', message: error.userMessage?.trim() || feedbackMessages.commentInvalid };
   }
 
   const known = error.apiCode ? apiMessages[error.apiCode] : undefined;

@@ -76,7 +76,9 @@ public sealed class ProductDecisionTests
         Assert.Null((await db.Users.SingleAsync(item => item.Id == optional.Value!.UserId)).Phone);
 
         var adultEmpty = RegistrationCatalog.Request(catalog, 30, email: "sin@situ.test") with { UserName = "sin", Phone = "" };
-        Assert.Equal("phone.invalid", (await register.Handle(adultEmpty, CancellationToken.None)).Error!.Code);
+        var adultOptional = await register.Handle(adultEmpty, CancellationToken.None);
+        Assert.True(adultOptional.IsSuccess);
+        Assert.Null((await db.Users.SingleAsync(item => item.Id == adultOptional.Value!.UserId)).Phone);
 
         var leaked = "999000111";
         var invalid = await register.Handle(first with { Email = "mala@situ.test", UserName = "mala", Phone = leaked }, CancellationToken.None);

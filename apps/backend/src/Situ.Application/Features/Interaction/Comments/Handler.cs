@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Moderation;
 using Situ.Application.Features.Profiles;
 using Situ.Application.Features.Reports;
 using Situ.Domain.Anonymity;
@@ -84,9 +85,9 @@ public sealed class AddCommentHandler(IApplicationDbContext db, IClock clock)
         }
 
         var publicationSettings = await ReportSettings.LoadAsync(db, cancellationToken);
-        if (ProfileRules.ContainsBlocked(request.Text, ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms)))
+        if (ContentFilter.Rejects(request.Text, ContentFilterCatalog.Merge(ContentFilterCatalog.Current(), ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms))))
         {
-            return Result<AddCommentResponse>.Failure(ProfileRules.PublicationRejected());
+            return Result<AddCommentResponse>.Failure(ContentFilter.Rejected("text"));
         }
 
         var comment = Comment.Create(
@@ -237,9 +238,9 @@ public sealed class EditCommentHandler(IApplicationDbContext db, IClock clock)
         }
 
         var publicationSettings = await ReportSettings.LoadAsync(db, cancellationToken);
-        if (ProfileRules.ContainsBlocked(request.Text, ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms)))
+        if (ContentFilter.Rejects(request.Text, ContentFilterCatalog.Merge(ContentFilterCatalog.Current(), ProfileRules.List(publicationSettings, Domain.Administration.SystemSettingKeys.ProfileBlockedTerms))))
         {
-            return Result<EditCommentResponse>.Failure(ProfileRules.PublicationRejected());
+            return Result<EditCommentResponse>.Failure(ContentFilter.Rejected("text"));
         }
 
         try

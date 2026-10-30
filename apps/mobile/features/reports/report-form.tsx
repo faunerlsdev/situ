@@ -472,7 +472,7 @@ async function handleSubmitError(
   }
   if (error.code === 'VALIDATION') {
     setErrors({
-      description: error.fieldErrors?.description ?? error.fieldErrors?.Description,
+      description: error.fieldErrors?.description ?? error.fieldErrors?.Description ?? (error.apiCode === 'content.not_allowed' ? error.userMessage : undefined),
       media: error.fieldErrors?.mediaIds ?? error.fieldErrors?.MediaIds ?? error.userMessage,
     });
     return;

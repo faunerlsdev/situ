@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'expo-router';
 import * as Location from 'expo-location';
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLiveRoster } from '@/features/live/roster';
@@ -93,7 +93,12 @@ export function WazeTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const config = useAppConfig();
-  const visible = tabs.filter((tab) => shellTabHrefs(socialTabsFrom(config.data)).includes(tab.href));
+  const visible = tabs.filter((tab) => {
+    if (Platform.OS === 'ios' && (tab.href === '/chisme' || tab.href === '/mensajes')) {
+      return false;
+    }
+    return shellTabHrefs(socialTabsFrom(config.data)).includes(tab.href);
+  });
 
   return (
     <View style={{ backgroundColor: theme.colors.surface, paddingBottom: insets.bottom }}>

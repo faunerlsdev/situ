@@ -1,0 +1,34 @@
+# Lista editable sin recompilar. Una palabra o frase por línea.
+# El API vuelve a leer el archivo cuando cambia su fecha de modificación.
+# Las líneas que empiezan por # se ignoran. Sin tildes: el filtro las quita al comparar.
+
+# Insultos
+puta
+puto
+mierda
+marica
+idiota
+imbecil
+estupido
+pendejo
+hijueputa
+gonorrea
+malparido
+nazi
+
+# Contenido sexual explícito
+porn
+porno
+xxx
+nudes
+onlyfans
+prostituta
+prostituto
+
+# Amenazas directas (frases, para no bloquear un reporte de un hecho)
+te voy a matar
+te mato
+los voy a matar
+te voy a violar
+te violo
+te voy a quebrar

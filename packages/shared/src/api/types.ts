@@ -86,8 +86,8 @@ export type RegisterRequest = {
   password: string;
   dateOfBirth: string;
   countryId: string;
-  regionId: string;
-  cityId: string;
+  regionId?: string | null;
+  cityId?: string | null;
   acceptedDocumentIds: string[];
   guardianEmail?: string;
   minorNoticeAccepted?: boolean;

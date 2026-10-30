@@ -36,8 +36,8 @@ export const registerSchema = z
     month: z.string().trim().min(1, 'Escribe el mes.'),
     year: z.string().trim().min(1, 'Escribe el año.'),
     countryId: z.string().min(1, 'Selecciona un país.'),
-    regionId: z.string().min(1, 'Selecciona un departamento.'),
-    cityId: z.string().min(1, 'Selecciona una ciudad.'),
+    regionId: z.string(),
+    cityId: z.string(),
     accepted: z.boolean().refine((value) => value, 'Debes aceptar los documentos legales vigentes.'),
     guardianEmail: z.string().trim(),
     minorNoticeAccepted: z.boolean(),
@@ -55,7 +55,7 @@ export const registerSchema = z
 
     const age = ageInYears(birth);
     const composed = value.phone ? composePhone(value.callingCode, value.phone) : '';
-    if ((value.phone === '' && (age === null || age >= adultAge)) || (value.phone !== '' && !isE164(composed))) {
+    if (value.phone !== '' && !isE164(composed)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['phone'],

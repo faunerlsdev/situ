@@ -60,6 +60,13 @@ describe('write error mapping', () => {
   it('treats a network failure as retryable without a new message', () => {
     expect(classifyWriteError({ code: 'NETWORK' })).toEqual({ kind: 'network' });
   });
+
+  it('shows the server text next to the field when the content filter rejects it', () => {
+    expect(classifyWriteError({ code: 'VALIDATION', apiCode: 'content.not_allowed', userMessage: 'Ese texto no se puede publicar.' })).toEqual({
+      kind: 'inline',
+      message: 'Ese texto no se puede publicar.',
+    });
+  });
 });
 
 describe('optimistic reactions', () => {

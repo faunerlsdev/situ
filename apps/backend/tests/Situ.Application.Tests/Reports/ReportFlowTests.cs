@@ -316,7 +316,7 @@ public class ReportFlowTests
         var category = Category("accidente_transito", MediaRequirement.None, false, 90);
         db.ReportCategories.Add(category);
         await db.SaveChangesAsync();
-        return (user, category, user.CityId);
+        return (user, category, user.CityId!.Value);
     }
 
     private static ReportCategory Category(string code, MediaRequirement requirement, bool adultOnly, int ttl = 90)

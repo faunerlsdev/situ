@@ -3,7 +3,6 @@ using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Guardianship.RequestGuardianConsent;
 using Situ.Application.Features.Legal;
-using Situ.Domain.Administration;
 using Situ.Domain.Common;
 using Situ.Domain.Guardianship;
 using Situ.Domain.Identity;
@@ -55,18 +54,30 @@ public sealed class RegisterUserHandler(
             return Result<RegisterUserResponse>.Failure(IdentityErrors.CountryUnavailable());
         }
 
-        var region = await db.Regions
-            .FirstOrDefaultAsync(item => item.Id == request.RegionId, cancellationToken);
-        if (region is null || !region.IsEnabled || region.CountryId != country.Id)
+        Guid? regionId = null;
+        if (request.RegionId is { } requestedRegion && requestedRegion != Guid.Empty)
         {
-            return Result<RegisterUserResponse>.Failure(IdentityErrors.RegionUnavailable());
+            var region = await db.Regions
+                .FirstOrDefaultAsync(item => item.Id == requestedRegion, cancellationToken);
+            if (region is null || !region.IsEnabled || region.CountryId != country.Id)
+            {
+                return Result<RegisterUserResponse>.Failure(IdentityErrors.RegionUnavailable());
+            }
+
+            regionId = region.Id;
         }
 
-        var city = await db.Cities
-            .FirstOrDefaultAsync(item => item.Id == request.CityId, cancellationToken);
-        if (city is null || !city.IsEnabled || city.RegionId != region.Id || city.CountryId != country.Id)
+        Guid? cityId = null;
+        if (request.CityId is { } requestedCity && requestedCity != Guid.Empty)
         {
-            return Result<RegisterUserResponse>.Failure(IdentityErrors.CityUnavailable());
+            var city = await db.Cities
+                .FirstOrDefaultAsync(item => item.Id == requestedCity, cancellationToken);
+            if (regionId is null || city is null || !city.IsEnabled || city.RegionId != regionId || city.CountryId != country.Id)
+            {
+                return Result<RegisterUserResponse>.Failure(IdentityErrors.CityUnavailable());
+            }
+
+            cityId = city.Id;
         }
 
         if (await db.Users.AnyAsync(user => user.Email == emailAddress, cancellationToken))
@@ -93,22 +104,14 @@ public sealed class RegisterUserHandler(
         }
 
         var now = clock.UtcNow;
-        var age = AgeCalculator.AgeOn(request.DateOfBirth, AgeCalculator.ToDate(now));
-        var phoneRequired = age >= MinorProtectionPolicy.AdultAge || await PhoneRequiredForMinorsAsync(cancellationToken);
         PhoneNumber? phone = null;
-        if (string.IsNullOrWhiteSpace(request.Phone))
+        if (!string.IsNullOrWhiteSpace(request.Phone))
         {
-            if (phoneRequired)
+            if (!PhoneNumber.TryCreate(request.Phone, out var parsed))
             {
                 return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
             }
-        }
-        else if (!PhoneNumber.TryCreate(request.Phone, out var parsed))
-        {
-            return Result<RegisterUserResponse>.Failure(IdentityErrors.InvalidPhone());
-        }
-        else
-        {
+
             phone = parsed;
         }
 
@@ -124,8 +127,8 @@ public sealed class RegisterUserHandler(
                 passwords.Hash(request.Password),
                 request.DateOfBirth,
                 country.Id,
-                region.Id,
-                city.Id,
+                regionId,
+                cityId,
                 country.DefaultLocale,
                 country.MinimumAge,
                 now);
@@ -210,15 +213,6 @@ public sealed class RegisterUserHandler(
         {
             return false;
         }
-    }
-
-    private async Task<bool> PhoneRequiredForMinorsAsync(CancellationToken cancellationToken)
-    {
-        var value = await db.SystemSettings
-            .Where(item => item.Key == SystemSettingKeys.PhoneRequiredForMinors)
-            .Select(item => item.Value)
-            .FirstOrDefaultAsync(cancellationToken);
-        return !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? Clip(string? value, int maxLength)

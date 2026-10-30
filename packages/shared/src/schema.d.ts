@@ -2964,7 +2964,7 @@ export interface components {
             isMinor: boolean;
             canPublish: boolean;
             publishBlockedReason: null | string;
-            homeCity: components["schemas"]["SessionHomeCityView"];
+            homeCity: null | components["schemas"]["SessionHomeCityView"];
             plan: components["schemas"]["SessionPlanView"];
             profile: components["schemas"]["SessionProfileView"];
             guardian: null | components["schemas"]["SessionGuardianView"];
@@ -3363,9 +3363,9 @@ export interface components {
             /** Format: uuid */
             countryId: string;
             /** Format: uuid */
-            regionId: string;
+            regionId: null | string;
             /** Format: uuid */
-            cityId: string;
+            cityId: null | string;
             acceptedDocumentIds: string[];
             ipAddress: null | string;
             userAgent: null | string;

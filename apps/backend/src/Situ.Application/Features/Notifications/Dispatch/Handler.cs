@@ -542,7 +542,8 @@ public sealed class ProcessNotificationJobsHandler(
             return false;
         }
 
-        return !disabledCities.Contains(user.CityId) && !blocks.Any(item => Blocks(item, report.AuthorId, user.Id, report.IsAnonymous));
+        return (user.CityId is not { } homeCity || !disabledCities.Contains(homeCity))
+            && !blocks.Any(item => Blocks(item, report.AuthorId, user.Id, report.IsAnonymous));
     }
 
     private static bool IsClosed(UserStatus status) =>

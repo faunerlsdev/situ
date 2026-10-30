@@ -46,6 +46,9 @@ public sealed record Error
 
     public static Error Validation(string code, string message) => new(code, message, ErrorType.Validation);
 
+    public static Error Field(string code, string field, string message) =>
+        new(code, message, ErrorType.Validation, new Dictionary<string, object?> { ["field"] = field });
+
     public static Error NotFound(string code, string message) => new(code, message, ErrorType.NotFound);
 
     public static Error Conflict(string code, string message) => new(code, message, ErrorType.Conflict);

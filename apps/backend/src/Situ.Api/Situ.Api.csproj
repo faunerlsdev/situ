@@ -5,6 +5,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Content Include="..\..\config\content-filter.txt" Link="config\content-filter.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Situ.Application\Situ.Application.csproj" />
         <ProjectReference Include="..\Situ.Infrastructure\Situ.Infrastructure.csproj" />
     </ItemGroup>

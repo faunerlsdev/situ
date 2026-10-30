@@ -29,11 +29,11 @@ public sealed class User : AggregateRoot
     public string PasswordHash { get; private set; }
     public DateOnly DateOfBirth { get; private set; }
 
-    /// <summary>Country, region and city chosen at registration; the city is the "city of interest".</summary>
+    /// <summary>Country is required. Region and city are optional and become the city of interest when the person chooses them.</summary>
     public Guid CountryId { get; private set; }
 
-    public Guid RegionId { get; private set; }
-    public Guid CityId { get; private set; }
+    public Guid? RegionId { get; private set; }
+    public Guid? CityId { get; private set; }
     public string Locale { get; private set; }
 
     public UserStatus Status { get; private set; }
@@ -77,8 +77,8 @@ public sealed class User : AggregateRoot
         string passwordHash,
         DateOnly dateOfBirth,
         Guid countryId,
-        Guid regionId,
-        Guid cityId,
+        Guid? regionId,
+        Guid? cityId,
         string locale,
         int minimumAge,
         DateTimeOffset now)
@@ -101,8 +101,8 @@ public sealed class User : AggregateRoot
             PasswordHash = Guard.NotEmpty(passwordHash, nameof(passwordHash)),
             DateOfBirth = dateOfBirth,
             CountryId = Guard.NotEmpty(countryId, nameof(countryId)),
-            RegionId = Guard.NotEmpty(regionId, nameof(regionId)),
-            CityId = Guard.NotEmpty(cityId, nameof(cityId)),
+            RegionId = regionId is { } region && region != Guid.Empty ? region : null,
+            CityId = cityId is { } city && city != Guid.Empty ? city : null,
             Locale = Guard.NotEmpty(locale, nameof(locale), 15),
             Status = isMinor ? UserStatus.PendingGuardianConsent : UserStatus.PendingEmailConfirmation,
         };

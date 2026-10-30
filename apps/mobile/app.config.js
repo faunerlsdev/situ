@@ -85,6 +85,7 @@ module.exports = ({ config } = {}) => ({
       // Listed before the publisher: Expo runs the last iOS mod first, so this
       // rewrite sees the HaishinKit lines that plugin just injected.
       './plugins/with-nitro-rtmp-podspecs',
+      './plugins/with-android-r8-rules',
       [
         'react-native-nitro-rtmp-publisher',
         {

@@ -16,8 +16,6 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserReques
             .WithMessage("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.");
         RuleFor(request => request.DateOfBirth).NotEqual(default(DateOnly));
         RuleFor(request => request.CountryId).NotEmpty();
-        RuleFor(request => request.RegionId).NotEmpty();
-        RuleFor(request => request.CityId).NotEmpty();
         RuleFor(request => request.AcceptedDocumentIds).NotEmpty();
     }
 }

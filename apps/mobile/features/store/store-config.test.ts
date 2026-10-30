@@ -27,9 +27,14 @@ const envKeys = [
 type ExpoConfig = {
   ios: {
     bundleIdentifier: string;
+    supportsTablet?: boolean;
     associatedDomains?: string[];
     infoPlist: Record<string, unknown>;
-    privacyManifests: { NSPrivacyTracking: boolean; NSPrivacyAccessedAPITypes: unknown[] };
+    privacyManifests: {
+      NSPrivacyTracking: boolean;
+      NSPrivacyAccessedAPITypes: unknown[];
+      NSPrivacyCollectedDataTypes: { NSPrivacyCollectedDataType: string }[];
+    };
   };
   android: {
     package: string;
@@ -99,6 +104,19 @@ describe('store config', () => {
     expect(expo.ios.infoPlist.NSUserTrackingUsageDescription).toBeUndefined();
     expect(expo.ios.privacyManifests.NSPrivacyTracking).toBe(false);
     expect(expo.ios.privacyManifests.NSPrivacyAccessedAPITypes.length).toBeGreaterThan(0);
+    const collected = expo.ios.privacyManifests.NSPrivacyCollectedDataTypes.map((entry) => entry.NSPrivacyCollectedDataType);
+    expect(collected).toContain('NSPrivacyCollectedDataTypePreciseLocation');
+    expect(collected).not.toContain('NSPrivacyCollectedDataTypeAudioData');
+    expect(collected).not.toContain('NSPrivacyCollectedDataTypeDeviceID');
+    const reasons = expo.ios.privacyManifests.NSPrivacyAccessedAPITypes as { NSPrivacyAccessedAPIType: string; NSPrivacyAccessedAPITypeReasons: string[] }[];
+    expect(reasons.map((entry) => entry.NSPrivacyAccessedAPIType)).toEqual([
+      'NSPrivacyAccessedAPICategoryUserDefaults',
+      'NSPrivacyAccessedAPICategoryFileTimestamp',
+      'NSPrivacyAccessedAPICategoryDiskSpace',
+      'NSPrivacyAccessedAPICategorySystemBootTime',
+    ]);
+    expect(reasons.map((entry) => entry.NSPrivacyAccessedAPITypeReasons[0])).toEqual(['CA92.1', 'C617.1', 'E174.1', '35F9.1']);
+    expect(expo.ios.supportsTablet).toBe(false);
     expect(expo.updates?.url).toBeUndefined();
   });
 

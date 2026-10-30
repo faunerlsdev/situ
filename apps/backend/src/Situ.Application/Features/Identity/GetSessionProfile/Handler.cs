@@ -54,7 +54,7 @@ public sealed record GetSessionProfileResponse(
     bool IsMinor,
     bool CanPublish,
     string? PublishBlockedReason,
-    SessionHomeCityView HomeCity,
+    SessionHomeCityView? HomeCity,
     SessionPlanView Plan,
     SessionProfileView Profile,
     SessionGuardianView? Guardian,
@@ -80,9 +80,11 @@ public sealed class GetSessionProfileHandler(
             return Result<GetSessionProfileResponse>.Failure(Error.NotFound("session.not_found", "No encontramos la sesión."));
         }
 
-        var city = await db.Cities.FirstOrDefaultAsync(item => item.Id == user.CityId, cancellationToken);
+        var city = user.CityId is { } cityId
+            ? await db.Cities.FirstOrDefaultAsync(item => item.Id == cityId, cancellationToken)
+            : null;
         var country = await db.Countries.FirstOrDefaultAsync(item => item.Id == user.CountryId, cancellationToken);
-        if (city is null || country is null)
+        if (country is null || (user.CityId is not null && city is null))
         {
             return Result<GetSessionProfileResponse>.Failure(Error.NotFound("session.city_not_found", "No encontramos tu ciudad de interés."));
         }
@@ -145,7 +147,7 @@ public sealed class GetSessionProfileHandler(
             isMinor,
             canPublish,
             PublishBlockedReason(user),
-            new SessionHomeCityView(city.Id, city.Name, city.Center.Latitude, city.Center.Longitude, country.Id, country.Name),
+            city is null ? null : new SessionHomeCityView(city.Id, city.Name, city.Center.Latitude, city.Center.Longitude, country.Id, country.Name),
             new SessionPlanView(
                 plan.Code,
                 plan.Tier.ToString(),

@@ -12,8 +12,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.Property(e => e.Locale).HasMaxLength(15);
         builder.Required<User, Country>(e => e.CountryId);
-        builder.Required<User, Region>(e => e.RegionId);
-        builder.Required<User, City>(e => e.CityId);
+        builder.Optional<User, Region>(e => e.RegionId);
+        builder.Optional<User, City>(e => e.CityId);
         builder.HasIndex(e => e.Email).IsUnique().AreNullsDistinct(false);
         builder.HasIndex(e => e.UserName).IsUnique().AreNullsDistinct(false);
     }

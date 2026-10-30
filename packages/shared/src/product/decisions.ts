@@ -9,7 +9,7 @@ export const callingCodes = [
 ] as const;
 
 export const phonePurpose =
-  'Lo usamos para seguridad de tu cuenta y, más adelante, verificación en dos pasos. No lo mostramos a otros usuarios.';
+  'Opcional. Si lo escribes, lo usamos para la seguridad de la cuenta. No lo mostramos a otros usuarios.';
 
 export const emailSpamHint =
   'Si no lo ves en unos minutos, revisa tu carpeta de spam o correo no deseado.';

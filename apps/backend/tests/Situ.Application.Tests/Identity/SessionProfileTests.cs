@@ -48,7 +48,7 @@ public class SessionProfileTests
         Assert.Equal("free", adultProfile.Plan.Code);
         Assert.Equal(10, adultProfile.Plan.Limits.MaxReportsPerDay);
         Assert.Equal(3, adultProfile.Plan.Limits.MaxAnonymousPostsPerDay);
-        Assert.Equal("Bogotá", adultProfile.HomeCity.Name);
+        Assert.Equal("Bogotá", adultProfile.HomeCity!.Name);
         Assert.Equal(4.711, adultProfile.HomeCity.Latitude);
         Assert.Equal("Private", adultProfile.Profile.Visibility);
         Assert.True(adultProfile.Profile.PreferAnonymousReports);

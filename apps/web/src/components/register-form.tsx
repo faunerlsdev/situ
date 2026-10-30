@@ -123,7 +123,7 @@ export function RegisterForm({
   async function onSubmit(values: RegisterValues) {
     const dateOfBirth = composeDateOfBirth(values.year, values.month, values.day);
     if (!dateOfBirth || documents.length === 0) {
-      setFormError('Completa el lugar y acepta los documentos legales.');
+      setFormError('Revisa la fecha de nacimiento y acepta los documentos legales.');
       return;
     }
 
@@ -139,8 +139,8 @@ export function RegisterForm({
         password: values.password,
         dateOfBirth,
         countryId: values.countryId,
-        regionId: values.regionId,
-        cityId: values.cityId,
+        regionId: values.regionId || null,
+        cityId: values.cityId || null,
         acceptedDocumentIds: documents.map((document) => document.id),
         guardianEmail: values.guardianEmail.trim() || undefined,
         minorNoticeAccepted: values.minorNoticeAccepted,
@@ -192,7 +192,7 @@ export function RegisterForm({
             ))}
           </select>
         </label>
-        <TextInput id="phone" label="Teléfono" type="tel" autoComplete="tel" error={errors.phone?.message} registration={form.register('phone')} />
+        <TextInput id="phone" label="Celular (opcional)" type="tel" autoComplete="tel" error={errors.phone?.message} registration={form.register('phone')} />
         <p className="text-sm text-app-muted">{phonePurpose}</p>
         <TextInput id="userName" label="Nombre de usuario" autoComplete="username" error={errors.userName?.message} registration={form.register('userName')} />
         <TextInput id="email" label="Correo" type="email" autoComplete="email" error={errors.email?.message} registration={form.register('email')} />
@@ -204,20 +204,20 @@ export function RegisterForm({
             <option key={country.id} value={country.id}>{country.name}</option>
           ))}
         </SelectInput>
-        <SelectInput id="regionId" label={selectedCountry?.regionLabel ?? 'Departamento'} error={errors.regionId?.message} disabled={regions.length === 0} registration={form.register('regionId')}>
+        <SelectInput id="regionId" label={`${selectedCountry?.regionLabel ?? 'Departamento'} (opcional)`} error={errors.regionId?.message} disabled={regions.length === 0} registration={form.register('regionId')}>
           <option value="">{regions.length === 0 ? 'Selecciona un país primero' : 'Selecciona'}</option>
           {regions.map((region) => (
             <option key={region.id} value={region.id}>{region.name}</option>
           ))}
         </SelectInput>
-        <SelectInput id="cityId" label="Ciudad" error={errors.cityId?.message} disabled={cities.length === 0} registration={form.register('cityId')}>
+        <SelectInput id="cityId" label="Ciudad (opcional)" error={errors.cityId?.message} disabled={cities.length === 0} registration={form.register('cityId')}>
           <option value="">{cities.length === 0 ? 'Selecciona un departamento primero' : 'Selecciona'}</option>
           {cities.map((city) => (
             <option key={city.id} value={city.id}>{city.name}</option>
           ))}
         </SelectInput>
         <fieldset>
-          <legend className="font-sans text-body font-bold text-app-text italic">Fecha de nacimiento</legend>
+          <legend className="font-sans text-body font-bold text-app-text italic">Fecha de nacimiento. La usamos para verificar la edad mínima.</legend>
           <div className="mt-2 flex gap-2.5">
             <input aria-label="Día" inputMode="numeric" maxLength={2} placeholder="Día" className={dateClass} {...form.register('day')} />
             <input aria-label="Mes" inputMode="numeric" maxLength={2} placeholder="Mes" className={dateClass} {...form.register('month')} />

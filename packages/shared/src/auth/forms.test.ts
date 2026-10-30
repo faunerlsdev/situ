@@ -31,6 +31,10 @@ describe('registerSchema guardian fields', () => {
     expect(registerSchema.safeParse(values()).success).toBe(true);
   });
 
+  it('allows an adult to skip phone, province and city', () => {
+    expect(registerSchema.safeParse(values({ phone: '', regionId: '', cityId: '' })).success).toBe(true);
+  });
+
   it('requires the representative email and the notice when the person is under 18', () => {
     const missing = registerSchema.safeParse(values({ year: '2012' }));
     expect(missing.success).toBe(false);

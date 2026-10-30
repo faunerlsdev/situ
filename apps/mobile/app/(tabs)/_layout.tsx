@@ -1,6 +1,7 @@
 import { socialTabsFrom } from '@situ/shared';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 
 import { ShellProvider, WazeHeader, WazeTabBar } from '@/components/shell';
 import { useAppConfig } from '@/features/reports/use-app-config';
@@ -24,9 +25,9 @@ export default function TabsLayout() {
         }}
       >
         <Tabs.Screen name="mapa" options={{ title: 'Mapa' }} />
-        <Tabs.Screen name="chisme" options={{ title: 'Chisme', href: social ? undefined : null }} />
+        <Tabs.Screen name="chisme" options={{ title: 'Chisme', href: Platform.OS === 'ios' || !social ? null : undefined }} />
         <Tabs.Screen name="notificaciones" options={{ title: 'Alertas' }} />
-        <Tabs.Screen name="mensajes" options={{ title: 'Mensajes', href: social ? undefined : null }} />
+        <Tabs.Screen name="mensajes" options={{ title: 'Mensajes', href: Platform.OS === 'ios' || !social ? null : undefined }} />
         {/* href: null hides the tab and Expo Router then replaces that route with the first visible tab, so the tap looks dead. */}
         <Tabs.Screen name="amigos" options={{ title: 'Amigos' }} />
         <Tabs.Screen name="perfil" options={{ title: 'Perfil' }} />
