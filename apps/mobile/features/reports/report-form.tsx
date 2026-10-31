@@ -19,14 +19,16 @@ import {
 } from '@situ/shared';
 import type { ReportVisibility } from '@situ/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from 'expo-audio';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
+import { ensurePermissions, readOsPermission } from '@/features/permissions/gate';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
@@ -167,7 +169,7 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       notify.warning(rejectedMediaReason({ kind: 'image', mime: 'image/jpeg', name: 'foto.jpg', imageCount, videoCount, limits }) ?? 'Puedes subir hasta 5 fotos.');
       return;
     }
-    if (!(await allowCapture(source))) {
+    if (!(await allowCapture(source, false))) {
       return;
     }
     setPicking(true);
@@ -197,7 +199,7 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
       notify.warning(limits.maxVideos === 1 ? 'Puedes subir un solo video.' : `Puedes subir hasta ${limits.maxVideos} videos.`);
       return;
     }
-    if (!(await allowCapture(source))) {
+    if (!(await allowCapture(source, source === 'camera'))) {
       return;
     }
     setPicking(true);
@@ -372,33 +374,61 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
   );
 }
 
-async function allowCapture(source: 'camera' | 'library'): Promise<boolean> {
+async function allowCapture(source: 'camera' | 'library', microphone: boolean): Promise<boolean> {
   const camera = source === 'camera';
-  const proceed = await confirm({
-    title: camera ? 'Usar la cámara' : 'Elegir de la galería',
-    message: camera
-      ? 'SITU abre la cámara solo para la foto o el video de este reporte.'
-      : 'SITU abre tu galería solo para elegir la foto o el video de este reporte.',
-    type: 'info',
-    confirmText: 'Continuar',
-    cancelText: 'Cancelar',
+  const deniedTitle = microphone
+    ? 'Necesitamos la cámara y el micrófono'
+    : camera
+      ? feedbackMessages.cameraDeniedTitle
+      : 'Necesitamos la galería';
+  const deniedBody = microphone
+    ? 'Activa la cámara y el micrófono para grabar el video.'
+    : camera
+      ? feedbackMessages.cameraDeniedBody
+      : 'Activa el permiso de fotos para elegir la imagen o el video.';
+  return ensurePermissions({
+    statuses: async () => {
+      if (!camera) {
+        const library = await ImagePicker.getMediaLibraryPermissionsAsync();
+        return [readOsPermission(library.status)];
+      }
+      const current = await ImagePicker.getCameraPermissionsAsync();
+      const statuses = [readOsPermission(current.status)];
+      if (microphone) {
+        const audio = await getRecordingPermissionsAsync();
+        statuses.push(readOsPermission(audio.status));
+      }
+      return statuses;
+    },
+    explain: () => confirm({
+      title: microphone ? 'Usar la cámara y el micrófono' : camera ? 'Usar la cámara' : 'Elegir de la galería',
+      message: microphone
+        ? 'SITU abre la cámara y el micrófono solo para grabar el video de este reporte.'
+        : camera
+          ? 'SITU abre la cámara solo para la foto o el video de este reporte.'
+          : 'SITU abre tu galería solo para elegir la foto o el video de este reporte.',
+      type: 'info',
+      confirmText: 'Continuar',
+      cancelText: 'Cancelar',
+    }),
+    request: async () => {
+      if (!camera) {
+        return (await ImagePicker.requestMediaLibraryPermissionsAsync()).granted;
+      }
+      if (!(await ImagePicker.requestCameraPermissionsAsync()).granted) {
+        return false;
+      }
+      return microphone ? (await requestRecordingPermissionsAsync()).granted : true;
+    },
+    settings: () => confirm({
+      title: deniedTitle,
+      message: deniedBody,
+      type: 'warning',
+      confirmText: feedbackMessages.openSettings,
+      cancelText: 'Ahora no',
+    }),
+    openSettings: () => Linking.openSettings(),
   });
-  if (!proceed) {
-    return false;
-  }
-  const permission = camera
-    ? await ImagePicker.requestCameraPermissionsAsync()
-    : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (permission.granted) {
-    return true;
-  }
-  await alertModal({
-    title: camera ? feedbackMessages.cameraDeniedTitle : 'Necesitamos la galería',
-    message: camera ? feedbackMessages.cameraDeniedBody : 'Activa el permiso de fotos para elegir la imagen o el video.',
-    type: 'warning',
-    buttonText: feedbackMessages.openSettings,
-  });
-  return false;
 }
 
 function MediaSheet({ kind, onClose, onChoose }: { kind: 'photo' | 'video' | null; onClose: () => void; onChoose: (source: 'camera' | 'library') => void }) {

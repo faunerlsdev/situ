@@ -1,5 +1,8 @@
+import { confirm, feedbackMessages } from '@situ/shared';
+import { getRecordingPermissionsAsync, requestRecordingPermissionsAsync } from 'expo-audio';
+import * as ImagePicker from 'expo-image-picker';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import type { RtmpPublisherViewMethods } from 'react-native-nitro-rtmp-publisher';
 
 import { livePocAudio, livePocVideo } from '@/features/live-poc/urls';
@@ -7,6 +10,7 @@ import { liveDebug } from '@/features/live/debug';
 import { beginLiveAudio, endLiveAudio } from '@/features/live/ios-audio';
 import { nativePublishUrl, publishUrlError, publisherFailureCopy, rtmpTargetShape } from '@/features/live/logic';
 import type { LiveCameraHandle, LiveCameraProps, PublisherEvent } from '@/features/live/publisher-types';
+import { ensurePermissions, readOsPermission } from '@/features/permissions/gate';
 
 type PublisherModule = typeof import('react-native-nitro-rtmp-publisher');
 
@@ -28,12 +32,42 @@ export async function requestLiveCapture(): Promise<boolean> {
   if (!loaded) {
     return false;
   }
-  try {
-    const result = await loaded.requestRtmpPermissions();
-    return result.granted === true;
-  } catch {
-    return false;
-  }
+  const allowed = await ensurePermissions({
+    statuses: async () => {
+      const camera = await ImagePicker.getCameraPermissionsAsync();
+      const microphone = await getRecordingPermissionsAsync();
+      return [readOsPermission(camera.status), readOsPermission(microphone.status)];
+    },
+    explain: () => confirm({
+      title: 'Usar la cámara y el micrófono',
+      message: 'SITU abre la cámara y el micrófono solo para esta transmisión. El video no se guarda en el teléfono.',
+      type: 'info',
+      confirmText: 'Continuar',
+      cancelText: 'Cancelar',
+    }),
+    request: async () => {
+      if (Platform.OS === 'android') {
+        try {
+          const result = await loaded.requestRtmpPermissions();
+          return result.granted === true;
+        } catch {
+          return false;
+        }
+      }
+      const camera = await ImagePicker.requestCameraPermissionsAsync();
+      const microphone = await requestRecordingPermissionsAsync();
+      return camera.granted && microphone.granted;
+    },
+    settings: () => confirm({
+      title: 'Necesitamos la cámara y el micrófono',
+      message: 'Activa ambos permisos en los ajustes del teléfono para transmitir.',
+      type: 'warning',
+      confirmText: feedbackMessages.openSettings,
+      cancelText: 'Ahora no',
+    }),
+    openSettings: () => Linking.openSettings(),
+  });
+  return allowed;
 }
 
 export const LiveCamera = forwardRef<LiveCameraHandle, LiveCameraProps>(function LiveCamera({ onEvent, onFailure }, ref) {
