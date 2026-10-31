@@ -77,7 +77,7 @@ module.exports = ({ config } = {}) => ({
       [
         'expo-image-picker',
         {
-          photosPermission: contract.photos,
+          photosPermission: false,
           cameraPermission: contract.camera,
           microphonePermission: contract.microphone,
         },

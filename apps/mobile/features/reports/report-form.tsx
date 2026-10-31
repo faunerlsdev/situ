@@ -25,7 +25,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 
 import { ensurePermissions, readOsPermission } from '@/features/permissions/gate';
@@ -375,6 +375,10 @@ export function ReportForm({ categoryId }: { categoryId: string }) {
 }
 
 async function allowCapture(source: 'camera' | 'library', microphone: boolean): Promise<boolean> {
+  // iOS 14+ opens the system photo picker without a photo-library permission.
+  if (source === 'library' && Platform.OS === 'ios') {
+    return true;
+  }
   const camera = source === 'camera';
   const deniedTitle = microphone
     ? 'Necesitamos la cámara y el micrófono'

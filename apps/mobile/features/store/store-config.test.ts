@@ -99,6 +99,13 @@ describe('store config', () => {
       expect(expo.ios.infoPlist[key]).toBe(text);
     }
 
+    expect(expo.ios.infoPlist.NSPhotoLibraryUsageDescription).toBeUndefined();
+    expect(expo.ios.infoPlist.NSCameraUsageDescription).toBe(
+      'SITU usa la cámara para que tomes fotos o videos de tus reportes y para transmitir en vivo.',
+    );
+    expect(expo.ios.infoPlist.NSMicrophoneUsageDescription).toBe(
+      'SITU usa el micrófono para grabar el audio de tus videos y de tus transmisiones en vivo.',
+    );
     expect(expo.ios.infoPlist.NSLocationAlwaysAndWhenInUseUsageDescription).toBeUndefined();
     expect(expo.ios.infoPlist.NSLocationAlwaysUsageDescription).toBeUndefined();
     expect(expo.ios.infoPlist.NSUserTrackingUsageDescription).toBeUndefined();
