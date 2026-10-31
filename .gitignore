@@ -15,6 +15,18 @@ next-env.d.ts
 apps/mobile/ios/
 apps/mobile/android/
 
+# Carpetas nativas generadas por error al correr Expo desde la raíz.
+/android
+/ios
+
+# Binarios y firmas. Nunca versionar.
+*.apk
+*.aab
+*.ipa
+*.jks
+*.keystore
+keystore.properties
+
 # .NET
 bin/
 obj/
