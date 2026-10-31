@@ -29,7 +29,7 @@ public sealed class OpenReportMediaHandler(IApplicationDbContext db, IClock cloc
             }
 
             var report = await db.Reports.FirstOrDefaultAsync(item => item.Id == media.ReportId, cancellationToken);
-            if (report is null || !report.IsVisible(clock.UtcNow))
+            if (report is null || !report.IsVisible(clock.UtcNow) || await ReportAccess.AuthorWithdrewAsync(db, report.AuthorId, cancellationToken))
             {
                 return Result<OpenReportMediaResponse>.Failure(ReportErrors.NotFound());
             }

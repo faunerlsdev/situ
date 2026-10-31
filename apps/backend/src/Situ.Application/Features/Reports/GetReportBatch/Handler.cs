@@ -3,6 +3,7 @@ using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Reports.GetReportMap;
 using Situ.Domain.Common;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 
 namespace Situ.Application.Features.Reports.GetReportBatch;
@@ -47,6 +48,11 @@ public sealed class GetReportBatchHandler(IApplicationDbContext db, IClock clock
         }
 
         var reports = await db.Reports.Where(item => ids.Contains(item.Id)).ToListAsync(cancellationToken);
+        var reportAuthorIds = reports.Select(item => item.AuthorId).Distinct().ToArray();
+        var withdrawn = await db.Users
+            .Where(user => reportAuthorIds.Contains(user.Id) && user.Status == UserStatus.DeletionRequested)
+            .Select(user => user.Id)
+            .ToListAsync(cancellationToken);
         var byId = reports.ToDictionary(item => item.Id);
         var blocks = await ReportAccess.BlocksAsync(db, request.ViewerId, cancellationToken);
         var friends = await ReportAccess.FriendIdsAsync(db, request.ViewerId, cancellationToken);
@@ -54,7 +60,7 @@ public sealed class GetReportBatchHandler(IApplicationDbContext db, IClock clock
         var visible = new List<Report>();
         foreach (var id in ids)
         {
-            if (!byId.TryGetValue(id, out var report) || !report.IsVisible(now))
+            if (!byId.TryGetValue(id, out var report) || !report.IsVisible(now) || withdrawn.Contains(report.AuthorId))
             {
                 continue;
             }

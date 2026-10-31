@@ -6,8 +6,11 @@ using Situ.Application.Features.Interaction.Blocks;
 using Situ.Application.Features.Interaction.Comments;
 using Situ.Application.Features.Interaction.Complaints;
 using Situ.Application.Features.Interaction.Reactions;
+using Situ.Application.Features.Live;
+using Situ.Application.Features.Reports.GetPublicReportMap;
 using Situ.Application.Features.Reports.GetReport;
 using Situ.Application.Features.Reports.GetReportMap;
+using Situ.Application.Features.Social.GetPublicProfile;
 using Situ.Application.Tests.Support;
 using Situ.Domain.Administration;
 using Situ.Domain.Common;
@@ -540,6 +543,96 @@ public class InteractionFlowTests
         Assert.NotNull(await db.Reports.FirstOrDefaultAsync(item => item.Id == report.Id));
         Assert.Equal(AccountDeletionStatus.BlockedByLegalHold, (await db.AccountDeletionRequests.SingleAsync()).Status);
         Assert.Contains(db.AuditLogs, item => item.Action == "account_deletion.blocked_by_legal_hold");
+    }
+
+    [Fact]
+    public async Task Content_is_hidden_while_deletion_is_pending_and_returns_when_cancelled()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var author = await UserAsync(db, clock, 30, "hide@situ.test", "oculta");
+        var viewer = await UserAsync(db, clock, 31, "sees@situ.test", "mira");
+        var category = ReportCategory.Create("evento", "Evento", "Descripción de la categoría de prueba.", "/a.png", "/b.png", "#112233", 1, 90, 5);
+        db.ReportCategories.Add(category);
+        var report = Report.Create(
+            author.Id,
+            category.Id,
+            author.CityId,
+            new GeoPoint(4.711, -74.072),
+            "Hay novedad en esta esquina ahora mismo.",
+            false,
+            false,
+            TimeSpan.FromHours(2),
+            Now);
+        db.Reports.Add(report);
+        var host = await ReportAsync(db, viewer, ContentVisibility.Public, false);
+        var profile = UserProfile.CreateDefault(author.Id, "Oculta");
+        profile.UpdateDetails("Oculta", "Bio pública");
+        profile.MakePublic(30, Now, "2026-10-27");
+        profile.MarkCreated(Now);
+        db.UserProfiles.Add(profile);
+        var stream = LiveStream.Schedule(
+            author.Id,
+            30,
+            false,
+            null,
+            author.CityId,
+            new GeoPoint(4.711, -74.072),
+            "En la esquina",
+            ContentVisibility.Public,
+            "hide-live",
+            "hash",
+            Now.AddHours(2),
+            Now);
+        Assert.True(stream.AcceptPublishKey("hash", Now));
+        Assert.True(stream.MarkLive(Now));
+        db.LiveStreams.Add(stream);
+        await db.SaveChangesAsync();
+        var commented = await new AddCommentHandler(db, clock).Handle(
+            new AddCommentRequest(author.Id, host.Id, "Sigue el trancón en la esquina.", false, null),
+            CancellationToken.None);
+        Assert.True(commented.IsSuccess);
+
+        var map = new GetReportMapHandler(db, clock, new ReportMapReader(db, clock), new FakeSigner());
+        var pins = new GetPublicReportMapHandler(db, clock);
+        var profiles = new GetPublicProfileHandler(db, clock, new FakeLinks(), new FakeSigner());
+        var box = new GetReportMapRequest(viewer.Id, 4.5, -74.3, 4.9, -73.9, 16, [], null, null, null, null);
+
+        Assert.Contains((await map.Handle(box, CancellationToken.None)).Value!.Items, item => item.Id == report.Id);
+        Assert.Contains((await pins.Handle(new GetPublicReportMapRequest(4.5, -74.3, 4.9, -73.9), CancellationToken.None)).Value!.Items, item => item.CategoryCode == "evento");
+        Assert.True((await new GetReportHandler(db, clock, new FakeSigner()).Handle(new GetReportRequest(viewer.Id, report.Id), CancellationToken.None)).IsSuccess);
+        Assert.Contains((await new ListCommentsHandler(db, clock).Handle(new ListCommentsRequest(viewer.Id, host.Id, null), CancellationToken.None)).Value!.Comments, item => item.Text == "Sigue el trancón en la esquina.");
+        Assert.Equal("Bio pública", (await profiles.Handle(new GetPublicProfileRequest(viewer.Id, "oculta"), CancellationToken.None)).Value!.Bio);
+        Assert.Contains((await new ListLiveHandler(db, clock).Handle(new ListLiveRequest(viewer.Id), CancellationToken.None)).Value!.Streams, item => item.Id == "hide-live");
+        Assert.True((await new GetLiveHandler(db, clock).Handle(new GetLiveRequest(viewer.Id, "hide-live"), CancellationToken.None)).IsSuccess);
+
+        await new RequestAccountDeletionHandler(db, clock, new PlainHasher(), new FakeEmailSender()).Handle(
+            new RequestAccountDeletionRequest(author.Id, "hash"),
+            CancellationToken.None);
+
+        Assert.Equal(UserStatus.DeletionRequested, author.Status);
+        Assert.DoesNotContain((await map.Handle(box, CancellationToken.None)).Value!.Items, item => item.Id == report.Id);
+        Assert.DoesNotContain((await pins.Handle(new GetPublicReportMapRequest(4.5, -74.3, 4.9, -73.9), CancellationToken.None)).Value!.Items, item => item.CategoryCode == "evento");
+        Assert.True((await new GetReportHandler(db, clock, new FakeSigner()).Handle(new GetReportRequest(viewer.Id, report.Id), CancellationToken.None)).IsFailure);
+        Assert.DoesNotContain((await new ListCommentsHandler(db, clock).Handle(new ListCommentsRequest(viewer.Id, host.Id, null), CancellationToken.None)).Value!.Comments, item => item.Text == "Sigue el trancón en la esquina.");
+        Assert.Equal("profile.not_available", (await profiles.Handle(new GetPublicProfileRequest(viewer.Id, "oculta"), CancellationToken.None)).Error!.Code);
+        Assert.DoesNotContain((await new ListLiveHandler(db, clock).Handle(new ListLiveRequest(viewer.Id), CancellationToken.None)).Value!.Streams, item => item.Id == "hide-live");
+        Assert.True((await new GetLiveHandler(db, clock).Handle(new GetLiveRequest(viewer.Id, "hide-live"), CancellationToken.None)).IsFailure);
+        Assert.NotNull(await db.Reports.FirstOrDefaultAsync(item => item.Id == report.Id));
+        Assert.NotNull(await db.Comments.FirstOrDefaultAsync(item => item.Text == "Sigue el trancón en la esquina."));
+        var stored = await db.LiveStreams.SingleAsync(item => item.PublicPath == "hide-live");
+        Assert.Equal(LiveStreamStatus.Live, stored.Status);
+        Assert.Null(stored.RecordingKey);
+
+        var cancelled = await new CancelAccountDeletionHandler(db, clock).Handle(new CancelAccountDeletionRequest(author.Id), CancellationToken.None);
+        Assert.True(cancelled.IsSuccess);
+        Assert.Equal(UserStatus.Active, author.Status);
+        Assert.Contains((await map.Handle(box, CancellationToken.None)).Value!.Items, item => item.Id == report.Id);
+        Assert.Contains((await pins.Handle(new GetPublicReportMapRequest(4.5, -74.3, 4.9, -73.9), CancellationToken.None)).Value!.Items, item => item.CategoryCode == "evento");
+        Assert.True((await new GetReportHandler(db, clock, new FakeSigner()).Handle(new GetReportRequest(viewer.Id, report.Id), CancellationToken.None)).IsSuccess);
+        Assert.Contains((await new ListCommentsHandler(db, clock).Handle(new ListCommentsRequest(viewer.Id, host.Id, null), CancellationToken.None)).Value!.Comments, item => item.Text == "Sigue el trancón en la esquina.");
+        Assert.Equal("Bio pública", (await profiles.Handle(new GetPublicProfileRequest(viewer.Id, "oculta"), CancellationToken.None)).Value!.Bio);
+        Assert.Contains((await new ListLiveHandler(db, clock).Handle(new ListLiveRequest(viewer.Id), CancellationToken.None)).Value!.Streams, item => item.Id == "hide-live");
     }
 
     [Fact]

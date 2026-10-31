@@ -219,6 +219,18 @@ internal static class ReportAccess
         CancellationToken cancellationToken) =>
         (await BlocksAsync(db, userId, cancellationToken)).Full;
 
+    /// <summary>
+    /// The account asked to be deleted. The rows stay so cancelling within the grace period
+    /// shows the same reports, comments and streams again.
+    /// </summary>
+    public static Task<bool> AuthorWithdrewAsync(
+        IApplicationDbContext db,
+        Guid authorId,
+        CancellationToken cancellationToken) =>
+        db.Users.AnyAsync(
+            user => user.Id == authorId && user.Status == UserStatus.DeletionRequested,
+            cancellationToken);
+
     public static bool CanSee(Report report, Guid? viewerId, IReadOnlySet<Guid> friends, ContentBlocks blocks)
     {
         if (viewerId != report.AuthorId && blocks.Hides(report.AuthorId, report.IsAnonymous))

@@ -229,7 +229,9 @@ public sealed class ListLiveHandler(IApplicationDbContext db, IClock clock)
         bool liveOnly = true)
     {
         var streamer = await db.Users.FirstOrDefaultAsync(item => item.Id == stream.StreamerId, cancellationToken);
-        if (streamer is null || (liveOnly && stream.Status != LiveStreamStatus.Live))
+        if (streamer is null
+            || streamer.Status == Domain.Identity.UserStatus.DeletionRequested
+            || (liveOnly && stream.Status != LiveStreamStatus.Live))
         {
             return false;
         }
@@ -375,7 +377,8 @@ public sealed class CheckHlsTokenHandler(IApplicationDbContext db, IClock clock,
             return Refuse(false, "live.hls_unknown_stream");
         }
 
-        if (stream.HiddenByStaff)
+        var streamer = await db.Users.FirstOrDefaultAsync(item => item.Id == stream.StreamerId, cancellationToken);
+        if (stream.HiddenByStaff || streamer is null || streamer.Status == Domain.Identity.UserStatus.DeletionRequested)
         {
             return Refuse(true, "live.hls_forbidden");
         }

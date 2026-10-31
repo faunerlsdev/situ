@@ -5,6 +5,7 @@ using Situ.Application.Common.Results;
 using Situ.Application.Features.Interaction;
 using Situ.Domain.Common;
 using Situ.Domain.Guardianship;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 
 namespace Situ.Application.Features.Reports.GetReport
@@ -24,7 +25,7 @@ public sealed class GetReportHandler(IApplicationDbContext db, IClock clock, IMe
     public async Task<Result<GetReportResponse>> Handle(GetReportRequest request, CancellationToken cancellationToken)
     {
         var report = await db.Reports.FirstOrDefaultAsync(item => item.Id == request.ReportId, cancellationToken);
-        if (report is null)
+        if (report is null || await ReportAccess.AuthorWithdrewAsync(db, report.AuthorId, cancellationToken))
         {
             return Result<GetReportResponse>.Failure(ReportErrors.NotFound());
         }
@@ -75,10 +76,12 @@ public sealed class GetReportHandler(IApplicationDbContext db, IClock clock, IMe
         var vote = request.ViewerId is { } voter
             ? await db.ReportConfirmations.FirstOrDefaultAsync(item => item.ReportId == report.Id && item.UserId == voter, cancellationToken)
             : null;
+        var withdrawnAuthors = db.Users.Where(user => user.Status == UserStatus.DeletionRequested).Select(user => user.Id);
         var comments = await db.Comments
             .Where(item => item.TargetType == ContentTargetType.Report
                 && item.TargetId == report.Id
                 && item.Status == CommentStatus.Visible
+                && !withdrawnAuthors.Contains(item.AuthorId)
                 && !blocks.Full.Contains(item.AuthorId)
                 && !(item.IsAnonymous && blocks.Anonymous.Contains(item.AuthorId)))
             .OrderByDescending(item => item.CreatedAt)

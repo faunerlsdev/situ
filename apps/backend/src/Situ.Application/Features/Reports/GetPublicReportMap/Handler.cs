@@ -76,7 +76,7 @@ public sealed class GetPublicReportMapHandler(IApplicationDbContext db, IClock c
             .Where(item => authorIds.Contains(item.Id))
             .ToListAsync(cancellationToken);
         var adultAuthors = authors
-            .Where(item => !item.IsMinor(now) && item.Status != UserStatus.Deleted)
+            .Where(item => !item.IsMinor(now) && item.Status is not UserStatus.Deleted and not UserStatus.DeletionRequested)
             .Select(item => item.Id)
             .ToHashSet();
 

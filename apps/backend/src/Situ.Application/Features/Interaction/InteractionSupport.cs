@@ -121,7 +121,7 @@ internal static class InteractionAccess
         CancellationToken cancellationToken)
     {
         var report = await db.Reports.FirstOrDefaultAsync(item => item.Id == reportId, cancellationToken);
-        if (report is null)
+        if (report is null || await ReportAccess.AuthorWithdrewAsync(db, report.AuthorId, cancellationToken))
         {
             return Result<Report>.Failure(ReportErrors.NotFound());
         }

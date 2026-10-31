@@ -43,7 +43,8 @@ public sealed class ConfirmReportHandler(IApplicationDbContext db, IClock clock)
 
         var friends = await ReportAccess.FriendIdsAsync(db, request.UserId, cancellationToken);
         var blocks = await ReportAccess.BlocksAsync(db, request.UserId, cancellationToken);
-        if (!ReportAccess.CanSee(report, request.UserId, friends, blocks))
+        if (!ReportAccess.CanSee(report, request.UserId, friends, blocks)
+            || await ReportAccess.AuthorWithdrewAsync(db, report.AuthorId, cancellationToken))
         {
             return Result<ConfirmReportResponse>.Failure(ReportErrors.NotFound());
         }

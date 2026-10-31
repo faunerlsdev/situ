@@ -8,6 +8,7 @@ using Situ.Application.Features.Reports;
 using Situ.Domain.Anonymity;
 using Situ.Domain.Common;
 using Situ.Domain.Guardianship;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 
 namespace Situ.Application.Features.Interaction.Comments;
@@ -152,11 +153,13 @@ public sealed class ListCommentsHandler(IApplicationDbContext db, IClock clock)
         var blocks = request.ViewerId is { } viewer
             ? await ReportAccess.BlocksAsync(db, viewer, cancellationToken)
             : ContentBlocks.None;
+        var withdrawnAuthors = db.Users.Where(user => user.Status == UserStatus.DeletionRequested).Select(user => user.Id);
         var query = db.Comments.Where(item =>
             item.TargetType == ContentTargetType.Report
             && item.TargetId == request.ReportId
             && item.ParentCommentId == null
             && item.Status == CommentStatus.Visible
+            && !withdrawnAuthors.Contains(item.AuthorId)
             && !blocks.Full.Contains(item.AuthorId)
             && !(item.IsAnonymous && blocks.Anonymous.Contains(item.AuthorId)));
         if (Situ.Application.Features.Reports.ListMyReports.ReportCursor.TryDecode(request.Cursor, out var createdAt, out var id))
@@ -176,6 +179,7 @@ public sealed class ListCommentsHandler(IApplicationDbContext db, IClock clock)
             .Where(item => item.ParentCommentId != null
                 && parentIds.Contains(item.ParentCommentId.Value)
                 && item.Status == CommentStatus.Visible
+                && !withdrawnAuthors.Contains(item.AuthorId)
                 && !blocks.Full.Contains(item.AuthorId)
                 && !(item.IsAnonymous && blocks.Anonymous.Contains(item.AuthorId)))
             .OrderBy(item => item.CreatedAt)

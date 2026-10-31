@@ -67,7 +67,7 @@ Fecha: 30/10/2026. No hubo un rechazo previo de App Review pegado en el encargo.
 ## Cierre 10.3
 
 1. Denunciar una transmisión terminada: `ReportLiveHandler` usa `liveOnly: false`. El botón Denunciar también aparece en la fase `ended`. Un bloqueo sigue ocultando la transmisión.
-2. Al confirmar «Eliminar mi cuenta» se cierra la sesión y se revocan los tokens de refresco. El perfil, los reportes, los comentarios y las transmisiones siguen visibles hasta el día 14. Ocultarlos de inmediato está propuesto y no implementado.
+2. Al confirmar «Eliminar mi cuenta» se cierra la sesión y se revocan los tokens de refresco. El perfil, los reportes, los comentarios y las transmisiones dejan de mostrarse enseguida. Las filas siguen guardadas. Si cancelan dentro de los 14 días, ese contenido vuelve a verse. El borrado definitivo sigue en el día 14.
 3. Activar términos v1.1 es `apps/backend/scripts/activate-terms-v1.1`. No se ejecutó. La página sigue en v1.0.
 4. El seed deja las dos cuentas adultas, con el correo confirmado y con la versión de términos que esté activa en ese momento.
 5. Notas de App Review y cuestionario de edad actualizados.

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Domain.Common;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 
 namespace Situ.Application.Features.Reports.GetReportShare;
@@ -23,7 +24,7 @@ public sealed class GetReportShareHandler(IApplicationDbContext db, IClock clock
         }
 
         var author = await db.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == report.AuthorId, cancellationToken);
-        if (author is null || author.IsMinor(now))
+        if (author is null || author.IsMinor(now) || author.Status == UserStatus.DeletionRequested)
         {
             return Result<GetReportShareResponse>.Success(new GetReportShareResponse(false, null, null));
         }

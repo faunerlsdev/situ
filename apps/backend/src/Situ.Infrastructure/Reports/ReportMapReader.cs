@@ -4,6 +4,7 @@ using NpgsqlTypes;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Features.Reports.GetReportMap;
 using Situ.Domain.Common;
+using Situ.Domain.Identity;
 using Situ.Domain.Reports;
 
 namespace Situ.Infrastructure.Reports;
@@ -57,6 +58,10 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
         var adultIds = query.ViewerIsMinor
             ? await db.ReportCategories.Where(category => category.IsAdultOnly).Select(category => category.Id).ToListAsync(cancellationToken)
             : [];
+        var withdrawn = await db.Users
+            .Where(user => user.Status == UserStatus.DeletionRequested)
+            .Select(user => user.Id)
+            .ToListAsync(cancellationToken);
         var reports = await db.Reports
             .Where(report => report.Status == ReportStatus.Active && report.ExpiresAt > now)
             .ToListAsync(cancellationToken);
@@ -66,6 +71,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
             && report.Location.Longitude >= query.MinLongitude
             && report.Location.Longitude <= query.MaxLongitude
             && !adultIds.Contains(report.CategoryId)
+            && !withdrawn.Contains(report.AuthorId)
             && !query.BlockedIds.Contains(report.AuthorId)
             && !(report.IsAnonymous && query.AnonymousBlockedIds.Contains(report.AuthorId))
             && (query.Since is null || report.CreatedAt >= query.Since)
@@ -187,6 +193,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
               AND NOT (r.author_id = ANY(@blocked))
               AND NOT (r.is_anonymous AND r.author_id = ANY(@anonymousBlocked))
               AND (r.visibility = 'Public' OR r.author_id = @viewer OR r.author_id = ANY(@friends))
+              AND NOT EXISTS (SELECT 1 FROM users author WHERE author.id = r.author_id AND author.status = 'DeletionRequested')
             LIMIT 500
             """;
         if (explain)
@@ -223,6 +230,7 @@ public sealed class ReportMapReader(IApplicationDbContext db, IClock clock) : IR
               AND NOT (r.author_id = ANY(@blocked))
               AND NOT (r.is_anonymous AND r.author_id = ANY(@anonymousBlocked))
               AND (r.visibility = 'Public' OR r.author_id = @viewer OR r.author_id = ANY(@friends))
+              AND NOT EXISTS (SELECT 1 FROM users author WHERE author.id = r.author_id AND author.status = 'DeletionRequested')
             GROUP BY ST_SnapToGrid(r.location::geometry, @cell)
             LIMIT 500
             """;
