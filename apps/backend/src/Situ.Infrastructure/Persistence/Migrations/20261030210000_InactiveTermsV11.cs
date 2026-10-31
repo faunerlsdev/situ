@@ -20,6 +20,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
             migrationBuilder.InsertData(
                 table: "legal_documents",
                 columns: new[] { "id", "country_id", "created_at", "is_active", "locale", "published_at", "type", "updated_at", "url", "version" },
+                columnTypes: new[] { "uuid", "uuid", "timestamp with time zone", "boolean", "character varying(15)", "timestamp with time zone", "character varying(40)", "timestamp with time zone", "text", "character varying(30)" },
                 values: new object[]
                 {
                     new Guid("7ad39d3f-9848-4e1a-d5b4-d37731f778ba"),
@@ -40,6 +41,7 @@ namespace Situ.Infrastructure.Persistence.Migrations
             migrationBuilder.DeleteData(
                 table: "legal_documents",
                 keyColumn: "id",
+                keyColumnType: "uuid",
                 keyValue: new Guid("7ad39d3f-9848-4e1a-d5b4-d37731f778ba"));
         }
     }

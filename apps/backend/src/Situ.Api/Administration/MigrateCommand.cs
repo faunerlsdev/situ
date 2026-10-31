@@ -27,7 +27,11 @@ public static class MigrateCommand
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"No se pudieron aplicar las migraciones ({exception.GetType().Name}).");
+            Console.Error.WriteLine($"No se pudieron aplicar las migraciones ({exception.GetType().Name}): {exception.Message}");
+            for (var inner = exception.InnerException; inner is not null; inner = inner.InnerException)
+            {
+                Console.Error.WriteLine($"{inner.GetType().Name}: {inner.Message}");
+            }
             return 1;
         }
 
