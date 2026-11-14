@@ -58,7 +58,7 @@ sudo systemctl restart situ-mediamtx.service
 sudo systemctl is-active situ-mediamtx.service
 ```
 
-`install.sh` conserva `/etc/situ/live.env` si el archivo ya existe y vuelve a escribir `/etc/mediamtx/mediamtx.yml` con esos secretos. No abras ese archivo ni el journal si una línea trae `secret=`. Para comprobar la ruta sin imprimir el secreto:
+`install.sh` conserva `/etc/situ/live.env` si el archivo ya existe. El YAML del repo vale solo para el binario fijado en ese script (`v1.21.3`). No copies `mediamtx.yml` a `/etc/mediamtx/` a mano: el script deja el YAML renderizado aparte, sustituye el binario y el YAML juntos y reinicia. Si `situ-mediamtx` no queda activo, devuelve el binario y el YAML que ya estaban y no sigue. `./deploy/release.sh` no reinicia ese servicio. No abras `live.env`, el YAML renderizado ni el journal si una línea trae `secret=`. Para comprobar la ruta sin imprimir el secreto:
 
 ```bash
 sudo awk '

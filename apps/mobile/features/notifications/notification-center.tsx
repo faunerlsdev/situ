@@ -12,6 +12,17 @@ import { notificationOpenTarget } from './logic';
 import { NotificationRow } from './notification-row';
 
 const newsIcon = require('../../assets/images/icons/situ-noticias-dark.png');
+const readInSession = new Set<string>();
+
+function withSessionReads(page: NotificationPage): NotificationPage {
+  if (readInSession.size === 0) {
+    return page;
+  }
+  return {
+    ...page,
+    notifications: page.notifications.map((item) => readInSession.has(item.id) ? { ...item, isRead: true } : item),
+  };
+}
 
 export function NotificationCenter() {
   const router = useRouter();
@@ -19,12 +30,15 @@ export function NotificationCenter() {
   const query = useInfiniteQuery({
     queryKey: ['notifications', 'list'],
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => api.listNotifications(pageParam),
+    queryFn: async ({ pageParam }) => withSessionReads(await api.listNotifications(pageParam)),
     getNextPageParam: (page) => page.nextCursor,
   });
-  const items = query.data?.pages.flatMap((page) => page.notifications) ?? [];
+  const items = (query.data?.pages.flatMap((page) => page.notifications) ?? []).map(withSessionRead);
 
   function open(item: InboxNotification) {
+    if (!item.isRead) {
+      void markRead(queryClient, item.id);
+    }
     const target = notificationOpenTarget({
       available: item.available,
       reportId: item.reportId,
@@ -34,10 +48,6 @@ export function NotificationCenter() {
     if (target.kind === 'unavailable') {
       notify.warning(notificationMessages.unavailableNotice, { placement: 'top' });
       return;
-    }
-
-    if (!item.isRead) {
-      void markRead(queryClient, item.id);
     }
 
     if (target.kind === 'live') {
@@ -102,9 +112,11 @@ export function NotificationCenter() {
   );
 }
 
-async function markRead(queryClient: ReturnType<typeof useQueryClient>, id: string) {
-  const previousList = queryClient.getQueryData<InfiniteData<NotificationPage>>(['notifications', 'list']);
-  const previousCount = queryClient.getQueryData<{ count: number }>(['notifications', 'unread']);
+function withSessionRead(item: InboxNotification): InboxNotification {
+  return readInSession.has(item.id) ? { ...item, isRead: true } : item;
+}
+
+function applyRead(queryClient: ReturnType<typeof useQueryClient>, id: string) {
   queryClient.setQueryData<InfiniteData<NotificationPage>>(['notifications', 'list'], (current) => current ? {
     ...current,
     pages: current.pages.map((page) => ({
@@ -112,10 +124,22 @@ async function markRead(queryClient: ReturnType<typeof useQueryClient>, id: stri
       notifications: page.notifications.map((item) => item.id === id ? { ...item, isRead: true } : item),
     })),
   } : current);
+}
+
+async function markRead(queryClient: ReturnType<typeof useQueryClient>, id: string) {
+  await queryClient.cancelQueries({ queryKey: ['notifications', 'list'] });
+  await queryClient.cancelQueries({ queryKey: ['notifications', 'unread'] });
+  const previousList = queryClient.getQueryData<InfiniteData<NotificationPage>>(['notifications', 'list']);
+  const previousCount = queryClient.getQueryData<{ count: number }>(['notifications', 'unread']);
+  readInSession.add(id);
+  applyRead(queryClient, id);
   queryClient.setQueryData<{ count: number }>(['notifications', 'unread'], (current) => current ? { count: Math.max(0, current.count - 1) } : current);
   try {
     await api.markNotificationRead(id);
+    applyRead(queryClient, id);
+    void queryClient.invalidateQueries({ queryKey: ['notifications', 'unread'] });
   } catch (error) {
+    readInSession.delete(id);
     queryClient.setQueryData(['notifications', 'list'], previousList);
     queryClient.setQueryData(['notifications', 'unread'], previousCount);
     notify.error(error, { placement: 'top' });
@@ -125,6 +149,7 @@ async function markRead(queryClient: ReturnType<typeof useQueryClient>, id: stri
 async function markAll(queryClient: ReturnType<typeof useQueryClient>) {
   const previousList = queryClient.getQueryData<InfiniteData<NotificationPage>>(['notifications', 'list']);
   const previousCount = queryClient.getQueryData<{ count: number }>(['notifications', 'unread']);
+  const ids = previousList?.pages.flatMap((page) => page.notifications.map((item) => item.id)) ?? [];
   queryClient.setQueryData<InfiniteData<NotificationPage>>(['notifications', 'list'], (current) => current ? {
     ...current,
     pages: current.pages.map((page) => ({
@@ -135,6 +160,7 @@ async function markAll(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.setQueryData<{ count: number }>(['notifications', 'unread'], { count: 0 });
   try {
     await api.markAllNotificationsRead();
+    ids.forEach((id) => readInSession.add(id));
   } catch (error) {
     queryClient.setQueryData(['notifications', 'list'], previousList);
     queryClient.setQueryData(['notifications', 'unread'], previousCount);

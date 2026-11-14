@@ -22,7 +22,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LiveRoster } from '@/features/live/roster';
 import { LiveSignal } from '@/features/live/signal';
 import { NotificationRuntime } from '@/features/notifications/push-runtime';
-import { LocationEmitter } from '@/features/location/emitter';
+import { StopLocationSharing } from '@/features/location/stop-sharing';
 import { useMe } from '@/features/reports/use-me';
 import { clearLegacyProfile } from '@/lib/local-profile';
 import { FeedbackProvider } from '@/providers/feedback-provider';
@@ -88,7 +88,7 @@ function RootNavigator() {
     <>
     <StatusBar style="light" />
     {isSignedIn ? <NotificationRuntime /> : null}
-    {isSignedIn ? <LocationEmitter /> : null}
+    {isSignedIn ? <StopLocationSharing /> : null}
     {isSignedIn ? <LiveSignal /> : null}
     {isSignedIn ? <LiveRoster /> : null}
     <Stack

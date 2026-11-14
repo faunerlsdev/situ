@@ -293,8 +293,7 @@ async function followPush(
     await api.report(target.reportId);
   } catch (error) {
     if (reportOpenFailure(error instanceof AppError ? error.apiCode : undefined) === 'unavailable') {
-      notify.warning(notificationMessages.unavailableNotice, { placement: 'top' });
-      router.navigate('/notificaciones');
+      router.navigate('/chisme');
       return;
     }
   }

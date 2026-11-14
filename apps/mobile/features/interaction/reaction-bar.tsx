@@ -18,13 +18,16 @@ export function ReactionBar({
   counts,
   mine,
   onToggle,
+  quiet = false,
 }: {
   counts: ReactionCount[];
   mine: string | null;
   onToggle: (type: string) => void;
+  quiet?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const mineLabel = mine && mine in reactionLabels ? reactionLabels[mine as keyof typeof reactionLabels] : 'Me gusta';
+  const visible = counts.filter((item) => Number(item.count) > 0);
 
   return (
     <View style={styles.row}>
@@ -34,14 +37,14 @@ export function ReactionBar({
         onPress={() => onToggle(mine ?? 'Like')}
         onLongPress={() => setOpen(true)}
         delayLongPress={350}
-        style={styles.main}
+        style={[styles.main, quiet && styles.quiet]}
       >
         <Text style={[styles.glyph, mine && styles.on]}>{mine && mine in glyphs ? glyphs[mine as keyof typeof glyphs] : glyphs.Like}</Text>
-        <Text style={[styles.label, mine && styles.on]}>{mineLabel}</Text>
+        {quiet ? null : <Text style={[styles.label, mine && styles.on]}>{mineLabel}</Text>}
       </Pressable>
-      {counts.map((item) => (
+      {visible.map((item) => (
         <Text key={item.type} style={styles.count} accessibilityLabel={`${labelOf(item.type)}: ${item.count}`}>
-          {labelOf(item.type)} {item.count}
+          {glyphOf(item.type)} {item.count}
         </Text>
       ))}
       {open ? (
@@ -73,11 +76,19 @@ function labelOf(type: string): string {
   return type;
 }
 
+function glyphOf(type: string): string {
+  if (type in glyphs) {
+    return glyphs[type as keyof typeof glyphs];
+  }
+  return '•';
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   main: { minHeight: 44, minWidth: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  quiet: { minHeight: 28, minWidth: 28 },
   glyph: { color: theme.colors.textSecondary, fontSize: 18 },
-  label: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
+  label: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13 },
   on: { color: theme.colors.primary },
   count: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },
   picker: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 12, backgroundColor: theme.colors.surface },

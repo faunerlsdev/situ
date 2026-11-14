@@ -42,7 +42,7 @@ public sealed class GetReportHandler(IApplicationDbContext db, IClock clock, IMe
             ? await ReportAccess.BlocksAsync(db, blockedViewer, cancellationToken)
             : ContentBlocks.None;
         var isAuthor = request.ViewerId == report.AuthorId;
-        if (!isAuthor && (!report.IsVisible(clock.UtcNow) || !ReportAccess.CanSee(report, request.ViewerId, friends, blocks)))
+        if (!isAuthor && (!ReportAccess.OnWall(report) || !ReportAccess.CanSee(report, request.ViewerId, friends, blocks)))
         {
             return Result<GetReportResponse>.Failure(ReportErrors.NotFound());
         }
@@ -133,14 +133,10 @@ public sealed class GetReportHandler(IApplicationDbContext db, IClock clock, IMe
 
     private static string? UnavailableStatus(Report report, DateTimeOffset now)
     {
-        if (report.Status is ReportStatus.Expired or ReportStatus.Removed or ReportStatus.UnderReview)
+        _ = now;
+        if (report.Status is ReportStatus.Removed or ReportStatus.UnderReview)
         {
             return report.Status.ToString();
-        }
-
-        if (report.Status == ReportStatus.Active && now >= report.ExpiresAt)
-        {
-            return nameof(ReportStatus.Expired);
         }
 
         return null;

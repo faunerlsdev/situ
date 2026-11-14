@@ -2,14 +2,17 @@ import { notificationMessages, notify, profileMessages, shellTabHrefs, socialTab
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'expo-router';
 import * as Location from 'expo-location';
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Image, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { Image, Modal, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLiveRoster } from '@/features/live/roster';
 import { LiveToolbarMark } from '@/features/live/toolbar-mark';
+import { FilterBar } from '@/features/reports/filter-bar';
 import { setMapPlace } from '@/features/reports/place';
+import { useReportCatalog } from '@/features/reports/use-catalog';
 import { useAppConfig } from '@/features/reports/use-app-config';
 import { api } from '@/lib/api';
 
@@ -94,14 +97,36 @@ export function WazeTabBar() {
   const router = useRouter();
   const config = useAppConfig();
   const visible = tabs.filter((tab) => {
-    if (Platform.OS === 'ios' && (tab.href === '/chisme' || tab.href === '/mensajes')) {
+    if (tab.href === '/chisme') {
+      return true;
+    }
+    if (Platform.OS === 'ios' && tab.href === '/mensajes') {
       return false;
     }
     return shellTabHrefs(socialTabsFrom(config.data)).includes(tab.href);
   });
+  const order = visible.map((tab) => tab.href);
+  const current = Math.max(0, order.findIndex((href) => pathname === href));
+  const orderRef = useRef(order);
+  const currentRef = useRef(current);
+  orderRef.current = order;
+  currentRef.current = current;
+  const swipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 18 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderRelease: (_, gesture) => {
+        const tabsNow = orderRef.current;
+        const index = currentRef.current;
+        const next = gesture.dx <= -40 ? tabsNow[index + 1] : gesture.dx >= 40 ? tabsNow[index - 1] : undefined;
+        if (next) {
+          router.navigate(next);
+        }
+      },
+    }),
+  ).current;
 
   return (
-    <View style={{ backgroundColor: theme.colors.surface, paddingBottom: insets.bottom }}>
+    <View {...swipe.panHandlers} style={{ backgroundColor: theme.colors.surface, paddingBottom: insets.bottom }}>
       <View style={styles.divider} />
       <View style={styles.tabs}>
         {visible.map((tab) => {
@@ -116,7 +141,16 @@ export function WazeTabBar() {
               style={styles.tab}
             >
               <View>
-                <Image source={tab.icon} resizeMode="contain" style={[styles.tabIcon, !active && styles.inactive]} />
+                {tab.href === '/notificaciones' ? (
+                  <SymbolView
+                    name={{ ios: 'bell.fill', android: 'notifications', web: 'notifications' }}
+                    tintColor={theme.colors.textPrimary}
+                    size={26}
+                    style={[styles.tabIcon, !active && styles.inactive]}
+                  />
+                ) : (
+                  <Image source={tab.icon} resizeMode="contain" style={[styles.tabIcon, !active && styles.inactive]} />
+                )}
                 {tab.href === '/notificaciones' ? <UnreadBadge /> : null}
               </View>
               {active ? <View style={styles.dot} /> : <View style={styles.dotSpacer} />}
@@ -146,11 +180,10 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
   const router = useRouter();
   const { signOut } = useSession();
   const insets = useSafeAreaInsets();
-  const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: visible });
   const requests = useQuery({ queryKey: ['friend-requests'], queryFn: () => api.friendRequests() });
   const pendingFriends = requests.data?.incoming.length ?? 0;
 
-  function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/ubicacion' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
+  function go(href: '/perfil' | '/amigos' | '/visibilidad' | '/reportes' | '/bloqueados' | '/cuenta' | '/ajustes') {
     router.push(href);
     onClose();
   }
@@ -174,9 +207,6 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => go('/visibilidad')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Visibilidad de mi perfil</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Compartir mi ubicación" onPress={() => go('/ubicacion')} style={styles.drawerRow}>
-            <Text style={styles.drawerLabel}>{sharing.data?.enabled && !sharing.data.ghost ? 'Compartir mi ubicación · activo' : 'Compartir mi ubicación'}</Text>
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Mis reportes" onPress={() => go('/reportes')} style={styles.drawerRow}>
             <Text style={styles.drawerLabel}>Mis reportes</Text>
@@ -208,6 +238,7 @@ function AccountDrawer({ visible, onClose }: { visible: boolean; onClose: () => 
 
 function SearchSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
+  const catalog = useReportCatalog();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ latitude: number; longitude: number; label: string }[]>([]);
   const [searching, setSearching] = useState(false);
@@ -269,6 +300,8 @@ function SearchSheet({ visible, onClose }: { visible: boolean; onClose: () => vo
         <Pressable accessibilityRole="button" accessibilityLabel="Buscar" onPress={() => void search()} style={styles.drawerRow}>
           <Text style={styles.drawerLabel}>{searching ? 'Buscando…' : 'Buscar'}</Text>
         </Pressable>
+        <Text style={styles.drawerLabel}>Filtros del mapa</Text>
+        <FilterBar categories={catalog.data?.categories ?? []} />
         {results.map((item) => (
           <Pressable
             key={`${item.latitude}-${item.longitude}-${item.label}`}

@@ -442,11 +442,12 @@ export function createServices(http: HttpClient) {
       return http.request<void>({
         method: 'POST',
         url: `/api/v1/notifications/${encodeURIComponent(id)}/read`,
+        data: {},
         requiresAuth: true,
       });
     },
     markAllNotificationsRead() {
-      return http.request<void>({ method: 'POST', url: '/api/v1/notifications/read-all', requiresAuth: true });
+      return http.request<void>({ method: 'POST', url: '/api/v1/notifications/read-all', data: {}, requiresAuth: true });
     },
     changePassword(body: ChangePasswordRequest) {
       return http.request<void>({
@@ -689,6 +690,46 @@ export function createServices(http: HttpClient) {
         method: 'POST',
         url: '/api/v1/live',
         data: body,
+        requiresAuth: true,
+      });
+    },
+    updateLive(id: string, body: { title: string; visibility: 'Public' | 'Friends' }) {
+      return http.request<LiveCard>({
+        method: 'PATCH',
+        url: `/api/v1/live/${encodeURIComponent(id)}`,
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    liveRoom(id: string) {
+      return http.request<LiveRoom>({
+        url: `/api/v1/live/${encodeURIComponent(id)}/room`,
+        requiresAuth: true,
+      });
+    },
+    addLiveComment(id: string, body: { text: string; isAnonymous: boolean }) {
+      return http.request<{ id: string; text: string }>({
+        method: 'POST',
+        url: `/api/v1/live/${encodeURIComponent(id)}/comments`,
+        data: body,
+        requiresAuth: true,
+      });
+    },
+    setLiveReaction(id: string, type: string | null) {
+      return http.request<ReactionResult>({
+        method: 'PUT',
+        url: `/api/v1/live/${encodeURIComponent(id)}/reaction`,
+        data: { type },
+        requiresAuth: true,
+      });
+    },
+    reportFeed(cursor?: string, limit = 20) {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (cursor) {
+        params.set('cursor', cursor);
+      }
+      return http.request<MyReportsResponse>({
+        url: `/api/v1/reports/feed?${params.toString()}`,
         requiresAuth: true,
       });
     },
@@ -1003,6 +1044,26 @@ export type LivePublish = {
 export type LiveWatch = {
   url: string;
   expiresAt: string;
+};
+
+export type LiveRoom = {
+  title: string;
+  visibility: string;
+  viewers?: number;
+  reactionCounts: { type: string; count: number | string }[];
+  myReaction: string | null;
+  comments: {
+    id: string;
+    text: string;
+    createdAt: string;
+    myReaction: string | null;
+    isMine: boolean;
+    author: {
+      userId: string | null;
+      displayName: string;
+      isAnonymous: boolean;
+    };
+  }[];
 };
 
 export type InboxNotification = {

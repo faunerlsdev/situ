@@ -12,7 +12,6 @@ import {
   formatDistance,
   mapRealtimeOf,
   notify,
-  panelCopyOf,
   publishBlock,
   readApiUrl,
   relativeTime,
@@ -39,6 +38,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -47,22 +47,22 @@ import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native
 import type { Region } from 'react-native-maps';
 
 import { CategoryMark } from '@/features/reports/category-mark';
+import { PhotoViewer } from '@/features/reports/photo-viewer';
+import { SituRadial } from '@/features/reports/situ-radial';
 import { LiveMark } from '@/features/live/live-mark';
 import { locatedStreams } from '@/features/live/logic';
 import { refreshLiveRoster, useLiveRoster } from '@/features/live/roster';
+import { beginPublicLive } from '@/features/live/start-public';
 import { blockContent } from '@/features/interaction/block-content';
 import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
 import type { ComplaintTarget } from '@/features/interaction/complaint-sheet';
 import { responseCommitment } from '@/features/interaction/support-copy';
 import { ReactionBar } from '@/features/interaction/reaction-bar';
-import { usePeople } from '@/features/location/use-people';
-import { seenLabel } from '@/features/location/logic';
 import { api } from '@/lib/api';
-import type { MapPerson } from '@situ/shared';
 import { supportFallbackUrl } from '@/lib/store-links';
 import { theme } from '@/theme/theme';
 
-import { setMapFilters, useMapFilters } from './filters';
+import { useMapFilters } from './filters';
 import { setMapFocus, useMapFocus } from './focus';
 import { MapErrorBoundary, MapUnavailable } from './map-unavailable';
 import { useMapProvider } from './map-provider';
@@ -78,7 +78,6 @@ const shareIcon = { ios: 'square.and.arrow.up', android: 'share', web: 'share' }
 const flagIcon = { ios: 'flag', android: 'flag', web: 'flag' } as const;
 const blockIcon = { ios: 'nosign', android: 'block', web: 'block' } as const;
 
-const isotipo = require('../../assets/images/brand/situ-isotipo-negro.png');
 const avatar = require('../../assets/images/brand/situ-isotipo-naranja-claro.png');
 const darkMap = require('../../mapStyles/dark.json');
 
@@ -91,7 +90,6 @@ export function MapScreen() {
   const catalog = useReportCatalog();
   const me = useMe();
   const appConfig = useAppConfig();
-  const copy = panelCopyOf(appConfig.data);
   const homeRef = useRef(bogota);
   const homeCity = me.data?.homeCity;
   if (homeCity) {
@@ -114,12 +112,10 @@ export function MapScreen() {
   userRef.current = user;
   const [gate, setGate] = useState<'checking' | 'explain' | 'ready'>('checking');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedPerson, setSelectedPerson] = useState<MapPerson | null>(null);
-  const sharing = useQuery({ queryKey: ['location-sharing'], queryFn: () => api.locationSharing(), enabled: gate === 'ready' });
+  const [photo, setPhoto] = useState<string | null>(null);
   const lives = useLiveRoster();
   const livePoints = locatedStreams(lives.streams);
-  const people = usePeople({ active: gate === 'ready' && Platform.OS !== 'web', region: settled, selfId: me.data?.id ?? null });
-  const [sheetIndex, setSheetIndex] = useState(0);
+  const [sheetIndex, setSheetIndex] = useState(-1);
   const [parentId, setParentId] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [mapAttempt, setMapAttempt] = useState(0);
@@ -310,7 +306,7 @@ export function MapScreen() {
 
     const block = publishBlock(me.data?.canPublish === true, me.data?.publishBlockedReason);
     if (!me.data || block.kind === 'allowed') {
-      sheetRef.current?.snapToIndex(1);
+      sheetRef.current?.snapToIndex(0);
       return;
     }
 
@@ -424,7 +420,7 @@ export function MapScreen() {
         {gate === 'checking' ? <ActivityIndicator color={theme.colors.primary} /> : (
           <>
             <Text style={styles.gateTitle}>Para mostrarte lo que pasa cerca</Text>
-            <Text style={styles.gateBody}>SITU usa tu ubicación mientras la app está abierta para centrar el mapa, calcular distancias, confirmar que estás cerca de un reporte y, si tú lo activas, compartir un punto aproximado con tus amigos. No la usamos en segundo plano. Si no la concedes, el mapa sigue disponible en tu ciudad.</Text>
+            <Text style={styles.gateBody}>SITU usa tu ubicación mientras la app está abierta para centrar el mapa, calcular distancias y confirmar que estás cerca de un reporte. También queda en el reporte o la transmisión que publiques. No la usamos en segundo plano ni la compartimos de forma permanente. Si no la concedes, el mapa sigue disponible en tu ciudad.</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Continuar" onPress={() => void allowLocation()} style={styles.gateButton}>
               <Text style={styles.gateButtonLabel}>Continuar</Text>
             </Pressable>
@@ -449,15 +445,6 @@ export function MapScreen() {
           {realtime.mode === 'down' ? <Text style={styles.liveText}>Sin conexión en tiempo real</Text> : null}
         </View>
       ) : null}
-      {sharing.data?.enabled && !sharing.data.ghost ? (
-        <View accessibilityRole="text" accessibilityLabel="Estás compartiendo tu ubicación" style={styles.sharing}>
-          <Text style={styles.liveText}>Estás compartiendo tu ubicación</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Dejar de compartir ubicación" onPress={() => void api.setLocationSharing({ enabled: false, mode: sharing.data?.mode ?? 'AllFriends', duration: 'until_off' }).then(() => queryClient.invalidateQueries({ queryKey: ['location-sharing'] })).then(() => notify.success('Dejaste de compartir tu ubicación.')).catch((error) => notify.error(error))} style={styles.sharingOff}>
-            <Text style={styles.sharingOffLabel}>Apagar</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      <FilterBar categories={categories} />
       {Platform.OS === 'web' ? (
         <View style={styles.gate}><Text style={styles.gateBody}>El mapa nativo está en la app de iOS y Android.</Text></View>
       ) : mapChoice.status === 'unavailable' ? (
@@ -471,7 +458,7 @@ export function MapScreen() {
           customMapStyle={mapChoice.status === 'google' ? darkMap : undefined}
           userInterfaceStyle={mapChoice.status === 'apple' ? mapChoice.userInterfaceStyle : undefined}
           initialRegion={region ?? { ...bogota, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
-          showsUserLocation={user !== null && sharing.data?.hiddenBecauseAnonymous !== true}
+          showsUserLocation={user !== null}
           onPanDrag={() => setFollow(false)}
           onRegionChangeComplete={onRegion}
         >
@@ -505,35 +492,6 @@ export function MapScreen() {
               )}
             </Marker>
           ))}
-          {people.map((item) => (
-            <Marker
-              key={item.kind === 'cluster' ? `people-${item.key}` : `person-${item.person.userId}`}
-              coordinate={{ latitude: item.kind === 'cluster' ? item.latitude : item.person.latitude, longitude: item.kind === 'cluster' ? item.longitude : item.person.longitude }}
-              accessibilityLabel={item.kind === 'cluster' ? `${item.count} personas` : item.person.displayName}
-              onPress={() => {
-                if (item.kind === 'cluster') {
-                  const current = region ?? settled;
-                  mapRef.current?.animateToRegion({
-                    latitude: item.latitude,
-                    longitude: item.longitude,
-                    latitudeDelta: (current?.latitudeDelta ?? 0.05) / 2,
-                    longitudeDelta: (current?.longitudeDelta ?? 0.05) / 2,
-                  }, reduceMotion ? 0 : 350);
-                  return;
-                }
-                setSelectedId(null);
-                setSelectedPerson(item.person);
-              }}
-            >
-              {item.kind === 'cluster' ? (
-                <View style={styles.cluster}><Text style={styles.clusterText}>{item.count}</Text></View>
-              ) : (
-                <View style={styles.avatarPin}>
-                  {item.person.avatarUrl ? <Image source={{ uri: item.person.avatarUrl }} style={styles.avatarImage} /> : <Text style={styles.avatarLetter}>{item.person.displayName.slice(0, 1)}</Text>}
-                </View>
-              )}
-            </Marker>
-          ))}
           {livePoints.map((item) => (
             <Marker
               key={`live-${item.id}`}
@@ -549,19 +507,7 @@ export function MapScreen() {
           </MapView>
         </MapErrorBoundary>
       )}
-      {selectedPerson ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{selectedPerson.displayName}</Text>
-          <Text style={styles.cardMeta}>{`@${selectedPerson.userName} · ${seenLabel(selectedPerson.live, selectedPerson.lastSeenAt, Date.now())}`}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Abrir perfil" onPress={() => router.push({ pathname: '/usuario/[userName]', params: { userName: selectedPerson.userName } })} style={styles.vote}>
-            <Text style={styles.voteLabel}>Abrir perfil</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => setSelectedPerson(null)} style={styles.close}>
-            <Text style={styles.cardMeta}>Cerrar</Text>
-          </Pressable>
-        </View>
-      ) : null}
-      {selectedPoint && sheetIndex === 0 && !selectedPerson ? (
+      {selectedPoint && sheetIndex < 0 ? (
         <View style={styles.card}>
           <View style={styles.cardHead}>
             <Pressable accessibilityRole="button" accessibilityLabel="Ver detalle del reporte" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.cardBody}>
@@ -574,7 +520,7 @@ export function MapScreen() {
               <SymbolView name={closeIcon} tintColor={theme.colors.warning} size={18} />
             </Pressable>
           </View>
-          <MediaThumbs media={detail.data?.media ?? []} fallbackUrl={selectedPoint.previewUrl} />
+          <MediaThumbs media={detail.data?.media ?? []} fallbackUrl={selectedPoint.previewUrl} onOpen={setPhoto} />
           <View style={styles.actions}>
             <VoteButton label="Sigue ahí" selected={detail.data?.myConfirmation === 'StillThere'} onPress={() => void vote('StillThere')} />
             <VoteButton label="Ya no está" selected={detail.data?.myConfirmation === 'GoneNow'} onPress={() => void vote('GoneNow')} />
@@ -590,9 +536,9 @@ export function MapScreen() {
             <Pressable accessibilityRole="button" accessibilityLabel="Comentar" onPress={() => router.push({ pathname: '/reporte/[id]', params: { id: selectedPoint.id } })} style={styles.iconAction}>
               <SymbolView name={commentIcon} tintColor={theme.colors.textPrimary} size={22} />
             </Pressable>
-            <View accessibilityLabel="Compartir, próximamente" style={[styles.iconAction, styles.iconSoon]}>
-              <SymbolView name={shareIcon} tintColor={theme.colors.textSecondary} size={22} />
-            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Compartir" onPress={() => void Share.share({ message: `${categoryName(categories, selectedPoint.categoryCode)} en SITU\n${sites.web}/r/${selectedPoint.id}` })} style={styles.iconAction}>
+              <SymbolView name={shareIcon} tintColor={theme.colors.textPrimary} size={22} />
+            </Pressable>
             <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => { setDuplicate(null); setComplaint({ type: 'Report', id: selectedPoint.id }); }} style={styles.iconAction}>
               <SymbolView name={flagIcon} tintColor={theme.colors.textPrimary} size={22} />
             </Pressable>
@@ -623,21 +569,20 @@ export function MapScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="¿Dónde estoy?" onPress={() => void centerOnUser()} style={styles.locate}>
         <View style={styles.locateDot} />
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Quiero reportar algo" onPress={() => void openPublish()} style={styles.fab}>
-        <Image source={isotipo} resizeMode="contain" style={styles.fabMark} />
-      </Pressable>
+      <PhotoViewer uri={photo} onClose={() => setPhoto(null)} />
+      <SituRadial onReport={() => void openPublish()} onTransmit={() => void beginPublicLive(router, me.data)} />
       <BottomSheet
         ref={sheetRef}
-        index={0}
-        snapPoints={[88, '46%', '88%']}
+        index={-1}
+        snapPoints={['46%', '88%']}
         onChange={setSheetIndex}
+        enablePanDownToClose
         enableDynamicSizing={false}
-        animateOnMount={!reduceMotion}
+        animateOnMount={false}
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{ backgroundColor: theme.colors.border }}
       >
-        <Text style={styles.sheetTitle}>{copy.browse}</Text>
-        <Text style={styles.sheetSubtitle}>{copy.report}</Text>
+        <Text style={styles.sheetTitle}>¿Qué pasó?</Text>
         <BottomSheetScrollView contentContainerStyle={styles.grid}>
           {parentId ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Volver a las categorías" onPress={() => setParentId(null)} style={styles.back}>
@@ -669,41 +614,6 @@ export function MapScreen() {
         </BottomSheetScrollView>
       </BottomSheet>
     </View>
-  );
-}
-
-function FilterBar({ categories }: { categories: ReportCategory[] }) {
-  const filters = useMapFilters();
-  const roots = categoriesUnder(categories, null);
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters} contentContainerStyle={styles.filterContent}>
-      {roots.map((category) => {
-        const active = filters.categoryCodes.includes(category.code);
-        return (
-          <Pressable
-            key={category.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={category.name}
-            onPress={() => setMapFilters({
-              ...filters,
-              categoryCodes: active ? filters.categoryCodes.filter((code) => code !== category.code) : [...filters.categoryCodes, category.code],
-            })}
-            style={[styles.chip, active && styles.chipOn]}
-          >
-            <Text style={styles.chipLabel}>{category.name}</Text>
-          </Pressable>
-        );
-      })}
-      {(['all', 'hour', 'today'] as const).map((since) => (
-        <Pressable key={since} accessibilityRole="button" accessibilityState={{ selected: filters.since === since }} accessibilityLabel={sinceLabel(since)} onPress={() => setMapFilters({ ...filters, since })} style={[styles.chip, filters.since === since && styles.chipOn]}>
-          <Text style={styles.chipLabel}>{sinceLabel(since)}</Text>
-        </Pressable>
-      ))}
-      <Pressable accessibilityRole="button" accessibilityState={{ selected: filters.friendsOnly }} accessibilityLabel="Solo amigos" onPress={() => setMapFilters({ ...filters, friendsOnly: !filters.friendsOnly })} style={[styles.chip, filters.friendsOnly && styles.chipOn]}>
-        <Text style={styles.chipLabel}>Solo amigos</Text>
-      </Pressable>
-    </ScrollView>
   );
 }
 
@@ -747,12 +657,6 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function sinceLabel(since: 'all' | 'hour' | 'today'): string {
-  if (since === 'hour') return 'Última hora';
-  if (since === 'today') return 'Hoy';
-  return 'Todo';
-}
-
 function categoryName(categories: ReportCategory[], code: string | null): string {
   return categories.find((category) => category.code === code)?.name ?? 'Reporte';
 }
@@ -770,21 +674,26 @@ function useDelayed(active: boolean, delay: number): boolean {
   return visible;
 }
 
-function MediaThumbs({ media, fallbackUrl }: { media: { id: string; type: string; url: string; thumbnailUrl: string | null }[]; fallbackUrl: string | null }) {
+function MediaThumbs({ media, fallbackUrl, onOpen }: { media: { id: string; type: string; url: string; thumbnailUrl: string | null }[]; fallbackUrl: string | null; onOpen: (uri: string) => void }) {
   if (media.length === 0) {
     const preview = absoluteMediaUrl(apiBase, fallbackUrl);
-    return preview ? <Image source={{ uri: preview }} style={styles.preview} /> : null;
+    return preview ? (
+      <Pressable accessibilityRole="imagebutton" accessibilityLabel="Ver foto" onPress={() => onOpen(preview)}>
+        <Image source={{ uri: preview }} style={styles.preview} />
+      </Pressable>
+    ) : null;
   }
 
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
       {media.map((item) => {
+        const full = absoluteMediaUrl(apiBase, item.type === 'Video' ? item.thumbnailUrl : item.url);
         const uri = absoluteMediaUrl(apiBase, item.thumbnailUrl ?? (item.type === 'Video' ? null : item.url));
         return (
-          <View key={item.id} style={styles.thumb}>
+          <Pressable key={item.id} accessibilityRole="imagebutton" accessibilityLabel={item.type === 'Video' ? 'Ver video' : 'Ver foto'} onPress={() => { if (full && item.type !== 'Video') onOpen(full); }} style={styles.thumb}>
             {uri ? <Image source={{ uri }} style={styles.thumbImage} /> : null}
             {item.type === 'Video' ? <Text style={styles.thumbLabel}>Video</Text> : null}
-          </View>
+          </Pressable>
         );
       })}
     </ScrollView>

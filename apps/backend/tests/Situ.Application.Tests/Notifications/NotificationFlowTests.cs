@@ -348,11 +348,13 @@ public class NotificationFlowTests
         await db.SaveChangesAsync();
         var handler = new GetReportHandler(db, clock, new Signer());
 
-        await AssertUnavailable(handler, viewer.Id, expired.Id, "Expired");
+        var expiredView = await handler.Handle(new GetReportRequest(viewer.Id, expired.Id), CancellationToken.None);
+        Assert.True(expiredView.IsSuccess);
         await AssertUnavailable(handler, viewer.Id, removed.Id, "Removed");
         await AssertUnavailable(handler, viewer.Id, review.Id, "UnderReview");
         clock.UtcNow = lapsed.ExpiresAt.AddMinutes(1);
-        await AssertUnavailable(handler, viewer.Id, lapsed.Id, "Expired");
+        var lapsedView = await handler.Handle(new GetReportRequest(viewer.Id, lapsed.Id), CancellationToken.None);
+        Assert.True(lapsedView.IsSuccess);
 
         var asAuthor = await handler.Handle(new GetReportRequest(author.Id, expired.Id), CancellationToken.None);
         Assert.True(asAuthor.IsSuccess);
@@ -411,7 +413,7 @@ public class NotificationFlowTests
         Assert.Equal(report.Id.ToString(), sent.Payload.ReportId);
         Assert.DoesNotContain("Vi lo mismo", sent.Body + JsonSerializer.Serialize(sent.Payload), StringComparison.Ordinal);
         AssertOpaque(sent, commenter);
-        var listed = await new ListNotificationsHandler(db, clock).Handle(new ListNotificationsRequest(author.Id, null, 20), CancellationToken.None);
+        var listed = await new ListNotificationsHandler(db).Handle(new ListNotificationsRequest(author.Id, null, 20), CancellationToken.None);
         var item = Assert.Single(listed.Value!.Notifications);
         Assert.Equal(report.Id, item.ReportId);
         Assert.True(item.Available);
@@ -596,6 +598,26 @@ public class NotificationFlowTests
         Assert.DoesNotContain("latitude", payload, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("longitude", payload, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("distance", payload, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Opening_a_notification_keeps_it_read()
+    {
+        await using var db = IdentityTestDb.Create();
+        var clock = new FixedClock(Now);
+        var catalog = await CatalogAsync(db);
+        var user = await UserAsync(db, catalog, 30, "lectura@situ.test", "lectura", "+573000000081");
+        var notification = Notification.Create(user.Id, NotificationType.NearbyReport, "En tu ciudad", "Hurto", ContentTargetType.Report, Guid.NewGuid(), Now);
+        db.Notifications.Add(notification);
+        await db.SaveChangesAsync();
+
+        var marked = await new MarkNotificationReadHandler(db, clock).Handle(new MarkNotificationReadRequest(user.Id, notification.Id), CancellationToken.None);
+        Assert.True(marked.IsSuccess);
+
+        var listed = await new ListNotificationsHandler(db).Handle(new ListNotificationsRequest(user.Id, null), CancellationToken.None);
+        var item = Assert.Single(listed.Value!.Notifications);
+        Assert.True(item.IsRead);
+        Assert.Equal(0, (await new UnreadCountHandler(db).Handle(new UnreadCountRequest(user.Id), CancellationToken.None)).Value!.Count);
     }
 
     private static async Task DispatchAsync(IdentityTestDb db, FixedClock clock, RecordingPush push, string kind, Guid subjectId)

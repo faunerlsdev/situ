@@ -22,6 +22,7 @@ import type { InfiniteData } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef, ReactNode } from 'react';
+import { SymbolView } from 'expo-symbols';
 import { AccessibilityInfo, Dimensions, Image, Keyboard, LayoutAnimation, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAppConfig } from '@/features/reports/use-app-config';
@@ -38,6 +39,12 @@ import { responseCommitment } from './support-copy';
 import { ReactionBar } from './reaction-bar';
 
 const avatar = require('../../assets/images/brand/situ-isotipo-naranja-claro.png');
+const clockIcon = { ios: 'clock', android: 'schedule', web: 'schedule' } as const;
+const flagIcon = { ios: 'flag', android: 'flag', web: 'flag' } as const;
+const blockIcon = { ios: 'hand.raised', android: 'block', web: 'block' } as const;
+const personIcon = { ios: 'person.crop.circle.badge.exclamationmark', android: 'report', web: 'report' } as const;
+const editIcon = { ios: 'pencil', android: 'edit', web: 'edit' } as const;
+const deleteIcon = { ios: 'trash', android: 'delete', web: 'delete' } as const;
 
 type Page = { comments: CommentItem[]; nextCursor: string | null };
 
@@ -347,46 +354,46 @@ function CommentRow({
   const author = presentAuthor(comment.author);
   return (
     <View style={[styles.comment, nested && styles.nested]}>
-      <View style={styles.author}>
-        {author.anonymous ? <Image source={avatar} style={styles.avatar} accessibilityIgnoresInvertColors /> : null}
-        <View style={styles.copy}>
+      <Face name={author.name} anonymous={author.anonymous} />
+      <View style={styles.copy}>
+        <View style={styles.bubble}>
           <Text style={styles.name}>{author.name}</Text>
-          <Text style={styles.time}>{relativeTime(comment.createdAt)}</Text>
+          <Text style={styles.body}>{comment.text}</Text>
         </View>
-      </View>
-      <Text style={styles.body}>{comment.text}</Text>
-      <ReactionBar counts={comment.reactionCounts} mine={comment.myReaction} onToggle={(type) => onReact(comment, type)} />
-      <View style={styles.actions}>
-        {nested ? null : (
-          <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentReply} onPress={() => onReply(comment)} style={styles.action}>
-            <Text style={styles.link}>{feedbackMessages.commentReply}</Text>
-          </Pressable>
-        )}
-        {comment.isMine ? (
-          <>
-            <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentEdit} onPress={() => onEdit(comment)} style={styles.action}>
-              <Text style={styles.link}>{feedbackMessages.commentEdit}</Text>
+        <View style={styles.actions}>
+          <SymbolView name={clockIcon} tintColor={theme.colors.textSecondary} size={12} />
+          <Text style={styles.time}>{relativeTime(comment.createdAt)}</Text>
+          <ReactionBar quiet counts={comment.reactionCounts} mine={comment.myReaction} onToggle={(type) => onReact(comment, type)} />
+          {nested ? null : (
+            <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentReply} onPress={() => onReply(comment)} style={styles.action}>
+              <Text style={styles.meta}>{feedbackMessages.commentReply}</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentDelete} onPress={() => onDelete(comment)} style={styles.action}>
-              <Text style={styles.danger}>{feedbackMessages.commentDelete}</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <Pressable accessibilityRole="button" accessibilityLabel="Denunciar comentario" onPress={() => onComplain(comment)} style={styles.action}>
-              <Text style={styles.link}>Denunciar</Text>
-            </Pressable>
-            {!author.anonymous && comment.author.userId ? (
-              <Pressable accessibilityRole="button" accessibilityLabel="Denunciar usuario" onPress={() => onComplainUser(comment)} style={styles.action}>
-                <Text style={styles.link}>Denunciar usuario</Text>
+          )}
+          {comment.isMine ? (
+            <>
+              <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentEdit} onPress={() => onEdit(comment)} style={styles.action}>
+                <SymbolView name={editIcon} tintColor={theme.colors.textSecondary} size={15} />
               </Pressable>
-            ) : null}
-            <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => onBlock(comment)} style={styles.action}>
-              <Text style={styles.danger}>Bloquear</Text>
-            </Pressable>
-          </>
-        )}
-      </View>
+              <Pressable accessibilityRole="button" accessibilityLabel={feedbackMessages.commentDelete} onPress={() => onDelete(comment)} style={styles.action}>
+                <SymbolView name={deleteIcon} tintColor={theme.colors.danger} size={15} />
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable accessibilityRole="button" accessibilityLabel="Denunciar comentario" onPress={() => onComplain(comment)} style={styles.action}>
+                <SymbolView name={flagIcon} tintColor={theme.colors.textSecondary} size={15} />
+              </Pressable>
+              {!author.anonymous && comment.author.userId ? (
+                <Pressable accessibilityRole="button" accessibilityLabel="Denunciar usuario" onPress={() => onComplainUser(comment)} style={styles.action}>
+                  <SymbolView name={personIcon} tintColor={theme.colors.textSecondary} size={15} />
+                </Pressable>
+              ) : null}
+              <Pressable accessibilityRole="button" accessibilityLabel="Bloquear" onPress={() => onBlock(comment)} style={styles.action}>
+                <SymbolView name={blockIcon} tintColor={theme.colors.textSecondary} size={15} />
+              </Pressable>
+            </>
+          )}
+        </View>
       {comment.replies.map((reply) => (
         <CommentRow
           key={reply.id}
@@ -401,6 +408,19 @@ function CommentRow({
           onReact={onReact}
         />
       ))}
+      </View>
+    </View>
+  );
+}
+
+function Face({ name, anonymous }: { name: string; anonymous: boolean }) {
+  if (anonymous) {
+    return <Image source={avatar} style={styles.avatar} accessibilityIgnoresInvertColors />;
+  }
+  const letter = name.trim().charAt(0).toUpperCase() || 'S';
+  return (
+    <View style={styles.initial}>
+      <Text style={styles.initialText}>{letter}</Text>
     </View>
   );
 }
@@ -493,22 +513,24 @@ function mapComments(data: InfiniteData<Page> | undefined, change: (item: Commen
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   wrap: { gap: 12, paddingBottom: 16 },
-  heading: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 18 },
-  skeleton: { height: 88, borderRadius: 12, backgroundColor: theme.colors.skeleton },
-  empty: { gap: 8 },
-  emptyTitle: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 16 },
-  comment: { gap: 6, paddingVertical: 8 },
-  nested: { marginLeft: 16 },
-  author: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  avatar: { width: 28, height: 28 },
-  copy: { gap: 2 },
-  name: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
+  heading: { marginHorizontal: 16, color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 14 },
+  skeleton: { height: 72, marginHorizontal: 16, borderRadius: 16, backgroundColor: theme.colors.skeleton },
+  empty: { gap: 8, marginHorizontal: 16 },
+  emptyTitle: { marginHorizontal: 16, color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 14, lineHeight: 20 },
+  comment: { flexDirection: 'row', gap: 8, marginHorizontal: 16, paddingVertical: 6 },
+  nested: { marginHorizontal: 0, marginTop: 8 },
+  avatar: { width: 32, height: 32, borderRadius: 16 },
+  initial: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primarySoft },
+  initialText: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
+  copy: { flex: 1, gap: 4 },
+  bubble: { alignSelf: 'flex-start', maxWidth: '100%', gap: 2, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: theme.colors.surfaceElevated },
+  name: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 13 },
   time: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },
-  body: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sans, fontSize: 16, lineHeight: 22 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  action: { minHeight: 44, justifyContent: 'center' },
-  link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
-  danger: { color: theme.colors.danger, fontFamily: theme.fontFamily.sansBold, fontSize: 14 },
+  body: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sans, fontSize: 15, lineHeight: 20 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 },
+  action: { minHeight: 32, minWidth: 32, alignItems: 'center', justifyContent: 'center' },
+  meta: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12 },
+  link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sans, fontSize: 13 },
   retry: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   retryLabel: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold },
 });

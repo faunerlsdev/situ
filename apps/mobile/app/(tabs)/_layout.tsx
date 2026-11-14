@@ -25,7 +25,7 @@ export default function TabsLayout() {
         }}
       >
         <Tabs.Screen name="mapa" options={{ title: 'Mapa' }} />
-        <Tabs.Screen name="chisme" options={{ title: 'Chisme', href: Platform.OS === 'ios' || !social ? null : undefined }} />
+        <Tabs.Screen name="chisme" options={{ title: 'Chisme' }} />
         <Tabs.Screen name="notificaciones" options={{ title: 'Alertas' }} />
         <Tabs.Screen name="mensajes" options={{ title: 'Mensajes', href: Platform.OS === 'ios' || !social ? null : undefined }} />
         {/* href: null hides the tab and Expo Router then replaces that route with the first visible tab, so the tap looks dead. */}

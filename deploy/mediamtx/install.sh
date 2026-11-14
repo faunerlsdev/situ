@@ -100,18 +100,18 @@ upstream=$(grep "[* ]${TARBALL}$" "${work}/upstream.sha256" || true)
 [[ "${upstream%% *}" == "$expected" ]] || die "El checksum publicado no coincide con el fijado en el repositorio."
 (cd "$work" && printf '%s  %s\n' "$expected" "$TARBALL" | sha256sum -c -)
 tar -xzf "${work}/${TARBALL}" -C "$work" mediamtx
-install -m 755 "${work}/mediamtx" /usr/local/bin/mediamtx
-printf '%s\n' "$VERSION" > /usr/local/bin/mediamtx.version
-
+# This YAML is valid only for $VERSION. Render it aside so a failure here
+# leaves the running service on its current binary and config.
 sed \
   -e "s|__LIVE_AUTH_URL__|${AUTH_FOR_MTX}|g" \
   -e "s|__HLS_CDN_SECRET__|${HLS_CDN_SECRET}|g" \
   -e "s|__SITU_HLS_PORT__|${SITU_HLS_PORT}|g" \
   -e "s|__SITU_MTX_API_PORT__|${SITU_MTX_API_PORT}|g" \
   -e "s|__SITU_RTMPS_PORT__|${SITU_RTMPS_PORT}|g" \
-  "${SCRIPT_DIR}/mediamtx.yml" > /etc/mediamtx/mediamtx.yml
-chown root:situ-mediamtx /etc/mediamtx/mediamtx.yml
-chmod 640 /etc/mediamtx/mediamtx.yml
+  "${SCRIPT_DIR}/mediamtx.yml" > "${work}/mediamtx.yml"
+if grep -E '__SITU_|__LIVE_|__HLS_' "${work}/mediamtx.yml" >/dev/null; then
+  die "El YAML de MediaMTX quedó con marcadores. No toqué el servicio en marcha."
+fi
 
 install -m 755 "${SCRIPT_DIR}/poc-auth.py" /opt/situ/bin/situ-live-auth.py
 install -m 755 "${SCRIPT_DIR}/reload-certs.sh" /opt/situ/bin/mediamtx-reload-certs.sh
@@ -157,9 +157,48 @@ sed \
 situ_nginx_enable situ-live
 situ_nginx_reload || die "nginx -t falló. Quité solo el enlace de SITU de esta ejecución."
 
+# Swap the binary and the YAML together. The process keeps the previous
+# executable until this restart. If the new pair does not stay up, put both back.
+if [[ -f /usr/local/bin/mediamtx ]]; then
+  cp -a /usr/local/bin/mediamtx "${work}/previous-mediamtx"
+fi
+if [[ -f /usr/local/bin/mediamtx.version ]]; then
+  cp -a /usr/local/bin/mediamtx.version "${work}/previous.version"
+fi
+if [[ -f /etc/mediamtx/mediamtx.yml ]]; then
+  cp -a /etc/mediamtx/mediamtx.yml "${work}/previous.yml"
+fi
+install -m 755 "${work}/mediamtx" /usr/local/bin/mediamtx
+printf '%s\n' "$VERSION" > /usr/local/bin/mediamtx.version
+install -o root -g situ-mediamtx -m 640 "${work}/mediamtx.yml" /etc/mediamtx/mediamtx.yml
+
 systemctl daemon-reload
 systemctl disable --now situ-live-auth.service 2>/dev/null || true
-systemctl enable --now situ-mediamtx.service
-systemctl restart situ-mediamtx.service
+systemctl enable situ-mediamtx.service
+systemctl restart situ-mediamtx.service || true
+
+ready=0
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  if systemctl is-active --quiet situ-mediamtx.service \
+    && curl -fsS --max-time 2 -o /dev/null "http://127.0.0.1:${SITU_MTX_API_PORT}/v3/rtmps/conns/list"; then
+    ready=1
+    break
+  fi
+  sleep 1
+done
+if [[ "$ready" -ne 1 ]]; then
+  log "situ-mediamtx no quedó activo con MediaMTX ${VERSION}. Restauro el binario y el YAML anteriores."
+  if [[ -f "${work}/previous-mediamtx" ]]; then
+    cp -a "${work}/previous-mediamtx" /usr/local/bin/mediamtx
+  fi
+  if [[ -f "${work}/previous.version" ]]; then
+    cp -a "${work}/previous.version" /usr/local/bin/mediamtx.version
+  fi
+  if [[ -f "${work}/previous.yml" ]]; then
+    cp -a "${work}/previous.yml" /etc/mediamtx/mediamtx.yml
+  fi
+  systemctl restart situ-mediamtx.service || true
+  die "MediaMTX ${VERSION} no arrancó. El servicio que ya estaba quedó restaurado."
+fi
 log "MediaMTX ${VERSION} escucha RTMPS en ${SITU_RTMPS_PORT}. HLS queda en 127.0.0.1:${SITU_HLS_PORT} y la API de control en 127.0.0.1:${SITU_MTX_API_PORT}."
 log "Si el firewall bloquea ${SITU_RTMPS_PORT}/tcp, ábrelo tú. Este script no toca ufw."

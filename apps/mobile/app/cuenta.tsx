@@ -86,9 +86,6 @@ export default function CuentaScreen() {
       <Pressable accessibilityRole="button" accessibilityLabel="Visibilidad de mi perfil" onPress={() => router.push('/visibilidad')} style={styles.row}>
         <Text style={styles.label}>Visibilidad de mi perfil</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Compartir mi ubicación" onPress={() => router.push('/ubicacion')} style={styles.row}>
-        <Text style={styles.label}>Compartir mi ubicación</Text>
-      </Pressable>
       {__DEV__ ? (
         <Pressable accessibilityRole="button" accessibilityLabel="Prueba de transmisión" onPress={() => router.push('/vivo-poc')} style={styles.row}>
           <Text style={styles.label}>Prueba de transmisión</Text>

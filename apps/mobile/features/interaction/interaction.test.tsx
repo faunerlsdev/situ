@@ -79,9 +79,14 @@ describe('complaint sheet', () => {
         onSubmit={() => { sent += 1; }}
       />,
     );
+    const motivo = tree.root.findByProps({ accessibilityLabel: 'Elegir motivo' });
+    act(() => {
+      motivo.props.onPress();
+    });
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('Información falsa');
     expect(json).toContain('Seguridad de menores');
+    expect(json).toContain('Volver');
     expect(json).toContain('Ya enviaste una denuncia');
     const send = tree.root.findAll((node) => node.props.accessibilityLabel === 'Enviar denuncia');
     expect(send[0]?.props.disabled).toBe(true);

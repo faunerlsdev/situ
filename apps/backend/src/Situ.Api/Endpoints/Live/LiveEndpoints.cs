@@ -3,6 +3,7 @@ using Situ.Api.Http;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
 using Situ.Application.Features.Interaction.Complaints;
+using Situ.Application.Features.Interaction.Reactions;
 using Situ.Application.Features.Live;
 using Situ.Domain.Moderation;
 
@@ -18,6 +19,10 @@ public sealed class LiveEndpoints : IEndpoint
         live.MapGet("/", List).WithName("ListLive").RequireRateLimiting("live").Produces<ListLiveResponse>();
         live.MapGet("/{id}", Get).WithName("GetLive").RequireRateLimiting("live").Produces<LiveCard>();
         live.MapPost("/{id}/watch", Watch).WithName("WatchLive").RequireRateLimiting("live").Produces<WatchLiveResponse>();
+        live.MapPatch("/{id}", Update).WithName("UpdateLive").RequireRateLimiting("live").Produces<LiveCard>();
+        live.MapGet("/{id}/room", Room).WithName("GetLiveRoom").RequireRateLimiting("live").Produces<LiveRoomResponse>();
+        live.MapPost("/{id}/comments", Comment).WithName("AddLiveComment").RequireRateLimiting("live").Produces<AddLiveCommentResponse>();
+        live.MapPut("/{id}/reaction", React).WithName("SetLiveReaction").RequireRateLimiting("live").Produces<SetReactionResponse>();
         live.MapPost("/{id}/report", Report).WithName("ReportLive").RequireRateLimiting("live").Produces<FileComplaintResponse>();
 
         var admin = group.MapGroup("/admin/live")
@@ -60,6 +65,26 @@ public sealed class LiveEndpoints : IEndpoint
             ? (await handler.Handle(new GetLiveRequest(userId, id), cancellationToken)).ToHttpResult()
             : Results.Unauthorized();
 
+    private static async Task<IResult> Update(string id, UpdateBody body, ICurrentUser current, IHandler<UpdateLiveRequest, Result<LiveCard>> handler, CancellationToken cancellationToken) =>
+        current.UserId is { } userId
+            ? (await handler.Handle(new UpdateLiveRequest(userId, id, body.Title ?? "", body.Visibility ?? ""), cancellationToken)).ToHttpResult()
+            : Results.Unauthorized();
+
+    private static async Task<IResult> Room(string id, ICurrentUser current, IHandler<ListLiveRoomRequest, Result<LiveRoomResponse>> handler, CancellationToken cancellationToken) =>
+        current.UserId is { } userId
+            ? (await handler.Handle(new ListLiveRoomRequest(userId, id), cancellationToken)).ToHttpResult()
+            : Results.Unauthorized();
+
+    private static async Task<IResult> Comment(string id, CommentBody body, ICurrentUser current, IHandler<AddLiveCommentRequest, Result<AddLiveCommentResponse>> handler, CancellationToken cancellationToken) =>
+        current.UserId is { } userId
+            ? (await handler.Handle(new AddLiveCommentRequest(userId, id, body.Text ?? "", body.IsAnonymous), cancellationToken)).ToHttpResult()
+            : Results.Unauthorized();
+
+    private static async Task<IResult> React(string id, ReactBody body, ICurrentUser current, IHandler<SetLiveReactionRequest, Result<SetReactionResponse>> handler, CancellationToken cancellationToken) =>
+        current.UserId is { } userId
+            ? (await handler.Handle(new SetLiveReactionRequest(userId, id, body.Type), cancellationToken)).ToHttpResult()
+            : Results.Unauthorized();
+
     private static async Task<IResult> Watch(string id, ICurrentUser current, IHandler<WatchLiveRequest, Result<WatchLiveResponse>> handler, CancellationToken cancellationToken) =>
         current.UserId is { } userId
             ? (await handler.Handle(new WatchLiveRequest(userId, id), cancellationToken)).ToHttpResult()
@@ -98,6 +123,12 @@ public sealed class LiveEndpoints : IEndpoint
             : Results.Unauthorized();
 
     private sealed record CreateBody(string? Visibility, string? Title, Guid? CategoryId, double? Latitude, double? Longitude);
+
+    private sealed record UpdateBody(string? Title, string? Visibility);
+
+    private sealed record CommentBody(string? Text, bool IsAnonymous);
+
+    private sealed record ReactBody(string? Type);
 
     private sealed record ReportBody(string? Reason, string? Details);
 

@@ -220,6 +220,22 @@ public sealed class LiveStream : AggregateRoot
         return null;
     }
 
+    /// <summary>
+    /// Title and audience can change while the stream is still open.
+    /// A minor cannot switch a stream to public.
+    /// </summary>
+    public void Present(string title, ContentVisibility visibility, int streamerAge, DateTimeOffset now)
+    {
+        EnsureOpen();
+        Guard.That(
+            MinorProtectionPolicy.CanStreamTo(streamerAge, visibility),
+            "live.minor_friends_only",
+            "Users under 18 can only stream to their friends.");
+        Title = Guard.NotEmpty(title, nameof(title), 80);
+        Visibility = visibility;
+        MarkUpdated(now);
+    }
+
     public bool MarkLive(DateTimeOffset now)
     {
         if (Status != LiveStreamStatus.Waiting || HiddenByStaff || PublishKeyUsedAt is null)

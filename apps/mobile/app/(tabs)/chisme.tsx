@@ -1,5 +1,5 @@
-import { EmptyState } from '@/components/shell';
+import { ReportWall } from '@/features/reports/wall';
 
 export default function ChismeScreen() {
-  return <EmptyState title="Chisme" />;
+  return <ReportWall />;
 }

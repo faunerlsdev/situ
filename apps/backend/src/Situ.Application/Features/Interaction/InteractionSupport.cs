@@ -134,20 +134,17 @@ internal static class InteractionAccess
             return Result<Report>.Failure(ReportErrors.NotFound());
         }
 
-        if (!isAuthor && report.Status != ReportStatus.Active)
+        if (!isAuthor && !ReportAccess.OnWall(report))
         {
             return Result<Report>.Failure(ReportErrors.NotFound());
         }
 
-        if (requireActive && report.Status != ReportStatus.Active)
+        if (requireActive && !ReportAccess.OnWall(report))
         {
             return Result<Report>.Failure(InteractionErrors.ReportClosed());
         }
 
-        if (requireActive && now >= report.ExpiresAt)
-        {
-            return Result<Report>.Failure(InteractionErrors.ReportClosed());
-        }
+        _ = now;
 
         return Result<Report>.Success(report);
     }

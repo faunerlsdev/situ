@@ -30,6 +30,7 @@ export const StyleSheet = {
     return styles;
   },
   absoluteFill: {},
+  hairlineWidth: 1,
 };
 
 export const Platform = {

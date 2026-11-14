@@ -134,6 +134,61 @@ public sealed class CreateLiveHandler(
     }
 }
 
+public sealed record UpdateLiveRequest(Guid UserId, string PublicId, string Title, string Visibility);
+
+public sealed class UpdateLiveValidator : AbstractValidator<UpdateLiveRequest>
+{
+    public UpdateLiveValidator()
+    {
+        RuleFor(request => request.Title).NotEmpty().MaximumLength(80);
+        RuleFor(request => request.Visibility).Must(value => value is "Public" or "Friends" or "FriendsOnly");
+    }
+}
+
+public sealed class UpdateLiveHandler(IApplicationDbContext db, IClock clock)
+    : IHandler<UpdateLiveRequest, Result<LiveCard>>
+{
+    public async Task<Result<LiveCard>> Handle(UpdateLiveRequest request, CancellationToken cancellationToken)
+    {
+        var stream = await db.LiveStreams.FirstOrDefaultAsync(item => item.PublicPath == request.PublicId, cancellationToken);
+        if (stream is null || !stream.IsOpen)
+        {
+            return Result<LiveCard>.Failure(LiveRules.NotFound());
+        }
+
+        if (stream.StreamerId != request.UserId)
+        {
+            return Result<LiveCard>.Failure(Error.Forbidden("live.forbidden", "Solo quien transmite puede cambiarla."));
+        }
+
+        var user = await db.Users.FirstOrDefaultAsync(item => item.Id == request.UserId, cancellationToken);
+        if (user is null)
+        {
+            return Result<LiveCard>.Failure(LiveRules.NotFound());
+        }
+
+        if (ContentFilter.Rejects(request.Title, await ContentFilterCatalog.TermsAsync(db, cancellationToken)))
+        {
+            return Result<LiveCard>.Failure(ContentFilter.Rejected("title"));
+        }
+
+        var now = clock.UtcNow;
+        var visibility = request.Visibility is "Public" ? ContentVisibility.Public : ContentVisibility.FriendsOnly;
+        try
+        {
+            stream.Present(request.Title.Trim(), visibility, user.AgeOn(now), now);
+        }
+        catch (DomainException exception)
+        {
+            return Result<LiveCard>.Failure(LiveRules.FromDomain(exception));
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        var settings = await LiveRules.SettingsAsync(db, cancellationToken);
+        return Result<LiveCard>.Success(await ListLiveHandler.CardAsync(db, stream, settings, now, cancellationToken));
+    }
+}
+
 public sealed record EndLiveRequest(Guid UserId, string PublicId, bool Staff);
 
 public sealed class EndLiveHandler(

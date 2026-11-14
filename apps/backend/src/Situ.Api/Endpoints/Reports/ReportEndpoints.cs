@@ -14,6 +14,7 @@ using Situ.Application.Features.Reports.GetReportMap;
 using Situ.Application.Features.Reports.GetPublicReportMap;
 using Situ.Application.Features.Reports.GetReportShare;
 using Situ.Application.Features.Reports.ListMyReports;
+using Situ.Application.Features.Reports.ListReportFeed;
 using Situ.Application.Features.Reports.OpenReportMedia;
 using Situ.Application.Features.Reports.ManageReportCategories;
 using Situ.Application.Features.Reports.RemoveReport;
@@ -75,6 +76,13 @@ public sealed class ReportEndpoints : IEndpoint
             .WithTags("Reports")
             .WithSummary("Reportes de quien consulta, incluidos los anónimos.")
             .Produces<ListMyReportsResponse>()
+            .RequireAuthorization(AuthorizationPolicies.User);
+
+        group.MapGet("/reports/feed", Feed)
+            .WithName("ListReportFeed")
+            .WithTags("Reports")
+            .WithSummary("Muro de reportes que esta cuenta puede ver, incluidos los que ya salieron del mapa.")
+            .Produces<ListReportFeedResponse>()
             .RequireAuthorization(AuthorizationPolicies.User);
 
         group.MapGet("/reports/{id:guid}", Detail)
@@ -361,6 +369,21 @@ public sealed class ReportEndpoints : IEndpoint
 
         var result = await handler.Handle(new ListMyReportsRequest(userId, cursor, limit ?? 20), cancellationToken);
         return result.ToHttpResult();
+    }
+
+    private static async Task<IResult> Feed(
+        string? cursor,
+        int? limit,
+        ICurrentUser currentUser,
+        IHandler<ListReportFeedRequest, Result<ListReportFeedResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        if (currentUser.UserId is not { } userId)
+        {
+            return Results.Unauthorized();
+        }
+
+        return (await handler.Handle(new ListReportFeedRequest(userId, cursor, limit ?? 20), cancellationToken)).ToHttpResult();
     }
 
     private static async Task<IResult> Detail(

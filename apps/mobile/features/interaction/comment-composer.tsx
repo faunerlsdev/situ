@@ -1,4 +1,5 @@
 import { anonymityStatus, commentLimit, feedbackMessages } from '@situ/shared';
+import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 
 import { theme } from '@/theme/theme';
@@ -44,18 +45,29 @@ export function CommentComposer({
           </Pressable>
         </View>
       ) : null}
-      <TextInput
-        value={text}
-        onChangeText={onChangeText}
-        editable={!disabled && !pending}
-        multiline
-        maxLength={commentLimit}
-        placeholder="Escribe un comentario"
-        placeholderTextColor={theme.colors.textSecondary}
-        accessibilityLabel="Comentario"
-        keyboardAppearance="dark"
-        style={styles.input}
-      />
+      <View style={styles.fieldRow}>
+        <TextInput
+          value={text}
+          onChangeText={onChangeText}
+          editable={!disabled && !pending}
+          multiline
+          maxLength={commentLimit}
+          placeholder="Escribe un comentario"
+          placeholderTextColor={theme.colors.textPlaceholder}
+          accessibilityLabel="Comentario"
+          keyboardAppearance="dark"
+          style={styles.input}
+        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={feedbackMessages.commentSend}
+          disabled={disabled || pending}
+          onPress={onSend}
+          style={[styles.send, (disabled || pending) && styles.sendOff]}
+        >
+          <SymbolView name={{ ios: 'paperplane.fill', android: 'send', web: 'send' }} tintColor={theme.colors.textOnPrimary} size={16} />
+        </Pressable>
+      </View>
       <Text style={styles.counter}>{text.trim().length}/{commentLimit}</Text>
       <View style={styles.switchRow}>
         <Switch
@@ -65,47 +77,40 @@ export function CommentComposer({
           accessibilityLabel={feedbackMessages.commentAnonymous}
           trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
         />
-        <Text style={styles.hint}>Publicar como anónimo</Text>
+        <Text style={styles.hint}>Anónimo</Text>
       </View>
       <Text style={styles.hint}>{anonymityStatus(anonymous)}</Text>
       <Text style={styles.hint}>{anonymousLocked ? feedbackMessages.commentAnonymousLocked : feedbackMessages.commentAnonymousHelp}</Text>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       {inlineError ? <Text style={styles.error}>{inlineError}</Text> : null}
       {countdown ? <Text style={styles.error}>{countdown}</Text> : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={feedbackMessages.commentSend}
-        disabled={disabled || pending}
-        onPress={onSend}
-        style={[styles.send, (disabled || pending) && styles.sendOff]}
-      >
-        <Text style={styles.sendLabel}>{pending ? feedbackMessages.commentSending : feedbackMessages.commentSend}</Text>
-      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 8, padding: 16, borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: theme.colors.bg },
+  box: { gap: 6, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border, backgroundColor: theme.colors.bg },
   replyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  fieldRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   input: {
-    minHeight: 72,
-    borderRadius: theme.radius.input,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: 12,
+    flex: 1,
+    minHeight: 40,
+    maxHeight: 96,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: theme.colors.surfaceElevated,
     color: theme.colors.textPrimary,
     fontFamily: theme.fontFamily.sans,
-    fontSize: 16,
+    fontSize: 15,
   },
-  counter: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12, textAlign: 'right' },
-  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 },
-  hint: { flex: 1, color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 13, lineHeight: 18 },
-  notice: { color: theme.colors.primary, fontFamily: theme.fontFamily.sans, fontSize: 14 },
-  error: { color: theme.colors.danger, fontFamily: theme.fontFamily.sans, fontSize: 14 },
-  link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold },
-  cancel: { minHeight: 44, justifyContent: 'center' },
-  send: { minHeight: 44, borderRadius: theme.radius.button, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
-  sendOff: { opacity: 0.5 },
-  sendLabel: { color: theme.colors.textOnPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
+  counter: { color: theme.colors.textPlaceholder, fontFamily: theme.fontFamily.sans, fontSize: 11, textAlign: 'right' },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 36 },
+  hint: { flex: 1, color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 12, lineHeight: 16 },
+  notice: { color: theme.colors.primary, fontFamily: theme.fontFamily.sans, fontSize: 13 },
+  error: { color: theme.colors.danger, fontFamily: theme.fontFamily.sans, fontSize: 13 },
+  link: { color: theme.colors.primary, fontFamily: theme.fontFamily.sans, fontSize: 13 },
+  cancel: { minHeight: 36, justifyContent: 'center' },
+  send: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
+  sendOff: { opacity: 0.45 },
 });

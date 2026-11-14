@@ -21,6 +21,8 @@ export default defineConfig({
   resolve: {
     alias: {
       'react-native': path.resolve(__dirname, 'test/react-native.tsx'),
+      'expo-symbols': path.resolve(__dirname, 'test/expo-symbols.tsx'),
+      'react-native-safe-area-context': path.resolve(__dirname, 'test/safe-area.tsx'),
       '@': path.resolve(__dirname),
     },
   },

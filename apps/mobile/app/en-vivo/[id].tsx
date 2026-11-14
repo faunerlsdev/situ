@@ -1,21 +1,25 @@
-import { AppError, messageFromUnknown, notify } from '@situ/shared';
+import { AppError, messageFromUnknown, notify, sites, toggleReaction } from '@situ/shared';
 import type { ComplaintReasonCode } from '@situ/shared';
 import NetInfo from '@react-native-community/netinfo';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { SymbolView } from 'expo-symbols';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ComplaintSheet } from '@/features/interaction/complaint-sheet';
 import { liveDebug } from '@/features/live/debug';
 import { hlsProbeTargets, PLAYBACK_STALL_MS, PLAYBACK_START_MS, playbackEnd, playerFailureCopy, playerStatusCopy, readPlayerError, renewalDelayMs, watchCopy, watchFailure, type WatchPhase } from '@/features/live/logic';
+import { LiveActionRow, LiveCommentList, LiveTopBar, liveLikeCount, useKeyboardInset } from '@/features/live/overlay';
 import { subscribeLiveNotice } from '@/features/live/roster';
 import { api } from '@/lib/api';
 import { theme } from '@/theme/theme';
 
 export default function WatchLiveScreen() {
   const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardInset();
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const id = Array.isArray(params.id) ? params.id[0] ?? '' : params.id ?? '';
@@ -24,6 +28,21 @@ export default function WatchLiveScreen() {
   const [source, setSource] = useState<string | null>(null);
   const [complaint, setComplaint] = useState(false);
   const [pending, setPending] = useState(false);
+  const [comment, setComment] = useState('');
+  const [anonymous, setAnonymous] = useState(true);
+  const queryClient = useQueryClient();
+  const room = useQuery({
+    queryKey: ['live-room', id],
+    enabled: id.length > 0 && (phase === 'playing' || phase === 'ended'),
+    queryFn: () => api.liveRoom(id),
+    refetchInterval: phase === 'playing' ? 3000 : false,
+  });
+  const detail = useQuery({
+    queryKey: ['live', 'detail', id],
+    enabled: id.length > 0 && phase === 'playing',
+    queryFn: () => api.live(id),
+    refetchInterval: 3000,
+  });
   const expiresAt = useRef(0);
   const phaseRef = useRef(phase);
   const idRef = useRef(id);
@@ -302,19 +321,76 @@ export default function WatchLiveScreen() {
     }
   }
 
+  const title = room.data?.title || detail.data?.title || '';
+  const viewers = typeof room.data?.viewers === 'number' ? room.data.viewers : typeof detail.data?.viewers === 'number' ? detail.data.viewers : null;
+  const likes = liveLikeCount(room.data?.reactionCounts);
+  const liked = room.data?.myReaction === 'Like';
+
+  function like() {
+    const snapshot = {
+      counts: room.data?.reactionCounts.map((item) => ({ type: item.type, count: Number(item.count) })) ?? [],
+      mine: room.data?.myReaction ?? null,
+    };
+    const next = toggleReaction(snapshot, 'Like');
+    void api.setLiveReaction(id, next.mine).then(() => queryClient.invalidateQueries({ queryKey: ['live-room', id] })).catch((cause) => notify.error(messageFromUnknown(cause) || 'No se pudo reaccionar.'));
+  }
+
+  function send() {
+    const text = comment.trim();
+    if (!text) {
+      return;
+    }
+    void api.addLiveComment(id, { text, isAnonymous: anonymous }).then(() => {
+      setComment('');
+      void queryClient.invalidateQueries({ queryKey: ['live-room', id] });
+    }).catch((cause) => notify.error(messageFromUnknown(cause) || 'No se pudo comentar.'));
+  }
+
+  const bottom = keyboard > 0 ? keyboard + 8 : insets.bottom + 12;
+
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => router.back()} style={styles.back}>
-        <Text style={styles.backLabel}>Volver</Text>
-      </Pressable>
-      <VideoView style={styles.video} player={player} nativeControls contentFit="contain" allowsPictureInPicture={false} />
-      <Text style={styles.status}>{playerNote ?? watchCopy(phase)}</Text>
-      <Text style={styles.body}>Esta transmisión es anónima.</Text>
-      {phase === 'playing' || phase === 'offline' || phase === 'ended' ? (
-        <Pressable accessibilityRole="button" accessibilityLabel="Denunciar" onPress={() => setComplaint(true)} style={styles.report}>
-          <Text style={styles.reportLabel}>Denunciar</Text>
-        </Pressable>
-      ) : null}
+    <View style={styles.screen}>
+      <VideoView style={styles.video} player={player} nativeControls={false} contentFit="cover" allowsPictureInPicture={false} />
+      <View style={[styles.overlay, { paddingTop: insets.top + 8, paddingBottom: bottom }]} pointerEvents="box-none">
+        <LiveTopBar title={title} viewers={viewers} onBack={() => router.back()} />
+        {room.data?.visibility === 'Friends' ? <Text style={styles.note}>Solo la ven tus amigos.</Text> : null}
+        <View style={styles.middle} pointerEvents="none">
+          {phase !== 'playing' || playerNote ? <Text style={styles.status}>{playerNote ?? watchCopy(phase)}</Text> : null}
+        </View>
+        <LiveCommentList comments={room.data?.comments ?? []} />
+        <View style={styles.dock}>
+          {phase === 'playing' ? (
+            <View style={styles.composer}>
+              <TextInput
+                accessibilityLabel="Comentario"
+                value={comment}
+                onChangeText={setComment}
+                placeholder="Comentar"
+                placeholderTextColor={theme.colors.textPlaceholder}
+                style={styles.input}
+                returnKeyType="send"
+                blurOnSubmit={false}
+                onSubmitEditing={send}
+              />
+              <Pressable accessibilityRole="button" accessibilityLabel={anonymous ? 'Comentar como anónimo' : 'Comentar con tu nombre'} onPress={() => setAnonymous((value) => !value)} style={styles.ghost}>
+                <SymbolView name={anonymous ? anonymousIcon : namedIcon} tintColor={theme.colors.textPrimary} size={16} />
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Enviar comentario" onPress={send} style={styles.send}>
+                <SymbolView name={sendIcon} tintColor={theme.colors.textOnPrimary} size={16} />
+              </Pressable>
+            </View>
+          ) : <View style={styles.composer} />}
+          {phase === 'playing' || phase === 'offline' || phase === 'ended' ? (
+            <LiveActionRow
+              liked={liked}
+              likes={likes}
+              onLike={like}
+              onShare={() => void Share.share({ message: `${title || 'Transmisión'} en SITU\n${sites.web}` })}
+              onReport={() => setComplaint(true)}
+            />
+          ) : null}
+        </View>
+      </View>
       <ComplaintSheet
         visible={complaint}
         pending={pending}
@@ -325,6 +401,10 @@ export default function WatchLiveScreen() {
     </View>
   );
 }
+
+const anonymousIcon = { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' } as const;
+const namedIcon = { ios: 'person', android: 'person', web: 'person' } as const;
+const sendIcon = { ios: 'paperplane.fill', android: 'send', web: 'send' } as const;
 
 async function probePlaylist(url: string, depth = 2): Promise<void> {
   try {
@@ -345,12 +425,15 @@ async function probePlaylist(url: string, depth = 2): Promise<void> {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.bg, paddingHorizontal: 20, gap: 12 },
-  back: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center' },
-  backLabel: { color: theme.colors.primary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
-  video: { flex: 1, borderRadius: theme.radius.card, backgroundColor: theme.colors.surface, overflow: 'hidden' },
-  status: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 18, lineHeight: 24 },
-  body: { color: theme.colors.textSecondary, fontFamily: theme.fontFamily.sans, fontSize: 15, lineHeight: 22 },
-  report: { minHeight: 48, borderRadius: theme.radius.button, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center' },
-  reportLabel: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16 },
+  screen: { flex: 1, backgroundColor: '#000000' },
+  video: { ...StyleSheet.absoluteFill },
+  overlay: { flex: 1, justifyContent: 'flex-end', gap: 10 },
+  middle: { flex: 1, flexShrink: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 6 },
+  status: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sansBold, fontSize: 16, lineHeight: 22, textAlign: 'center' },
+  note: { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.sans, fontSize: 13, lineHeight: 18, paddingHorizontal: 56 },
+  dock: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12 },
+  composer: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  input: { flex: 1, minHeight: 40, borderRadius: 20, paddingHorizontal: 14, color: theme.colors.textPrimary, backgroundColor: 'rgba(20,20,20,0.55)', fontFamily: theme.fontFamily.sans, fontSize: 15 },
+  ghost: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(20,20,20,0.55)' },
+  send: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary },
 });

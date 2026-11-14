@@ -4,6 +4,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Situ.Application.Common.Abstractions;
 using Situ.Application.Common.Results;
+using Situ.Application.Features.Reports;
 using Situ.Domain.Common;
 using Situ.Domain.Notifications;
 using Situ.Domain.Reports;
@@ -37,7 +38,7 @@ public sealed class ListNotificationsValidator : AbstractValidator<ListNotificat
     }
 }
 
-public sealed class ListNotificationsHandler(IApplicationDbContext db, IClock clock)
+public sealed class ListNotificationsHandler(IApplicationDbContext db)
     : IHandler<ListNotificationsRequest, Result<ListNotificationsResponse>>
 {
     public async Task<Result<ListNotificationsResponse>> Handle(ListNotificationsRequest request, CancellationToken cancellationToken)
@@ -55,7 +56,6 @@ public sealed class ListNotificationsHandler(IApplicationDbContext db, IClock cl
             page.RemoveAt(page.Count - 1);
         }
 
-        var now = clock.UtcNow;
         var reportIds = page.Where(item => item.TargetType == ContentTargetType.Report && item.TargetId != null).Select(item => item.TargetId!.Value).ToList();
         var commentIds = page.Where(item => item.TargetType == ContentTargetType.Comment && item.TargetId != null).Select(item => item.TargetId!.Value).ToArray();
         var comments = await db.Comments.Where(item => commentIds.Contains(item.Id)).Select(item => new { item.Id, item.TargetId }).ToListAsync(cancellationToken);
@@ -72,7 +72,7 @@ public sealed class ListNotificationsHandler(IApplicationDbContext db, IClock cl
             var live = item.TargetType == ContentTargetType.LiveStream ? lives.FirstOrDefault(row => row.Id == item.TargetId) : null;
             var available = item.TargetType == ContentTargetType.LiveStream
                 ? live is not null && !live.HiddenByStaff
-                : report is not null && report.IsVisible(now);
+                : report is not null && ReportAccess.OnWall(report);
             return new NotificationItemResponse(
                 item.Id,
                 item.Type.ToString(),

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
 import { liveStartState } from '@/features/live/logic';
+import { beginPublicLive } from '@/features/live/start-public';
 import { getLiveQuotaFull, subscribeLiveQuota } from '@/features/live/quota';
 import { livePublisherAvailable } from '@/features/live/publisher';
 import { useMe } from '@/features/reports/use-me';
@@ -34,7 +35,7 @@ export function TransmitLiveControl({ label, variant = 'button' }: { label: stri
         accessibilityLabel={reason ? `${label}. ${reason}` : label}
         accessibilityState={{ disabled: !state.enabled }}
         disabled={!state.enabled}
-        onPress={() => router.push('/en-vivo/iniciar')}
+        onPress={() => void beginPublicLive(router, me.data)}
         style={[variant === 'icon' ? styles.iconButton : styles.button, !state.enabled && styles.disabled]}
       >
         {variant === 'icon' ? (

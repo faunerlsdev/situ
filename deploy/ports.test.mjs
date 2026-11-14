@@ -148,6 +148,15 @@ test('mediamtx accepts only the opaque path and still authorizes it', () => {
   assert.match(install, /Se conserva \$\{ENV_FILE\}\./);
   assert.match(install, /MainPID/);
   assert.match(install, /situ_port_listening/);
+  assert.match(install, /previous-mediamtx/);
+  assert.match(install, /No toqué el servicio en marcha/);
+  assert.match(install, /Restauro el binario/);
+  assert.doesNotMatch(install, /> \/etc\/mediamtx\/mediamtx\.yml/);
+  const pinned = install.match(/^VERSION=(v\d+\.\d+\.\d+)$/m)?.[1];
+  assert.ok(pinned);
+  assert.match(yml, new RegExp(`MediaMTX ${pinned.replaceAll('.', '\\.')}`));
+  assert.doesNotMatch(read('remote-release.sh'), /situ-mediamtx/);
+  assert.doesNotMatch(read('release.sh'), /mediamtx\/install\.sh/);
   const control = readFileSync(join(root, '../apps/backend/src/Situ.Api/Live/MediaMtxControl.cs'), 'utf8');
   assert.match(control, /\/v3\/rtmps\/conns\/list/);
   assert.match(control, /\/v3\/rtmps\/conns\/kick\//);

@@ -20,7 +20,7 @@ function walk(directory: string): string[] {
 }
 
 describe('live navigation', () => {
-  it('opens the live list from the toolbar and keeps transmit off the map fabs', () => {
+  it('opens the live list from the toolbar and starts a public stream from the situ gesture', () => {
     const map = source('features/reports/map-screen.tsx');
     const header = source('components/shell.tsx');
     const mark = source('features/live/toolbar-mark.tsx');
@@ -28,23 +28,27 @@ describe('live navigation', () => {
     const root = source('app/_layout.tsx');
     expect(map).not.toContain('accessibilityLabel="En vivo ahora"');
     expect(map).not.toContain('liveFab');
+    expect(map).toContain('SituRadial');
+    expect(map).toContain('beginPublicLive');
     expect(map).not.toContain('Transmitir en vivo');
     expect(map).not.toContain('TransmitLiveControl');
+    expect(map).not.toContain('Quiero chismosear');
+    expect(map).not.toContain('Quiero reportar algo');
     expect(header).toContain('LiveToolbarMark');
     expect(header).not.toContain('TransmitLiveControl');
     expect(header).not.toContain('nav-en-vivo');
     expect(header).toContain('nav-chisme-megafono-dark.png');
     expect(header).toContain("icon: chismeIcon");
     expect(header).toContain("router.push('/en-vivo')");
-    expect(source('app/en-vivo/iniciar.tsx')).toContain('Compartir ubicación');
-    expect(source('app/en-vivo/iniciar.tsx')).toContain('liveShareNote');
-    expect(source('app/en-vivo/iniciar.tsx')).toContain('useState(false)');
+    expect(source('features/live/start-public.ts')).toContain('Transmisión pública');
+    expect(source('features/live/start-public.ts')).toContain("visibility: 'Public'");
+    expect(source('app/en-vivo/transmitir.tsx')).toContain('Entre amigos');
     expect(mark).toContain('Ver transmisiones en vivo');
     expect(source('app/en-vivo/index.tsx')).toContain('label="Transmitir"');
     expect(source('features/live/transmit-control.tsx')).toContain('liveStartState');
     expect(tabs).not.toContain('en-vivo');
     expect(root).toContain('<Stack.Screen name="en-vivo" />');
-    expect(source('app/en-vivo/iniciar.tsx')).toContain('ANONYMITY_REMINDER');
+    expect(source('features/live/logic.ts')).toContain('ANONYMITY_REMINDER');
     expect(source('features/live/logic.ts')).toContain('Tu transmisión es anónima, pero el video puede mostrar rostros y lugares');
   });
 

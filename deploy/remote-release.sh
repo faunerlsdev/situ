@@ -52,6 +52,7 @@ if ! runuser -u situ --preserve-environment -- /usr/bin/dotnet Situ.Api.dll migr
 fi
 
 ln -sfn "$release" /opt/situ/current
+# Live video stays out of this restart. Its binary and YAML move together in mediamtx/install.sh.
 services=(situ-api situ-web situ-admin situ-support)
 if [[ -d "${release}/landing" ]]; then
   services+=(situ-landing)

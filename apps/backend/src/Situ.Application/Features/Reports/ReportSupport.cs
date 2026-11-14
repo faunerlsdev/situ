@@ -231,6 +231,13 @@ internal static class ReportAccess
             user => user.Id == authorId && user.Status == UserStatus.DeletionRequested,
             cancellationToken);
 
+    /// <summary>
+    /// Still on the wall after it leaves the map. Removed and under-review reports stay hidden.
+    /// The map query keeps its own Active filter.
+    /// </summary>
+    public static bool OnWall(Report report) =>
+        report.Status is ReportStatus.Active or ReportStatus.Expired;
+
     public static bool CanSee(Report report, Guid? viewerId, IReadOnlySet<Guid> friends, ContentBlocks blocks)
     {
         if (viewerId != report.AuthorId && blocks.Hides(report.AuthorId, report.IsAnonymous))
